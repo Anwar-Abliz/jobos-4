@@ -23,10 +23,17 @@ DEFAULT_MODEL = "gpt-4.1-mini"
 
 
 class OpenAIAdapter(LLMPort):
-    """OpenAI implementation of LLMPort."""
+    """OpenAI-compatible LLM adapter.
 
-    def __init__(self, api_key: str, model: str = DEFAULT_MODEL) -> None:
-        self._client = AsyncOpenAI(api_key=api_key)
+    Works with any OpenAI-compatible API: OpenAI, Qwen (DashScope),
+    DeepSeek, Ollama, vLLM, etc. Just set base_url accordingly.
+    """
+
+    def __init__(self, api_key: str, model: str = DEFAULT_MODEL, base_url: str = "") -> None:
+        client_kwargs: dict = {"api_key": api_key}
+        if base_url:
+            client_kwargs["base_url"] = base_url
+        self._client = AsyncOpenAI(**client_kwargs)
         self._model = model
 
     async def complete(

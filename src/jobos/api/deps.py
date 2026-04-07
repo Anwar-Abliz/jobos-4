@@ -23,6 +23,7 @@ from jobos.services.imperfection_service import ImperfectionService
 from jobos.services.metric_service import MetricService
 from jobos.adapters.openai.llm_adapter import OpenAIAdapter
 from jobos.pipeline.chat_turn import ChatTurnPipeline
+from jobos.services.hierarchy_service import HierarchyService
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +75,11 @@ async def initialize_connections() -> None:
     # LLM (optional)
     if settings.llm.enabled and settings.llm.api_key:
         try:
-            _llm = OpenAIAdapter(api_key=settings.llm.api_key)
+            _llm = OpenAIAdapter(
+                api_key=settings.llm.api_key,
+                model=settings.llm.model,
+                base_url=settings.llm.base_url,
+            )
             health = await _llm.check_connectivity()
             if health.get("ok"):
                 logger.info("LLM ready: %s", health.get("model"))
@@ -189,5 +194,16 @@ def get_chat_pipeline() -> ChatTurnPipeline:
     return ChatTurnPipeline(
         graph=get_graph_port(),
         db=get_relational_port(),
+        llm=_llm,
+    )
+
+
+# ═══════════════════════════════════════════════════════════
+#  Hierarchy Service
+# ═══════════════════════════════════════════════════════════
+
+def get_hierarchy_service() -> HierarchyService:
+    return HierarchyService(
+        graph=get_graph_port(),
         llm=_llm,
     )
