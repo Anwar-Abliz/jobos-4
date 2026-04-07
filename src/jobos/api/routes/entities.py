@@ -102,8 +102,8 @@ async def update_entity(entity_id: str, req: EntityUpdateIn) -> EntityOut:
     return _to_out(entity)
 
 
-@router.delete("/entities/{entity_id}", status_code=204)
-async def delete_entity(entity_id: str) -> None:
+@router.delete("/entities/{entity_id}", status_code=204, response_model=None)
+async def delete_entity(entity_id: str):
     """Delete an Entity and its incident edges."""
     svc = get_entity_service()
     found = await svc.delete(entity_id)

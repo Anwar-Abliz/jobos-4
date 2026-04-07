@@ -21,6 +21,8 @@ from jobos.services.entity_service import EntityService
 from jobos.services.hiring_service import HiringService
 from jobos.services.imperfection_service import ImperfectionService
 from jobos.services.metric_service import MetricService
+from jobos.adapters.openai.llm_adapter import OpenAIAdapter
+from jobos.pipeline.chat_turn import ChatTurnPipeline
 
 logger = logging.getLogger(__name__)
 
@@ -33,11 +35,12 @@ _neo4j_conn: Neo4jConnection | None = None
 _postgres_conn: PostgresConnection | None = None
 _graph_port: GraphPort | None = None
 _relational_port: RelationalPort | None = None
+_llm: OpenAIAdapter | None = None
 
 
 async def initialize_connections() -> None:
     """Initialize database connections. Called from app lifespan."""
-    global _neo4j_conn, _postgres_conn, _graph_port, _relational_port
+    global _neo4j_conn, _postgres_conn, _graph_port, _relational_port, _llm
 
     settings = get_settings()
 
@@ -67,6 +70,22 @@ async def initialize_connections() -> None:
         logger.warning("PostgreSQL connection failed: %s — running without relational DB", e)
         _postgres_conn = None
         _relational_port = None
+
+    # LLM (optional)
+    if settings.llm.enabled and settings.llm.api_key:
+        try:
+            _llm = OpenAIAdapter(api_key=settings.llm.api_key)
+            health = await _llm.check_connectivity()
+            if health.get("ok"):
+                logger.info("LLM ready: %s", health.get("model"))
+            else:
+                logger.warning("LLM health check failed: %s", health.get("error"))
+                _llm = None
+        except Exception as e:
+            logger.warning("LLM initialization failed: %s", e)
+            _llm = None
+    else:
+        logger.info("LLM disabled (set LLM_ENABLED=true and OPENAI_API_KEY to enable)")
 
 
 async def close_connections() -> None:
@@ -159,4 +178,16 @@ def get_metric_service() -> MetricService:
     return MetricService(
         graph=get_graph_port(),
         db=get_relational_port(),
+    )
+
+
+# ═══════════════════════════════════════════════════════════
+#  Chat Pipeline
+# ═══════════════════════════════════════════════════════════
+
+def get_chat_pipeline() -> ChatTurnPipeline:
+    return ChatTurnPipeline(
+        graph=get_graph_port(),
+        db=get_relational_port(),
+        llm=_llm,
     )

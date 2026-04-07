@@ -49,8 +49,9 @@ def create_app() -> FastAPI:
     )
 
     # Register routes
-    from jobos.api.routes import entities, jobs, hiring, imperfections, metrics, health
+    from jobos.api.routes import entities, jobs, hiring, imperfections, metrics, health, chat
     app.include_router(health.router, tags=["health"])
+    app.include_router(chat.router, prefix="/api", tags=["chat"])
     app.include_router(entities.router, prefix="/api", tags=["entities"])
     app.include_router(jobs.router, prefix="/api", tags=["jobs"])
     app.include_router(hiring.router, prefix="/api", tags=["hiring"])

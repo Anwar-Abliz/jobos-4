@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -18,7 +19,7 @@ class PostgresConnection:
         self._session_factory: sessionmaker | None = None
 
     async def connect(self) -> None:
-        """Initialize the engine and session factory."""
+        """Initialize the engine, session factory, and verify connectivity."""
         self._engine = create_async_engine(
             self._uri,
             echo=False,
@@ -30,6 +31,9 @@ class PostgresConnection:
             class_=AsyncSession,
             expire_on_commit=False,
         )
+        # Verify the connection actually works
+        async with self._engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
         logger.info("PostgreSQL connected: %s", self._uri.split("@")[-1])
 
     async def close(self) -> None:
@@ -55,7 +59,7 @@ class PostgresConnection:
         """Health check."""
         try:
             async with self.engine.connect() as conn:
-                await conn.execute("SELECT 1")
+                await conn.execute(text("SELECT 1"))
                 return True
         except Exception as e:
             logger.error("PostgreSQL connectivity check failed: %s", e)
