@@ -33,6 +33,8 @@ class LLMSettings:
 class JobOSSettings:
     debug: bool = os.getenv("JOBOS_DEBUG", "false").lower() == "true"
     log_level: str = os.getenv("JOBOS_LOG_LEVEL", "INFO")
+    entropy_residual_severity: float = float(os.getenv("ENTROPY_RESIDUAL_SEVERITY", "0.05"))
+    entropy_residual_risk: float = float(os.getenv("ENTROPY_RESIDUAL_RISK", "0.3"))
     neo4j: Neo4jSettings = Neo4jSettings()
     postgres: PostgresSettings = PostgresSettings()
     llm: LLMSettings = LLMSettings()

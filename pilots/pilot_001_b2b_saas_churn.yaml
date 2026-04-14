@@ -1,0 +1,70 @@
+metadata:
+  pilot_id: "PILOT_001"
+  segment: "B2B SaaS Growth"
+  status: "active"
+
+job_hierarchy:
+  tier_1_strategic_why: "Achieve sustainable product-market fit and revenue growth"
+  tier_2_core_what: "Reduce customer churn to below 3% monthly net revenue churn"
+
+tier3_steps:
+  - step_1: "Identify high-risk accounts using churn propensity signals"
+  - step_2: "Diagnose root cause of churn for each at-risk segment"
+  - step_3: "Design targeted retention interventions per segment"
+  - step_4: "Execute outreach and onboarding recovery campaigns"
+  - step_5: "Monitor engagement metrics and product adoption signals"
+  - step_6: "Evaluate intervention effectiveness against baseline"
+  - step_7: "Adjust retention playbook based on switch trigger feedback"
+
+dimension_b_metrics:
+  - name: "monthly_net_revenue_churn"
+    description: "Percentage of MRR lost from cancellations and downgrades"
+    target: "Below 3%"
+    switch_trigger_threshold: "> 5%"
+  - name: "onboarding_completion_rate"
+    description: "Percentage of new users completing the onboarding flow"
+    target: "Above 80%"
+    switch_trigger_threshold: "< 50%"
+  - name: "product_adoption_score"
+    description: "Composite score of key feature usage within first 30 days"
+    target: "Above 0.7"
+    switch_trigger_threshold: "< 0.4"
+
+dimension_a_experience_markers:
+  account_executive:
+    - "Feel confident that at-risk accounts are being proactively managed"
+    - "To be perceived as a strategic partner, not just a vendor"
+  customer_success_manager:
+    - "Feel empowered with clear playbooks and trigger signals"
+    - "To be recognized as the voice of the customer internally"
+  product_manager:
+    - "Feel connected to real churn signals driving roadmap decisions"
+    - "To be seen as data-driven and customer-obsessed"
+
+hypothesis_under_test: >
+  Automating churn-risk identification (T4 setup + act steps) and surfacing
+  real-time trigger signals will reduce time-to-intervention by 60% and
+  lower monthly net revenue churn below 3% within one quarter.
+
+exit_criteria_for_phase_1: >
+  Phase 1 exits GO when: monthly NRR churn drops below 4% for two consecutive
+  months, onboarding completion exceeds 70%, and fewer than 2 Switch events
+  are triggered in a 30-day window. NO-GO if churn exceeds 6% or product
+  adoption score falls below 0.35.
+
+risks_and_mitigations:
+  - risk: "Churn signals are lagging indicators — interventions arrive too late"
+    mitigation: "Add leading indicators (login frequency, feature adoption drop) as T4 triggers"
+  - risk: "CS team capacity constrains outreach volume at scale"
+    mitigation: "Automate T4 act steps for low-risk accounts; reserve human CS for high-value accounts"
+  - risk: "LLM-generated retention messaging feels generic and reduces trust"
+    mitigation: "Use human-in-the-loop review for all account-specific communications"
+
+data_sources:
+  - "CRM (Salesforce)"
+  - "Product analytics (Mixpanel)"
+  - "Support tickets (Zendesk)"
+
+connectors:
+  - "salesforce_connector"
+  - "mixpanel_connector"

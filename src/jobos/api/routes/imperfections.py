@@ -10,7 +10,7 @@ router = APIRouter()
 
 @router.get("/imperfections")
 async def list_imperfections(job_id: str | None = None) -> dict:
-    """List imperfections, optionally filtered by Job and ranked by IPS."""
+    """List imperfections, optionally filtered by Job and ranked by severity."""
     if job_id:
         svc = get_imperfection_service()
         ranked = await svc.rank(job_id)
@@ -25,13 +25,6 @@ async def list_imperfections(job_id: str | None = None) -> dict:
                     "status": i.status,
                     "severity": i.properties.get("severity", 0),
                     "is_blocker": i.properties.get("is_blocker", False),
-                    "ips_score": (
-                        3.0 * (1.0 if i.properties.get("is_blocker") else 0.0)
-                        + 2.0 * i.properties.get("severity", 0)
-                        + 1.0 * i.properties.get("frequency", 0.5)
-                        + 1.0 * i.properties.get("entropy_risk", 0)
-                        + 1.0 * (1.0 - i.properties.get("fixability", 0.5))
-                    ),
                 }
                 for i in ranked
             ],

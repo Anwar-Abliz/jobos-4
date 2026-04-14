@@ -1,18 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useSyncExternalStore } from "react";
 import { PanelRightClose, PanelRightOpen, RotateCcw } from "lucide-react";
 import { ChatPanel } from "@/components/ChatPanel";
-import { HierarchyPanel } from "@/components/HierarchyPanel";
+import { PhaseIndicator } from "@/components/PhaseIndicator";
+import { PhaseOnePanel } from "@/components/PhaseOnePanel";
+import { PhaseTwoPanel } from "@/components/PhaseTwoPanel";
+import { PhaseThreePanel } from "@/components/PhaseThreePanel";
 import { useAppStore } from "@/lib/store";
 
 export default function HomePage() {
-  const { rightPanelVisible, toggleRightPanel, reset } = useAppStore();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const { rightPanelVisible, toggleRightPanel, reset, currentPhase } = useAppStore();
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
 
   if (!mounted) {
     return <div className="h-screen bg-[var(--bg-primary)]" />;
@@ -43,7 +46,7 @@ export default function HomePage() {
           <button
             onClick={toggleRightPanel}
             className="p-1.5 rounded-md text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] transition-colors"
-            title={rightPanelVisible ? "Hide hierarchy" : "Show hierarchy"}
+            title={rightPanelVisible ? "Hide panel" : "Show panel"}
           >
             {rightPanelVisible ? (
               <PanelRightClose className="w-3.5 h-3.5" />
@@ -59,16 +62,21 @@ export default function HomePage() {
         {/* Left: Chat */}
         <div
           className={`flex flex-col transition-all duration-300 ${
-            rightPanelVisible ? "w-[55%]" : "w-full"
+            rightPanelVisible ? "w-[25%]" : "w-full"
           }`}
         >
           <ChatPanel />
         </div>
 
-        {/* Right: Hierarchy */}
+        {/* Right: Phase panel */}
         {rightPanelVisible && (
-          <div className="w-[45%] border-l border-[var(--border)] bg-[var(--bg-secondary)]">
-            <HierarchyPanel />
+          <div className="w-[75%] border-l border-[var(--border)] bg-[var(--bg-secondary)] flex flex-col">
+            <PhaseIndicator />
+            <div className="flex-1 overflow-hidden">
+              {currentPhase === 1 && <PhaseOnePanel />}
+              {currentPhase === 2 && <PhaseTwoPanel />}
+              {currentPhase === 3 && <PhaseThreePanel />}
+            </div>
           </div>
         )}
       </div>

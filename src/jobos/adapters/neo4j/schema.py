@@ -21,6 +21,17 @@ SCHEMA_STATEMENTS: list[str] = [
     "CREATE INDEX entity_type_idx IF NOT EXISTS FOR (e:Entity) ON (e.entity_type)",
     "CREATE INDEX entity_status_idx IF NOT EXISTS FOR (e:Entity) ON (e.status)",
     "CREATE INDEX entity_type_status_idx IF NOT EXISTS FOR (e:Entity) ON (e.entity_type, e.status)",
+
+    # Job hierarchy indexes (Axiom 6: Singularity+ / root_token enforcement)
+    "CREATE INDEX job_tier_idx IF NOT EXISTS FOR (e:Entity) ON (e.tier)",
+    "CREATE INDEX job_scope_idx IF NOT EXISTS FOR (e:Entity) ON (e.scope_id)",
+
+    # Experience Space (Dimension A — :Experience label nodes)
+    "CREATE INDEX experience_job_idx IF NOT EXISTS FOR (e:Experience) ON (e.job_id)",
+
+    # Slug-based lookups for Segment and Scenario entities
+    "CREATE INDEX segment_slug_idx IF NOT EXISTS FOR (e:Segment) ON (e.slug)",
+    "CREATE INDEX scenario_slug_idx IF NOT EXISTS FOR (e:Scenario) ON (e.slug)",
 ]
 
 # Fulltext index requires separate handling (may fail on Community Edition)

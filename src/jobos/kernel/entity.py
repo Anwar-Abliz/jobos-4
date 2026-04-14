@@ -41,6 +41,8 @@ class EntityType(str, Enum):
     EVIDENCE = "evidence"
     CONTEXT = "context"
     METRIC = "metric"
+    SEGMENT = "segment"
+    SCENARIO = "scenario"
 
 
 class JobType(str, Enum):
@@ -187,6 +189,14 @@ class JobProperties(BaseModel):
     The Job is the 'Generative Model' in Active Inference — it encodes
     the preferred states (success metrics) that the system works to maintain.
     vfe_current is the current Variational Free Energy (Imperfection as Surprise).
+
+    executor_type: Declared intent — 'AI' or 'HUMAN'. Runtime can derive
+        the actual executor from the active HIRES relationship. Nullable
+        for backwards compatibility; required on create via API validation.
+    root_token: Set to 'ROOT' for the top-level Job in a scope (Axiom 6).
+        Application enforces at most one ROOT per scope_id.
+    scope_id: Logical scope for root_token uniqueness (e.g. project or user ID).
+    tier: T1–T4 tier number from the Job Triad hierarchy.
     """
     job_type: JobType = JobType.CORE_FUNCTIONAL
     job_nature: JobNature = JobNature.PROJECT
@@ -194,6 +204,10 @@ class JobProperties(BaseModel):
     parent_id: str | None = None
     preferred_states: list[str] = Field(default_factory=list)
     vfe_current: float = 0.0
+    executor_type: Literal["AI", "HUMAN"] | None = None
+    root_token: Literal["ROOT"] | None = None
+    scope_id: str = ""
+    tier: Literal[1, 2, 3, 4] | None = None
 
     @field_validator("level")
     @classmethod
@@ -227,11 +241,20 @@ class ImperfectionProperties(BaseModel):
     """Properties for entity_type='imperfection'.
 
     Maps to the Architectural Synthesis's 'Prediction Error / Surprise'.
-    The IPS score ranks imperfections by urgency for the Scheduler.
 
-    IPS = 3*Blocker + 2*Severity + Frequency + EntropyRisk + (1 - Fixability)
+    Primary fields (Axiom 4: accuracy, speed, throughput):
+        metric_dimension: Which dimension this imperfection belongs to.
+        target_value:     The set-point (SP) or desired state.
+        observed_value:   The process variable (PV) or current state.
+        severity:         Computed gap = |target - observed| / |target|, in [0, 1].
+
+    Deprecated fields (retained for backward compatibility):
+        frequency, entropy_risk, fixability, is_blocker — from JobOS 2.0 IPS formula.
     """
     severity: float = Field(default=0.0, ge=0.0, le=1.0)
+    metric_dimension: str = ""
+    target_value: float | None = None
+    observed_value: float | None = None
     frequency: float = Field(default=0.5, ge=0.0, le=1.0)
     entropy_risk: float = Field(default=0.0, ge=0.0, le=1.0)
     fixability: float = Field(default=0.5, ge=0.0, le=1.0)
@@ -302,6 +325,36 @@ class MetricProperties(BaseModel):
     measurement_method: str = ""
 
 
+class SegmentProperties(BaseModel):
+    """Properties for entity_type='segment'.
+
+    A Segment groups related Scenarios that share a business domain.
+    """
+    slug: str = ""
+    description: str = ""
+    root_job_ids: list[str] = Field(default_factory=list)
+    tags: list[str] = Field(default_factory=list)
+
+
+class ScenarioProperties(BaseModel):
+    """Properties for entity_type='scenario'.
+
+    A Scenario is a concrete pilot hypothesis within a Segment.
+    It owns a T1→T2→T3→T4 hierarchy, Dimension B metrics,
+    and optional Dimension A experience markers.
+    """
+    slug: str = ""
+    segment_id: str = ""
+    pilot_id: str = ""
+    hypothesis: str = ""
+    exit_criteria: str = ""
+    risks: list[dict[str, str]] = Field(default_factory=list)
+    dimension_b_metrics: list[dict[str, Any]] = Field(default_factory=list)
+    dimension_a_config: dict[str, Any] = Field(default_factory=dict)
+    status: str = "draft"
+    phase: str = "phase_1"
+
+
 # ═══════════════════════════════════════════════════════════
 #  Entity Property Validation (ECS System)
 # ═══════════════════════════════════════════════════════════
@@ -315,6 +368,8 @@ ENTITY_PROPERTY_MODELS: dict[EntityType, type[BaseModel]] = {
     EntityType.EVIDENCE: EvidenceProperties,
     EntityType.CONTEXT: ContextProperties,
     EntityType.METRIC: MetricProperties,
+    EntityType.SEGMENT: SegmentProperties,
+    EntityType.SCENARIO: ScenarioProperties,
 }
 
 

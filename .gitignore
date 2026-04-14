@@ -38,3 +38,18 @@ htmlcov/
 
 # Logs
 *.log
+
+# Node.js
+node_modules/
+.next/
+frontend/node_modules/
+frontend/.next/
+
+# Tool-specific
+.bevel/
+.claude/
+.hypothesis/
+
+# Scratch / test files
+nul
+hier_result.json

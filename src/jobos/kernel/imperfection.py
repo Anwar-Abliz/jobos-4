@@ -4,10 +4,12 @@ The Imperfection is the central signal in JobOS:
 - In NSAIG (Blueprint 1): Imperfection = Variational Free Energy = Surprise
 - In CDEE (Blueprint 2): Imperfection = Error Signal = SP - PV
 
-IPS = 3*Blocker + 2*Severity + Frequency + EntropyRisk + (1 - Fixability)
-Higher IPS → more urgent → processed first by the scheduler.
+Primary scoring function: compute_vfe() — severity-based VFE score.
+Legacy compute_ips() is deprecated but retained for backward compatibility.
 """
 from __future__ import annotations
+
+import warnings
 
 from jobos.kernel.entity import EntityBase, EntityType, ImperfectionProperties
 
@@ -23,12 +25,22 @@ W_FIXABILITY = 1.0  # Inverted: hard-to-fix = higher priority
 
 # ─── Core Functions ──────────────────────────────────────
 
-def compute_ips(props: ImperfectionProperties | dict) -> float:
-    """Compute Imperfection Priority Score.
+def compute_vfe(props: ImperfectionProperties | dict) -> float:
+    """Compute VFE score for an imperfection.
 
-    IPS = 3*Blocker + 2*Severity + Frequency + EntropyRisk + (1 - Fixability)
+    Minimizing Imperfection is formally equivalent to minimizing variational
+    free energy (Research Synthesis §Active Inference). The VFE score is
+    severity-based: it represents the prediction error magnitude.
 
-    Accepts either a typed ImperfectionProperties or a raw dict.
+    For a single imperfection, VFE ≈ severity (the gap between observed
+    and target). Additional terms (blocker, entropy_risk) are retained as
+    weighting factors for backward compatibility with the IPS formula.
+
+    Args:
+        props: ImperfectionProperties or raw dict.
+
+    Returns:
+        VFE score as a float >= 0.
     """
     if isinstance(props, dict):
         props = ImperfectionProperties.model_validate(props)
@@ -43,15 +55,41 @@ def compute_ips(props: ImperfectionProperties | dict) -> float:
     )
 
 
+def compute_ips(props: ImperfectionProperties | dict) -> float:
+    """Compute Imperfection Priority Score (DEPRECATED).
+
+    .. deprecated::
+        Use ``compute_vfe()`` instead. IPS and VFE are formally equivalent
+        (minimizing Imperfection = minimizing variational free energy).
+
+    IPS = 3*Blocker + 2*Severity + Frequency + EntropyRisk + (1 - Fixability)
+    """
+    warnings.warn(
+        "compute_ips() is deprecated, use compute_vfe() instead",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return compute_vfe(props)
+
+
 def compute_severity(observed: float | None, target: float, op: str = "<=") -> float:
     """Compute severity score between 0.0 (met) and 1.0 (max gap).
 
-    This is the 'Prediction Error' in Active Inference terms,
-    and the 'Error Signal' in Control Theory terms.
+    Dual interpretation:
+
+    - **Active Inference (NSAIG)**: Severity = Prediction Error. The generative
+      model (Job) predicted a target state; observed deviates from it. Severity
+      quantifies the magnitude of surprise: ``|target - observed| / |target|``.
+
+    - **Control Theory (CDEE)**: Severity = Error Signal = SP - PV. The set-point
+      (target) minus the process variable (observed), normalised to [0, 1].
+
+    Both frames converge: minimising severity ≡ minimising VFE ≡ driving the
+    controlled system toward its set-point.
 
     Args:
         observed: Current metric value (None = missing data → max severity)
-        target: Target/threshold value
+        target: Target/threshold value (set-point)
         op: Comparison operator ("<=", ">=", "==", etc.)
 
     Returns:
@@ -76,7 +114,10 @@ def rank_imperfections(
     entities: list[EntityBase],
     top_n: int | None = None,
 ) -> list[EntityBase]:
-    """Sort imperfection entities by IPS score (highest first).
+    """Sort imperfection entities by severity (highest first).
+
+    Severity is the primary ranking signal — it represents the prediction
+    error (VFE) for each imperfection.
 
     Args:
         entities: List of Entity:Imperfection entities
@@ -90,8 +131,7 @@ def rank_imperfections(
         if e.entity_type != EntityType.IMPERFECTION:
             continue
         props = ImperfectionProperties.model_validate(e.properties)
-        ips = compute_ips(props)
-        scored.append((ips, e))
+        scored.append((props.severity, e))
 
     scored.sort(key=lambda x: x[0], reverse=True)
 
@@ -105,11 +145,18 @@ def derive_imperfection_properties(
     observed: float | None,
     target: float,
     op: str = "<=",
+    metric_dimension: str = "",
 ) -> dict:
     """Derive imperfection properties from a metric gap.
 
     Used by ImperfectionService when auto-generating imperfections
     from unmet metric thresholds.
+
+    Args:
+        observed:         Current metric value (None = missing data).
+        target:           Target/threshold value.
+        op:               Comparison operator ("<=", ">=", etc.).
+        metric_dimension: Which metric dimension (accuracy, speed, throughput).
 
     Returns a dict suitable for ImperfectionProperties.
     """
@@ -121,6 +168,9 @@ def derive_imperfection_properties(
 
     return {
         "severity": round(severity, 4),
+        "metric_dimension": metric_dimension,
+        "target_value": target,
+        "observed_value": observed,
         "frequency": frequency,
         "entropy_risk": round(entropy_risk, 4),
         "fixability": fixability,

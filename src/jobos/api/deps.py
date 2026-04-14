@@ -24,6 +24,9 @@ from jobos.services.metric_service import MetricService
 from jobos.adapters.openai.llm_adapter import OpenAIAdapter
 from jobos.pipeline.chat_turn import ChatTurnPipeline
 from jobos.services.hierarchy_service import HierarchyService
+from jobos.services.pilot_service import PilotService
+from jobos.services.experience_service import ExperienceService
+from jobos.services.baseline_service import BaselineService
 
 logger = logging.getLogger(__name__)
 
@@ -206,4 +209,23 @@ def get_hierarchy_service() -> HierarchyService:
     return HierarchyService(
         graph=get_graph_port(),
         llm=_llm,
+    )
+
+
+def get_pilot_service() -> PilotService:
+    return PilotService(graph=get_graph_port())
+
+
+def get_experience_service() -> ExperienceService:
+    return ExperienceService(
+        graph=get_graph_port(),
+        db=get_relational_port(),
+        llm=_llm,
+    )
+
+
+def get_baseline_service() -> BaselineService:
+    return BaselineService(
+        graph=get_graph_port(),
+        db=get_relational_port(),
     )

@@ -25,6 +25,10 @@ from jobos.adapters.postgres.models import (
     VFEReadingRow,
     HiringEventRow,
     ExperimentRow,
+    JobMetricsRow,
+    ExperienceVersionRow,
+    BaselineSnapshotRow,
+    SwitchEventRow,
 )
 
 logger = logging.getLogger(__name__)
@@ -188,6 +192,230 @@ class PostgresRepo(RelationalPort):
 
     async def verify_connectivity(self) -> bool:
         return await self._conn.verify_connectivity()
+
+    # ── Job Metrics (Dimension B) ─────────────────────────
+
+    async def insert_job_metric(
+        self,
+        job_id: str,
+        metrics: dict[str, float],
+        bounds: dict[str, list[float | None]],
+        *,
+        context_hash: str | None = None,
+        context_vector_ref: str | None = None,
+    ) -> str:
+        import uuid as _uuid
+        row_id = _uuid.uuid4().hex[:12]
+        async with self._conn.session() as session:
+            row = JobMetricsRow(
+                id=row_id,
+                job_id=job_id,
+                accuracy=metrics.get("accuracy"),
+                speed=metrics.get("speed"),
+                throughput=metrics.get("throughput"),
+                bounds=bounds,
+                context_hash=context_hash,
+                context_vector_ref=context_vector_ref,
+            )
+            session.add(row)
+            await session.commit()
+            return row_id
+
+    async def get_job_metrics(
+        self,
+        job_id: str,
+        limit: int = 50,
+    ) -> list[dict[str, Any]]:
+        async with self._conn.session() as session:
+            stmt = (
+                select(JobMetricsRow)
+                .where(JobMetricsRow.job_id == job_id)
+                .order_by(desc(JobMetricsRow.timestamp))
+                .limit(limit)
+            )
+            result = await session.execute(stmt)
+            rows = result.scalars().all()
+            return [
+                {
+                    "id": r.id,
+                    "job_id": r.job_id,
+                    "timestamp": r.timestamp,
+                    "accuracy": r.accuracy,
+                    "speed": r.speed,
+                    "throughput": r.throughput,
+                    "bounds": r.bounds,
+                    "context_hash": r.context_hash,
+                    "context_vector_ref": r.context_vector_ref,
+                }
+                for r in rows
+            ]
+
+    # ── Experience Versions (Dimension A) ─────────────────
+
+    async def save_experience_version(
+        self,
+        job_id: str,
+        version: int,
+        markers: dict[str, Any],
+        source: str,
+        confidence: float | None = None,
+        created_by: str | None = None,
+    ) -> str:
+        import uuid as _uuid
+        row_id = _uuid.uuid4().hex[:12]
+        async with self._conn.session() as session:
+            row = ExperienceVersionRow(
+                id=row_id,
+                job_id=job_id,
+                version=version,
+                markers=markers,
+                source=source,
+                confidence=confidence,
+                created_by=created_by,
+            )
+            session.add(row)
+            await session.commit()
+            return row_id
+
+    async def get_experience_history(
+        self,
+        job_id: str,
+        limit: int = 50,
+    ) -> list[dict[str, Any]]:
+        async with self._conn.session() as session:
+            stmt = (
+                select(ExperienceVersionRow)
+                .where(ExperienceVersionRow.job_id == job_id)
+                .order_by(desc(ExperienceVersionRow.version))
+                .limit(limit)
+            )
+            result = await session.execute(stmt)
+            rows = result.scalars().all()
+            return [
+                {
+                    "id": r.id,
+                    "job_id": r.job_id,
+                    "version": r.version,
+                    "markers": r.markers,
+                    "source": r.source,
+                    "confidence": r.confidence,
+                    "created_by": r.created_by,
+                    "created_at": r.created_at,
+                }
+                for r in rows
+            ]
+
+    # ── Baseline Snapshots ─────────────────────────────────
+
+    async def save_baseline_snapshot(
+        self,
+        scenario_id: str,
+        job_id: str,
+        metrics: dict[str, Any],
+        bounds: dict[str, Any],
+        captured_by: str | None = None,
+    ) -> str:
+        import uuid as _uuid
+        row_id = _uuid.uuid4().hex[:12]
+        async with self._conn.session() as session:
+            row = BaselineSnapshotRow(
+                id=row_id,
+                scenario_id=scenario_id,
+                job_id=job_id,
+                metrics=metrics,
+                bounds=bounds,
+                captured_by=captured_by,
+            )
+            session.add(row)
+            await session.commit()
+            return row_id
+
+    async def get_baseline_snapshot(
+        self,
+        scenario_id: str,
+        job_id: str,
+    ) -> dict[str, Any] | None:
+        async with self._conn.session() as session:
+            stmt = (
+                select(BaselineSnapshotRow)
+                .where(BaselineSnapshotRow.scenario_id == scenario_id)
+                .where(BaselineSnapshotRow.job_id == job_id)
+                .order_by(desc(BaselineSnapshotRow.captured_at))
+                .limit(1)
+            )
+            result = await session.execute(stmt)
+            row = result.scalar_one_or_none()
+            if not row:
+                return None
+            return {
+                "id": row.id,
+                "scenario_id": row.scenario_id,
+                "job_id": row.job_id,
+                "metrics": row.metrics,
+                "bounds": row.bounds,
+                "captured_at": row.captured_at,
+                "captured_by": row.captured_by,
+            }
+
+    # ── Switch Events ──────────────────────────────────────
+
+    async def save_switch_event(
+        self,
+        scenario_id: str,
+        job_id: str,
+        trigger_metric: str,
+        trigger_value: float,
+        trigger_bound: str,
+        action: str,
+        reason: str = "",
+    ) -> str:
+        import uuid as _uuid
+        row_id = _uuid.uuid4().hex[:12]
+        async with self._conn.session() as session:
+            row = SwitchEventRow(
+                id=row_id,
+                scenario_id=scenario_id,
+                job_id=job_id,
+                trigger_metric=trigger_metric,
+                trigger_value=trigger_value,
+                trigger_bound=trigger_bound,
+                action=action,
+                reason=reason,
+            )
+            session.add(row)
+            await session.commit()
+            return row_id
+
+    async def get_switch_events(
+        self,
+        scenario_id: str,
+        limit: int = 50,
+    ) -> list[dict[str, Any]]:
+        async with self._conn.session() as session:
+            stmt = (
+                select(SwitchEventRow)
+                .where(SwitchEventRow.scenario_id == scenario_id)
+                .order_by(desc(SwitchEventRow.occurred_at))
+                .limit(limit)
+            )
+            result = await session.execute(stmt)
+            rows = result.scalars().all()
+            return [
+                {
+                    "id": r.id,
+                    "scenario_id": r.scenario_id,
+                    "job_id": r.job_id,
+                    "trigger_metric": r.trigger_metric,
+                    "trigger_value": r.trigger_value,
+                    "trigger_bound": r.trigger_bound,
+                    "action": r.action,
+                    "reason": r.reason,
+                    "occurred_at": r.occurred_at,
+                    "resolved_at": r.resolved_at,
+                    "resolution": r.resolution,
+                }
+                for r in rows
+            ]
 
     # ── Row Mappers ──────────────────────────────────────
 

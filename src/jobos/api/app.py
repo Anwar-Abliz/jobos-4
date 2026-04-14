@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from jobos.api.deps import initialize_connections, close_connections
+from jobos.api.deps import close_connections, initialize_connections
 
 logger = logging.getLogger(__name__)
 
@@ -49,10 +49,31 @@ def create_app() -> FastAPI:
     )
 
     # Register routes
-    from jobos.api.routes import entities, jobs, hiring, imperfections, metrics, health, chat, hierarchy
+    from jobos.api.routes import (
+        baseline,
+        chat,
+        entities,
+        experience,
+        extraction,
+        health,
+        hierarchy,
+        hiring,
+        imperfections,
+        jobs,
+        metrics,
+        recommendation,
+        scenarios,
+        segments,
+    )
     app.include_router(health.router, tags=["health"])
     app.include_router(chat.router, prefix="/api", tags=["chat"])
     app.include_router(hierarchy.router, prefix="/api", tags=["hierarchy"])
+    app.include_router(experience.router, prefix="/api", tags=["experience"])
+    app.include_router(baseline.router, prefix="/api", tags=["baseline"])
+    app.include_router(segments.router, prefix="/api", tags=["segments"])
+    app.include_router(scenarios.router, prefix="/api", tags=["scenarios"])
+    app.include_router(recommendation.router, prefix="/api", tags=["recommendation"])
+    app.include_router(extraction.router, prefix="/api", tags=["extraction"])
     app.include_router(entities.router, prefix="/api", tags=["entities"])
     app.include_router(jobs.router, prefix="/api", tags=["jobs"])
     app.include_router(hiring.router, prefix="/api", tags=["hiring"])

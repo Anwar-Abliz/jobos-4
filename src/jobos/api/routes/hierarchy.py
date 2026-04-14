@@ -63,7 +63,9 @@ async def generate_hierarchy(req: HierarchyGenerateIn) -> HierarchyOut:
     - T1 Strategic: The overarching WHY
     - T2 Core Functional: Solution-agnostic WHAT
     - T3 Execution: Concrete HOW
-    - T4 Experience: Emotional/social FEEL
+    - T4 Micro-Job: Smallest discrete functional actions (EXECUTE)
+
+    Experience (FEEL) is Dimension A, orthogonal to the tier hierarchy.
 
     All generated jobs are persisted to Neo4j as Entity:Job nodes
     connected by HIRES edges.

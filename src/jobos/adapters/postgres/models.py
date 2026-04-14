@@ -11,6 +11,7 @@ from sqlalchemy import (
     Column,
     DateTime,
     Float,
+    Index,
     String,
     Text,
     func,
@@ -109,3 +110,100 @@ class SessionRow(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
+
+
+class JobMetricsRow(Base):
+    """Dimension B: Evaluation Space — per-job performance metrics.
+
+    Stores accuracy, speed, and throughput readings for a Job, along with
+    the bounds that the SwitchEvaluator (Axiom 7) uses to detect breaches.
+
+    context_hash:       SHA-256 of the context vector at observation time.
+    context_vector_ref: ID of the Context entity associated with this reading.
+    bounds:             Per-metric (lower, upper) bounds as JSONB.
+                        e.g. {"accuracy": [0.8, 1.0], "speed": [0, 200], "throughput": [30, null]}
+    """
+    __tablename__ = "job_metrics"
+
+    id: Mapped[str] = mapped_column(
+        String(36), primary_key=True, default=lambda: uuid.uuid4().hex[:12]
+    )
+    job_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    timestamp: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+    )
+    accuracy: Mapped[float | None] = mapped_column(Float, nullable=True)
+    speed: Mapped[float | None] = mapped_column(Float, nullable=True)
+    throughput: Mapped[float | None] = mapped_column(Float, nullable=True)
+    bounds: Mapped[dict] = mapped_column(JSONB, default=dict)
+    context_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    context_vector_ref: Mapped[str | None] = mapped_column(String(36), nullable=True)
+
+    __table_args__ = (
+        Index("ix_job_metrics_job_ts", "job_id", "timestamp"),
+        Index("ix_job_metrics_accuracy", "accuracy"),
+        Index("ix_job_metrics_speed", "speed"),
+        Index("ix_job_metrics_throughput", "throughput"),
+    )
+
+
+class ExperienceVersionRow(Base):
+    """Experience marker version history (Dimension A versioning)."""
+    __tablename__ = "experience_versions"
+
+    id: Mapped[str] = mapped_column(
+        String(36), primary_key=True, default=lambda: uuid.uuid4().hex[:12]
+    )
+    job_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    version: Mapped[int] = mapped_column(nullable=False)
+    markers: Mapped[dict] = mapped_column(JSONB, default=dict)
+    source: Mapped[str] = mapped_column(String(20), nullable=False, default="llm")
+    confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
+    created_by: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+
+    __table_args__ = (
+        Index("ix_experience_versions_job_ver", "job_id", "version"),
+    )
+
+
+class BaselineSnapshotRow(Base):
+    """Baseline metric snapshots for scenarios."""
+    __tablename__ = "baseline_snapshots"
+
+    id: Mapped[str] = mapped_column(
+        String(36), primary_key=True, default=lambda: uuid.uuid4().hex[:12]
+    )
+    scenario_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    job_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    metrics: Mapped[dict] = mapped_column(JSONB, default=dict)
+    bounds: Mapped[dict] = mapped_column(JSONB, default=dict)
+    captured_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+    captured_by: Mapped[str | None] = mapped_column(String(100), nullable=True)
+
+
+class SwitchEventRow(Base):
+    """Switch events triggered by metric breaches."""
+    __tablename__ = "switch_events"
+
+    id: Mapped[str] = mapped_column(
+        String(36), primary_key=True, default=lambda: uuid.uuid4().hex[:12]
+    )
+    scenario_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    job_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    trigger_metric: Mapped[str] = mapped_column(String(100), nullable=False)
+    trigger_value: Mapped[float] = mapped_column(Float, nullable=False)
+    trigger_bound: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    action: Mapped[str] = mapped_column(String(20), nullable=False)
+    reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    occurred_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+    resolved_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    resolution: Mapped[str | None] = mapped_column(Text, nullable=True)

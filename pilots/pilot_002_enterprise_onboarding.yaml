@@ -1,0 +1,70 @@
+metadata:
+  pilot_id: "PILOT_002"
+  segment: "Enterprise Onboarding"
+  status: "active"
+
+job_hierarchy:
+  tier_1_strategic_why: "Achieve enterprise customer activation within 30 days of contract signing"
+  tier_2_core_what: "Deliver structured onboarding that drives measurable time-to-value"
+
+tier3_steps:
+  - step_1: "Define onboarding scope, stakeholders, and success metrics with the customer"
+  - step_2: "Locate and provision required integrations and data sources"
+  - step_3: "Prepare technical environment and configure initial workspace"
+  - step_4: "Train primary users on core workflows and key features"
+  - step_5: "Execute first live use case with customer data"
+  - step_6: "Monitor adoption metrics and resolve blockers in real time"
+  - step_7: "Evaluate onboarding outcome against exit criteria and hand off to CS"
+
+dimension_b_metrics:
+  - name: "time_to_first_value_days"
+    description: "Days from contract signing to customer's first meaningful outcome"
+    target: "Below 14 days"
+    switch_trigger_threshold: "> 25 days"
+  - name: "onboarding_nps"
+    description: "Net Promoter Score collected at onboarding completion"
+    target: "Above 50"
+    switch_trigger_threshold: "< 20"
+  - name: "integration_completion_rate"
+    description: "Percentage of planned integrations successfully connected"
+    target: "Above 90%"
+    switch_trigger_threshold: "< 60%"
+
+dimension_a_experience_markers:
+  implementation_engineer:
+    - "Feel in control of the technical delivery timeline"
+    - "To be recognized as a trusted technical advisor by the customer"
+  customer_champion:
+    - "Feel that their team is set up for long-term success, not just launch"
+    - "To be seen internally as the driver of the partnership's value"
+  sales_engineer:
+    - "Feel confident that promises made during sales are being fulfilled"
+    - "To be perceived as a partner who delivers on commitments"
+
+hypothesis_under_test: >
+  Standardizing T3 execution steps with automated T4 setup and verification
+  actions will reduce time-to-first-value from an average of 22 days to
+  under 14 days, while increasing onboarding NPS above 50.
+
+exit_criteria_for_phase_1: >
+  Phase 1 exits GO when: time-to-first-value is below 18 days for 3
+  consecutive customers, onboarding NPS exceeds 40, and integration
+  completion rate is above 80%. NO-GO if TTFV exceeds 28 days for
+  any enterprise account or NPS drops below 20.
+
+risks_and_mitigations:
+  - risk: "Customer IT security policies delay integration approvals"
+    mitigation: "Pre-qualify security requirements during sales cycle; add T4 verify step for security sign-off"
+  - risk: "Scope creep from customer requests expands onboarding beyond 30 days"
+    mitigation: "Define strict change-control process; T4 act steps are time-boxed"
+  - risk: "Key customer stakeholder changes mid-onboarding disrupts progress"
+    mitigation: "Document all decisions in shared workspace; T4 cleanup steps ensure knowledge transfer"
+
+data_sources:
+  - "CRM (HubSpot)"
+  - "Project management (Linear)"
+  - "Customer portal (Notion)"
+
+connectors:
+  - "hubspot_connector"
+  - "linear_connector"

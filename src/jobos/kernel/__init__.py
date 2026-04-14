@@ -3,7 +3,7 @@
 The kernel contains the mathematical core of the JobOS ontology:
 - Unified Entity model with ECS-style components
 - The 6 non-negotiable axioms
-- Imperfection Priority Scoring (IPS)
+- VFE scoring (variational free energy, replaces legacy IPS)
 - Job statement linguistic validation
 """
 from jobos.kernel.entity import (
@@ -27,7 +27,7 @@ from jobos.kernel.entity import (
     ENTITY_PROPERTY_MODELS,
 )
 from jobos.kernel.axioms import JobOSAxioms
-from jobos.kernel.imperfection import compute_ips, compute_severity, rank_imperfections
+from jobos.kernel.imperfection import compute_vfe, compute_ips, compute_severity, rank_imperfections
 from jobos.kernel.job_statement import parse_job_statement, validate_verb
 
 __all__ = [
@@ -50,6 +50,7 @@ __all__ = [
     "validate_entity",
     "ENTITY_PROPERTY_MODELS",
     "JobOSAxioms",
+    "compute_vfe",
     "compute_ips",
     "compute_severity",
     "rank_imperfections",

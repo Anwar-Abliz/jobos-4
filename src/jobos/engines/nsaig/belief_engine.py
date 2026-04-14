@@ -26,8 +26,10 @@ class AxiomSatisfaction:
     """Satisfaction scores for each axiom. 1.0 = fully satisfied."""
     axiom_1_hierarchy: float = 1.0
     axiom_2_imperfection: float = 1.0
+    axiom_3_contextual: float = 1.0
     axiom_4_singularity: float = 1.0
     axiom_5_linguistic: float = 1.0
+    axiom_6_root_token: float = 1.0
     logic_loss: float = 0.0  # Aggregate violation score
 
 
@@ -48,6 +50,8 @@ class BeliefEngine:
         self,
         jobs: list[EntityBase],
         imperfections_by_job: dict[str, list[EntityBase]] | None = None,
+        *,
+        scope_id: str | None = None,
     ) -> AxiomSatisfaction:
         """Evaluate all applicable axioms over a set of Job entities.
 
@@ -56,6 +60,19 @@ class BeliefEngine:
         """
         imperfections_by_job = imperfections_by_job or {}
         result = AxiomSatisfaction()
+
+        # Axiom 3: Contextual variance — HUMAN jobs require context
+        contextual_scores = []
+        for job in jobs:
+            if job.entity_type != EntityType.JOB:
+                continue
+            try:
+                JobOSAxioms.validate_contextual_variance(job)
+                contextual_scores.append(1.0)
+            except AxiomViolation:
+                contextual_scores.append(0.0)
+        if contextual_scores:
+            result.axiom_3_contextual = sum(contextual_scores) / len(contextual_scores)
 
         # Axiom 4: Singularity — at most one root Job
         try:
@@ -76,6 +93,14 @@ class BeliefEngine:
                 linguistic_scores.append(0.0)
         if linguistic_scores:
             result.axiom_5_linguistic = sum(linguistic_scores) / len(linguistic_scores)
+
+        # Axiom 6: root_token uniqueness per scope_id
+        if scope_id is not None:
+            try:
+                JobOSAxioms.validate_root_token(jobs, scope_id)
+                result.axiom_6_root_token = 1.0
+            except AxiomViolation:
+                result.axiom_6_root_token = 0.0
 
         # Axiom 2: Inherent imperfection — every Job must have >= 1
         imperfection_scores = []
@@ -98,7 +123,7 @@ class BeliefEngine:
         """Aggregate axiom violations into a single 'Logic Loss'.
 
         Logic Loss = sum of (1 - satisfaction) for each axiom.
-        0.0 = all axioms satisfied. Higher = more violations.
+        0.0 = all axioms satisfied. Max = 6.0 (all 6 axioms violated).
 
         Phase 3: This becomes the differentiable loss function
         for LTN training: minimize Logic Loss via gradient descent
@@ -107,6 +132,8 @@ class BeliefEngine:
         return (
             (1.0 - scores.axiom_1_hierarchy)
             + (1.0 - scores.axiom_2_imperfection)
+            + (1.0 - scores.axiom_3_contextual)
             + (1.0 - scores.axiom_4_singularity)
             + (1.0 - scores.axiom_5_linguistic)
+            + (1.0 - scores.axiom_6_root_token)
         )

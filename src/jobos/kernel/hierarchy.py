@@ -11,7 +11,10 @@ Tier Structure:
     T1  Strategic Jobs     — The overarching goals (WHY)
     T2  Core Functional    — Solution-agnostic outcomes (WHAT)
     T3  Execution Jobs     — Concrete actions and processes (HOW)
-    T4  Experience Jobs    — Emotional + social desired states (FEEL)
+    T4  Micro-Jobs         — Smallest discrete, self-similar functional actions (EXECUTE)
+
+Experience (FEEL) is Dimension A — an orthogonal dimension, not a tier.
+See ``experience.py`` for Dimension A models.
 
 Each tier connects via HIRES edges: a higher-tier job "hires" lower-tier
 jobs to accomplish itself. This is the golden axiom applied recursively.
@@ -26,11 +29,14 @@ Key difference from JobOS 3.0's "Pyramid":
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic import BaseModel, Field
 
 from jobos.kernel.entity import _uid
+
+if TYPE_CHECKING:
+    from jobos.kernel.generative_model import GenerativeModel
 
 
 # ═══════════════════════════════════════════════════════════
@@ -41,14 +47,14 @@ class JobTier(str, Enum):
     """The four tiers of the Job Triad hierarchy.
 
     Based on open JTBD terminology from Ulwick, Christensen, Moesta:
-    - Functional jobs (core + execution) are solution-agnostic
-    - Emotional/social jobs capture the human experience
+    - All four tiers are functional (solution-agnostic → concrete → micro)
+    - Experience (FEEL) is Dimension A, orthogonal to the tier hierarchy
     - Strategic jobs sit above all as the macro-goal (Axiom 4: Singularity)
     """
     STRATEGIC = "T1_strategic"         # WHY — the overarching goal
     CORE_FUNCTIONAL = "T2_core"        # WHAT — solution-agnostic outcomes
     EXECUTION = "T3_execution"         # HOW — concrete processes and actions
-    EXPERIENCE = "T4_experience"       # FEEL — emotional + social desired states
+    MICRO_JOB = "T4_micro"            # EXECUTE — smallest discrete functional actions
 
 
 class ExecutionCategory(str, Enum):
@@ -60,13 +66,35 @@ class ExecutionCategory(str, Enum):
     ADAPTATION = "adaptation"           # Adjust when context changes
 
 
-class ExperienceCategory(str, Enum):
-    """Sub-categories for T4 Experience Jobs."""
-    CONFIDENCE = "confidence"           # Feel confident, in control
-    RECOGNITION = "recognition"         # Be seen as competent/valuable
-    GROWTH = "growth"                   # Feel like I'm developing
-    CONNECTION = "connection"           # Feel connected to team/purpose
-    RELIEF = "relief"                   # Avoid anxiety, embarrassment, overload
+class MicroJobCategory(str, Enum):
+    """Sub-categories for T4 Micro-Jobs."""
+    SETUP = "setup"                     # Prepare inputs and environment
+    ACT = "act"                         # Perform the atomic action
+    VERIFY = "verify"                   # Check the outcome
+    CLEANUP = "cleanup"                 # Release resources, hand off
+
+
+# ─── T3 Execution: Standard 8-Step Sequence ──────────────
+# A T3 Execution job may decompose into these canonical child nodes.
+# Based on the universal consumption chain pattern (phase-independent).
+# Maps to the GenerativeModel.execution_steps field.
+
+T3_STANDARD_STEPS: list[str] = [
+    "Define",       # Clarify scope and success criteria
+    "Locate",       # Find or acquire necessary resources
+    "Prepare",      # Set up environment, tools, inputs
+    "Confirm",      # Validate readiness before acting
+    "Execute",      # Perform the core action
+    "Monitor",      # Track progress and detect deviations
+    "Modify",       # Adjust mid-course based on feedback
+    "Conclude",     # Wrap up, document, and hand off
+]
+
+# Neo4j relationship note: CHILD_OF is an alias direction for PART_OF.
+# parent -[:HIRES]-> child  (golden axiom direction)
+# child  -[:CHILD_OF]-> parent  (for upward traversal queries)
+# Both are created when a child job is linked to a parent.
+CHILD_OF_RELATIONSHIP = "CHILD_OF"
 
 
 # ═══════════════════════════════════════════════════════════
@@ -78,6 +106,10 @@ class HierarchyJob(BaseModel):
 
     Each job becomes an Entity:Job node in Neo4j.
     The tier determines its level in the hierarchy.
+
+    root_token: Set to 'ROOT' for T1 strategic jobs (Axiom 6 Singularity).
+    scope_id:   Logical scope for root_token uniqueness.
+    executor_type: Declared 'AI' or 'HUMAN' intent for this job.
     """
     id: str = Field(default_factory=_uid)
     tier: JobTier
@@ -85,6 +117,9 @@ class HierarchyJob(BaseModel):
     category: str = ""           # Tier-specific sub-category
     rationale: str = ""          # Why this job exists in the hierarchy
     metrics_hint: list[str] = Field(default_factory=list)  # Suggested metrics
+    root_token: Literal["ROOT"] | None = None
+    scope_id: str = ""
+    executor_type: Literal["AI", "HUMAN"] | None = None
 
 
 class HierarchyEdge(BaseModel):
@@ -114,6 +149,8 @@ class HierarchyResult(BaseModel):
     jobs: list[HierarchyJob] = Field(default_factory=list)
     edges: list[HierarchyEdge] = Field(default_factory=list)
     summary: dict[str, Any] = Field(default_factory=dict)
+    # GenerativeModel per job_id — populated by HierarchyService._build_hierarchy()
+    generative_models: dict[str, Any] = Field(default_factory=dict)
 
     def jobs_at_tier(self, tier: JobTier) -> list[HierarchyJob]:
         return [j for j in self.jobs if j.tier == tier]
@@ -123,15 +160,26 @@ class HierarchyResult(BaseModel):
         return [j for j in self.jobs if j.id in child_ids]
 
     def to_tree_dict(self) -> dict[str, Any]:
-        """Convert to a nested tree structure for visualization."""
-        # Build adjacency map
+        """Convert to a nested tree structure with dimension separation.
+
+        Returns a dict with two keys:
+          - functional_spine: nested T1→T2→T3→T4 tree (all four tiers are functional)
+          - experience_dimension: populated from Dimension A :Experience nodes (if any)
+
+        T4 Micro-Jobs are the smallest functional units, children of T3 via
+        HIRES edges. Experience (FEEL) is an orthogonal dimension, not a tier.
+        """
+        # Build adjacency map — all four tiers are in the functional spine
         children_map: dict[str, list[str]] = {}
         for e in self.edges:
             children_map.setdefault(e.parent_id, []).append(e.child_id)
 
-        # Find roots (T1 jobs with no parent)
-        all_children = {e.child_id for e in self.edges}
-        roots = [j for j in self.jobs if j.id not in all_children]
+        # Functional spine roots: T1 jobs with no parent
+        all_children = {cid for kids in children_map.values() for cid in kids}
+        functional_roots = [
+            j for j in self.jobs
+            if j.tier == JobTier.STRATEGIC and j.id not in all_children
+        ]
 
         job_map = {j.id: j for j in self.jobs}
 
@@ -139,7 +187,7 @@ class HierarchyResult(BaseModel):
             job = job_map.get(job_id)
             if not job:
                 return {}
-            node = {
+            node: dict[str, Any] = {
                 "id": job.id,
                 "tier": job.tier.value,
                 "statement": job.statement,
@@ -151,8 +199,12 @@ class HierarchyResult(BaseModel):
                 node["children"] = [build_node(cid) for cid in kids]
             return node
 
+        # Experience dimension: placeholder for Dimension A nodes (populated externally)
+        experience_nodes: list[dict[str, Any]] = []
+
         return {
             "id": self.id,
             "domain": self.context.domain,
-            "tree": [build_node(r.id) for r in roots],
+            "functional_spine": [build_node(r.id) for r in functional_roots],
+            "experience_dimension": experience_nodes,
         }

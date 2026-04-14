@@ -115,6 +115,17 @@ class GraphPort(ABC):
     # ── Schema Management ────────────────────────────────
 
     @abstractmethod
+    async def add_label(self, entity_id: str, label: str) -> bool:
+        """Add an extra Neo4j label to an existing Entity node.
+
+        Used by the Duality hook (Axiom 3): when a Job completes it gains
+        the :Capability label in addition to :Job.
+
+        Returns True if the node was found and updated.
+        """
+        ...
+
+    @abstractmethod
     async def ensure_schema(self) -> int:
         """Initialize constraints, indexes. Returns count of statements run."""
         ...

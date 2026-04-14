@@ -33,6 +33,7 @@ def _entity_to_node_params(entity: EntityBase) -> dict[str, Any]:
         "labels": entity.labels,
         "created_at": entity.created_at.isoformat(),
         "updated_at": entity.updated_at.isoformat(),
+        "slug": entity.properties.get("slug", ""),
     }
 
 
@@ -89,6 +90,7 @@ class Neo4jEntityRepo(GraphPort):
             e.status = $status,
             e.properties_json = $properties_json,
             e.labels = $labels,
+            e.slug = $slug,
             e.created_at = coalesce(e.created_at, $created_at),
             e.updated_at = $updated_at
         SET e:{type_label}
@@ -174,6 +176,7 @@ class Neo4jEntityRepo(GraphPort):
             "HIRES", "FIRES", "MINIMIZES", "PART_OF", "QUALIFIES",
             "MEASURED_BY", "OCCURS_IN", "IMPACTS", "ABOUT",
             "SUPPORTS", "REFUTES", "DUAL_AS", "DEPENDS_ON", "HAS_STEP",
+            "CHILD_OF", "CONTAINS", "TARGETS", "EXPERIENCE_OF",
         }
         if edge_type not in allowed_types:
             logger.warning("Unknown edge type: %s", edge_type)
@@ -318,6 +321,26 @@ class Neo4jEntityRepo(GraphPort):
         }
 
     # ── Schema Management ────────────────────────────────
+
+    async def add_label(self, entity_id: str, label: str) -> bool:
+        """Add an extra label to an existing Entity node.
+
+        Used by the Duality hook: completed Job gains :Capability label.
+        Label is sanitised to alpha-numeric + underscore only.
+        """
+        # Sanitise: only allow safe label characters
+        safe_label = "".join(c for c in label if c.isalnum() or c == "_")
+        if not safe_label:
+            logger.warning("add_label: rejected unsafe label '%s'", label)
+            return False
+
+        query = f"""
+        MATCH (e:Entity {{id: $id}})
+        SET e:{safe_label}
+        RETURN e.id AS id
+        """
+        rows = await self._conn.run(query, {"id": entity_id})
+        return bool(rows)
 
     async def ensure_schema(self) -> int:
         """Initialize Neo4j schema."""

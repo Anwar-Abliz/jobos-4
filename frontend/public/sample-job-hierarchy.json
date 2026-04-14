@@ -1,0 +1,201 @@
+{
+  "jobHierarchy": {
+    "tier1": "Manage Translation Projects",
+    "phases": [
+      {
+        "tier2": "Plan and preparation",
+        "jobSteps": [
+          {
+            "tier3": "Client submit language requests to project teams",
+            "outcomes": [
+              { "tier4": "Minimize the time required to submit language requests" },
+              { "tier4": "Minimize the likelihood of missing critical project requirements during the definition phase" },
+              { "tier4": "Minimize the time it takes to review and gain approval on project requirements from stakeholders" },
+              { "tier4": "Minimize the likelihood of conflicting or unclear project requirements from different stakeholders" }
+            ]
+          },
+          {
+            "tier3": "Identify project stakeholders and their needs",
+            "outcomes": [
+              { "tier4": "Minimize the time it takes to identify and prioritize project stakeholders and their needs" },
+              { "tier4": "Minimize the likelihood of overlooking key stakeholders or their needs" },
+              { "tier4": "Minimize the time it takes to gather input and feedback from stakeholders on project goals" },
+              { "tier4": "Minimize the likelihood of conflicting or unrealistic expectations from stakeholders" },
+              { "tier4": "Minimize the likelihood of incomplete or inaccurate project documentation" },
+              { "tier4": "Minimize the time it takes for stakeholders to access and use project documentation" },
+              { "tier4": "Minimize the likelihood of miscommunication or misunderstandings regarding project results and documentation" },
+              { "tier4": "Minimize the likelihood of turnover or attrition during the project" }
+            ]
+          }
+        ]
+      },
+      {
+        "tier2": "Locate and assemble project team",
+        "jobSteps": [
+          {
+            "tier3": "Determine team roles and responsibilities",
+            "outcomes": [
+              { "tier4": "Minimize the time it takes to define team roles and responsibilities" },
+              { "tier4": "Minimize the likelihood of assigning roles that do not match team members' skills or expertise" },
+              { "tier4": "Minimize the time it takes to gain agreement on team roles and responsibilities" },
+              { "tier4": "Minimize the likelihood of misunderstandings or conflicts regarding team roles and responsibilities" }
+            ]
+          },
+          {
+            "tier3": "Identify and recruit team members",
+            "outcomes": [
+              { "tier4": "Minimize the time it takes to identify and evaluate potential team members" },
+              { "tier4": "Minimize the likelihood of selecting team members who lack the necessary skills or experience" },
+              { "tier4": "Minimize the time it takes to onboard new team members" },
+              { "tier4": "Minimize the likelihood of turnover or attrition during the project" }
+            ]
+          }
+        ]
+      },
+      {
+        "tier2": "Prepare project plan and schedule",
+        "jobSteps": [
+          {
+            "tier3": "Develop project plan and timeline",
+            "outcomes": [
+              { "tier4": "Minimize the time it takes to create a comprehensive project plan and timeline" },
+              { "tier4": "Minimize the likelihood of missing key tasks or milestones in the project plan" },
+              { "tier4": "Minimize the time it takes to gain approval on the project plan from stakeholders" },
+              { "tier4": "Minimize the likelihood of unrealistic or unachievable timelines in the project plan" }
+            ]
+          },
+          {
+            "tier3": "Determine resource needs and constraints",
+            "outcomes": [
+              { "tier4": "Minimize the time it takes to identify and allocate necessary resources for the project" },
+              { "tier4": "Minimize the likelihood of resource constraints that hinder project progress" },
+              { "tier4": "Minimize the time it takes to gain approval on resource allocation from stakeholders" },
+              { "tier4": "Minimize the likelihood of conflicts or misunderstandings regarding resource allocation" }
+            ]
+          }
+        ]
+      },
+      {
+        "tier2": "Decide on communication and collaboration tools",
+        "jobSteps": [
+          {
+            "tier3": "Evaluate communication and collaboration tools",
+            "outcomes": [
+              { "tier4": "Minimize the time it takes to evaluate and compare communication and collaboration tools" },
+              { "tier4": "Minimize the likelihood of selecting tools that do not meet project requirements" },
+              { "tier4": "Minimize the time it takes to gain approval on selected tools from stakeholders" },
+              { "tier4": "Minimize the likelihood of conflicts or misunderstandings regarding tool selection" }
+            ]
+          },
+          {
+            "tier3": "Select tools that meet project requirements and constraints",
+            "outcomes": [
+              { "tier4": "Minimize the time it takes to select and implement communication and collaboration tools" },
+              { "tier4": "Minimize the likelihood of issues or technical difficulties during tool implementation" },
+              { "tier4": "Minimize the time it takes to onboard team members on selected tools" },
+              { "tier4": "Minimize the likelihood of conflicts or misunderstandings regarding tool usage" }
+            ]
+          }
+        ]
+      },
+      {
+        "tier2": "Execute project tasks",
+        "jobSteps": [
+          {
+            "tier3": "Assign tasks to team members",
+            "outcomes": [
+              { "tier4": "Minimize the time it takes to assign and communicate project tasks to team members" },
+              { "tier4": "Minimize the likelihood of assigning tasks to team members who lack the necessary skills or expertise" },
+              { "tier4": "Minimize the time it takes to gain agreement on task assignments from team members" },
+              { "tier4": "Minimize the likelihood of misunderstandings or conflicts regarding task assignments" }
+            ]
+          },
+          {
+            "tier3": "Monitor progress and provide support as needed",
+            "outcomes": [
+              { "tier4": "Minimize the time it takes to track and report project progress" },
+              { "tier4": "Minimize the likelihood of delays or roadblocks in project tasks" },
+              { "tier4": "Minimize the time it takes to provide support or resources to team members who need assistance" },
+              { "tier4": "Minimize the likelihood of misunderstandings or conflicts regarding project progress or support needs" }
+            ]
+          }
+        ]
+      },
+      {
+        "tier2": "Monitor project progress",
+        "jobSteps": [
+          {
+            "tier3": "Track project progress against plan and timeline",
+            "outcomes": [
+              { "tier4": "Minimize the time it takes to identify deviations from the project plan and timeline" },
+              { "tier4": "Minimize the likelihood of missing project milestones or deadlines" },
+              { "tier4": "Minimize the time it takes to communicate progress updates to stakeholders" },
+              { "tier4": "Minimize the likelihood of incomplete or inaccurate progress tracking data" }
+            ]
+          },
+          {
+            "tier3": "Identify and address any issues or risks",
+            "outcomes": [
+              { "tier4": "Minimize the time it takes to identify project risks and issues" },
+              { "tier4": "Minimize the likelihood of project risks and issues going unnoticed or unaddressed" },
+              { "tier4": "Minimize the time it takes to communicate project risks and issues to stakeholders" },
+              { "tier4": "Minimize the likelihood of project risks and issues causing delays or cost overruns" }
+            ]
+          }
+        ]
+      },
+      {
+        "tier2": "Modify project plan and schedule as needed",
+        "jobSteps": [
+          {
+            "tier3": "Adjust project plan and timeline based on new information",
+            "outcomes": [
+              { "tier4": "Minimize the time it takes to adjust the project plan and timeline based on new information" },
+              { "tier4": "Minimize the likelihood of adjustments to the project plan and timeline causing delays or cost overruns" },
+              { "tier4": "Minimize the time it takes to communicate changes to the project plan and timeline to stakeholders" },
+              { "tier4": "Minimize the likelihood of miscommunication or misunderstandings regarding changes to the project plan and timeline" }
+            ]
+          },
+          {
+            "tier3": "Reallocate resources as needed",
+            "outcomes": [
+              { "tier4": "Minimize the time it takes to reallocate resources when changes to the project plan and timeline are made" },
+              { "tier4": "Minimize the likelihood of resource reallocation causing delays or cost overruns" },
+              { "tier4": "Minimize the time it takes to communicate resource reallocation changes to stakeholders" },
+              { "tier4": "Minimize the likelihood of miscommunication or misunderstandings regarding resource reallocation changes" }
+            ]
+          }
+        ]
+      },
+      {
+        "tier2": "Conclude project and evaluate results",
+        "jobSteps": [
+          {
+            "tier3": "Complete project tasks and deliverables",
+            "outcomes": [
+              { "tier4": "Minimize the time it takes to complete all project tasks and deliverables" },
+              { "tier4": "Minimize the likelihood of incomplete or incorrect project tasks and deliverables" },
+              { "tier4": "Minimize the time it takes to communicate project completion to stakeholders" },
+              { "tier4": "Minimize the likelihood of miscommunication or misunderstandings regarding project completion" }
+            ]
+          },
+          {
+            "tier3": "Evaluate project outcomes and identify areas for improvement",
+            "outcomes": [
+              { "tier4": "Minimize the time it takes to evaluate project outcomes and identify areas for improvement" },
+              { "tier4": "Minimize the likelihood of inaccurate or incomplete evaluation of project outcomes" },
+              { "tier4": "Minimize the time it takes to communicate evaluation results and improvement recommendations to stakeholders" },
+              { "tier4": "Minimize the likelihood of miscommunication or misunderstandings regarding evaluation results and improvement recommendations" }
+            ]
+          },
+          {
+            "tier3": "Share project results with stakeholders and archive project documentation",
+            "outcomes": [
+              { "tier4": "Minimize the time it takes to share project results with stakeholders and archive project documentation" }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

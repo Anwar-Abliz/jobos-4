@@ -40,6 +40,7 @@ from jobos.engines.cdee import (
     SwitchHub,
     StabilityResult,
 )
+from jobos.engines.switch_evaluator import switch_evaluator, SwitchDecision
 from jobos.ports.graph_port import GraphPort
 from jobos.ports.relational_port import RelationalPort
 
@@ -263,6 +264,8 @@ class HiringService:
         hirer_id: str,
         hiree_id: str,
         job_id: str,
+        *,
+        switch_state: dict | None = None,
     ) -> HireEvaluation:
         """Periodic evaluation of an active Hire.
 
@@ -270,9 +273,11 @@ class HiringService:
         1. CDEE Controller computes current error signal and trend
         2. CDEE SwitchHub checks Lyapunov stability
         3. NSAIG SwitchLogic checks VFE threshold
-        4. Return combined assessment
+        4. SwitchEvaluator (Axiom 7 heuristic) runs bounds + context check
+        5. Return combined assessment — SwitchEvaluator verdict wins on FIRE
 
-        This is where 'Should we keep or switch?' is answered.
+        switch_state: caller-managed mutable dict for hysteresis tracking
+            across repeated evaluate_hire() calls for the same hire.
         """
         evaluation = HireEvaluation(
             hire_id=f"{hirer_id}->{hiree_id}",
@@ -306,8 +311,28 @@ class HiringService:
             "reasoning": switch_rec.reasoning,
         }
 
+        # ── Axiom 7: SwitchEvaluator (Phase 1 heuristic) ──
+        # Build scalar metric dict and bounds from current metric entities.
+        # Phase 1: uses current_value vs (0, target_value) as bounds.
+        scalar_metrics, bounds = self._build_switch_inputs(metrics)
+        context_delta = self._estimate_context_delta(vfe_history)
+
+        switch_decision: SwitchDecision = await switch_evaluator(
+            job_id=job_id,
+            latest_metrics=scalar_metrics,
+            context_delta=context_delta,
+            bounds=bounds,
+            _state=switch_state,
+        )
+
         # ── Combined verdict ────────────────────────────
-        if stability.should_switch or switch_rec.should_switch:
+        # SwitchEvaluator FIRE takes priority; it has explicit metric bounds.
+        if switch_decision.action == "FIRE":
+            evaluation.combined_verdict = "switch"
+            evaluation.reasoning = (
+                f"SwitchEvaluator (Axiom 7): {switch_decision.reason}"
+            )
+        elif stability.should_switch or switch_rec.should_switch:
             evaluation.combined_verdict = "switch"
             evaluation.reasoning = "At least one engine recommends switching."
         elif stability.status == "oscillating" or switch_rec.urgency == "warning":
@@ -316,6 +341,13 @@ class HiringService:
         else:
             evaluation.combined_verdict = "keep"
             evaluation.reasoning = "Both engines indicate the hire is effective."
+
+        # Attach SwitchEvaluator details for audit
+        evaluation.cdee_evaluation["switch_evaluator"] = {
+            "action": switch_decision.action,
+            "triggered_by": switch_decision.triggered_by,
+            "details": switch_decision.details,
+        }
 
         return evaluation
 
@@ -421,3 +453,45 @@ class HiringService:
         if not errors:
             return [0.0]
         return [sum(errors) / len(errors)]
+
+    def _build_switch_inputs(
+        self,
+        metrics: dict[str, dict],
+    ) -> tuple[dict[str, float], dict[str, tuple[float, float | None]]]:
+        """Convert gathered metrics to SwitchEvaluator inputs.
+
+        Phase 1: uses target_value as upper bound for MINIMIZE metrics,
+        or lower bound for MAXIMIZE metrics. Returns scalar values and bounds.
+        """
+        scalar: dict[str, float] = {}
+        bounds: dict[str, tuple[float, float | None]] = {}
+
+        for m_id, m in metrics.items():
+            observed = m.get("observed")
+            target = m.get("target")
+            if observed is None:
+                continue
+            scalar[m_id] = float(observed)
+            if target is not None:
+                op = m.get("op", "<=")
+                if op == "<=":
+                    # MINIMIZE: we want observed <= target; breach if observed > target
+                    bounds[m_id] = (0.0, float(target))
+                else:
+                    # MAXIMIZE: we want observed >= target; breach if observed < target
+                    bounds[m_id] = (float(target), None)
+
+        return scalar, bounds
+
+    def _estimate_context_delta(self, vfe_history: list[float]) -> dict[str, float]:
+        """Estimate context drift from VFE trend as a proxy.
+
+        Phase 1: if VFE is rising, treat as context_delta = {"vfe_drift": delta}.
+        Phase 2: use actual context entity snapshots.
+        """
+        if len(vfe_history) < 2:
+            return {}
+        delta = vfe_history[0] - vfe_history[-1]  # history is newest-first
+        if abs(delta) < 0.01:
+            return {}
+        return {"vfe_drift": abs(delta)}

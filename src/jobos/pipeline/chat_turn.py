@@ -28,7 +28,7 @@ from jobos.kernel.entity import (
     VFEReading,
     _uid,
 )
-from jobos.kernel.imperfection import compute_ips, derive_imperfection_properties, compute_severity
+from jobos.kernel.imperfection import compute_vfe, derive_imperfection_properties, compute_severity
 from jobos.kernel.axioms import JobOSAxioms
 from jobos.kernel.job_statement import validate_verb
 from jobos.engines.nsaig import PolicyOptimizer
@@ -149,6 +149,7 @@ class ChatTurnPipeline:
         3. ANALYZE  — derive imperfections, compute VFE
         4. RESPOND  — generate grounded response
         """
+        is_new_session = session_id is None
         session_id = session_id or _uid()
         result = ChatTurnResult(session_id=session_id)
 
@@ -161,8 +162,8 @@ class ChatTurnPipeline:
         result.entities_created = [{"id": e.id, "name": e.name, "type": e.entity_type.value} for e in created]
         result.entities_updated = [{"id": e.id, "name": e.name, "type": e.entity_type.value} for e in updated]
 
-        # Find the active job (created, specified, or most recent)
-        active_job_id = await self._resolve_active_job(job_id, created)
+        # Find the active job (created, specified, or most recent in session)
+        active_job_id = await self._resolve_active_job(job_id, created, is_new_session=is_new_session)
 
         # ── Step 3: ANALYZE ──────────────────────────────
         graph_context = {}
@@ -371,19 +372,19 @@ class ChatTurnPipeline:
 
             if severity > 0.0:
                 imp_props = derive_imperfection_properties(current, target, op)
-                ips = compute_ips(imp_props)
+                vfe = compute_vfe(imp_props)
                 imperfections.append({
                     "metric_name": m["name"],
                     "metric_id": m["id"],
                     "severity": round(severity, 3),
                     "is_blocker": imp_props["is_blocker"],
-                    "ips_score": round(ips, 3),
+                    "vfe_score": round(vfe, 3),
                     "observed": current,
                     "target": target,
                     "op": op,
                 })
 
-        imperfections.sort(key=lambda x: x["ips_score"], reverse=True)
+        imperfections.sort(key=lambda x: x["vfe_score"], reverse=True)
         context["imperfections"] = imperfections
         context["top_blocker"] = imperfections[0] if imperfections else None
 
@@ -451,11 +452,11 @@ class ChatTurnPipeline:
                 context_parts.append(f"  - {m['name']}{status}")
 
         if graph_context.get("imperfections"):
-            context_parts.append("**Top imperfections (ranked by IPS)**:")
+            context_parts.append("**Top imperfections (ranked by VFE)**:")
             for imp in graph_context["imperfections"][:3]:
                 context_parts.append(
                     f"  - {imp['metric_name']}: severity={imp['severity']}, "
-                    f"blocker={imp['is_blocker']}, IPS={imp['ips_score']}"
+                    f"blocker={imp['is_blocker']}, VFE={imp['vfe_score']}"
                 )
 
         if graph_context.get("vfe_current") is not None:
@@ -522,7 +523,7 @@ Generate a helpful, grounded response. Reference specific entities and metrics f
             top = graph_context["imperfections"][0]
             parts.append(
                 f"Top blocker: {top['metric_name']} "
-                f"(severity={top['severity']}, IPS={top['ips_score']})."
+                f"(severity={top['severity']}, VFE={top['vfe_score']})."
             )
 
         if graph_context.get("vfe_current") is not None and graph_context["vfe_current"] > 0:
@@ -555,8 +556,18 @@ Generate a helpful, grounded response. Reference specific entities and metrics f
         self,
         explicit_job_id: str | None,
         created_entities: list[EntityBase],
+        is_new_session: bool = True,
     ) -> str | None:
-        """Determine the active job for this turn."""
+        """Determine the active job for this turn.
+
+        Priority:
+        1. Explicitly provided job_id
+        2. A Job entity just created in this turn
+        3. Most recent job in the graph — only if this is a continuation
+           of an existing session (is_new_session=False). On brand-new
+           sessions we never fall back to prior graph state so that old
+           jobs from previous conversations don't bleed into the response.
+        """
         # If explicitly provided, use it
         if explicit_job_id:
             return explicit_job_id
@@ -566,9 +577,10 @@ Generate a helpful, grounded response. Reference specific entities and metrics f
             if e.entity_type == EntityType.JOB:
                 return e.id
 
-        # Find the most recent job in the graph
-        jobs = await self._graph.list_entities(entity_type="job", limit=1)
-        if jobs:
-            return jobs[0].id
+        # Only fall back to the most recent graph job within an ongoing session.
+        if not is_new_session:
+            jobs = await self._graph.list_entities(entity_type="job", limit=1)
+            if jobs:
+                return jobs[0].id
 
         return None
