@@ -1,0 +1,1388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobOS 4.0 — Interactive Demo Storyboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-primary: #0a0a0a;
+    --bg-secondary: #141414;
+    --bg-tertiary: #1a1a1a;
+    --border: #2a2a2a;
+    --text-primary: #e5e5e5;
+    --text-secondary: #a3a3a3;
+    --text-muted: #666666;
+    --accent: #8b5cf6;
+    --accent-dim: rgba(124, 58, 237, 0.125);
+    --user-bubble: #1e1e2e;
+    --violet: #8b5cf6;
+    --blue: #3b82f6;
+    --emerald: #10b981;
+    --amber: #f59e0b;
+    --green: #22c55e;
+    --red: #ef4444;
+  }
+
+  body {
+    background: #000;
+    color: var(--text-primary);
+    font-family: 'Inter', system-ui, sans-serif;
+    overflow: hidden;
+    height: 100vh;
+  }
+
+  /* ── Controls ── */
+  .controls {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(20, 20, 20, 0.95);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 8px 16px;
+    z-index: 100;
+    backdrop-filter: blur(8px);
+  }
+  .controls button {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .controls button:hover { border-color: var(--accent); color: var(--accent); }
+  .controls button.primary { background: var(--accent); color: white; border-color: var(--accent); }
+  .controls button.primary:hover { opacity: 0.9; }
+  .controls .step-info {
+    font-size: 11px;
+    color: var(--text-muted);
+    min-width: 80px;
+    text-align: center;
+  }
+  .controls .narration {
+    font-size: 11px;
+    color: var(--text-secondary);
+    max-width: 400px;
+    line-height: 1.4;
+  }
+
+  /* ── Slide container ── */
+  .slide {
+    display: none;
+    width: 100vw;
+    height: 100vh;
+  }
+  .slide.active { display: flex; }
+
+  /* ── App frame ── */
+  .app-frame {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Top bar ── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 44px;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-primary);
+    flex-shrink: 0;
+  }
+  .topbar .logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .topbar .logo-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: var(--accent-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .topbar .logo-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .topbar .version {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-left: 4px;
+  }
+
+  /* ── Main layout ── */
+  .main-content {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ── Chat panel (25%) ── */
+  .chat-panel {
+    width: 25%;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-primary);
+  }
+  .chat-messages {
+    flex: 1;
+    padding: 16px 12px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .chat-welcome {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+    padding: 12px;
+  }
+  .chat-welcome .logo-big {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--accent-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+  .chat-welcome h2 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .chat-welcome p {
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    margin-bottom: 12px;
+  }
+  .chip-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    max-width: 200px;
+  }
+  .chip {
+    border: 1px solid var(--border);
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 10px;
+    color: var(--text-secondary);
+    text-align: left;
+  }
+  .chat-input-area {
+    border-top: 1px solid var(--border);
+    padding: 8px 12px;
+  }
+  .chat-input {
+    width: 100%;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 32px 8px 12px;
+    font-size: 12px;
+    color: var(--text-primary);
+    outline: none;
+  }
+  .msg { display: flex; gap: 8px; margin-bottom: 12px; }
+  .msg.user { justify-content: flex-end; }
+  .msg-avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .msg-avatar.bot { background: var(--accent-dim); color: var(--accent); }
+  .msg-avatar.usr { background: var(--bg-tertiary); color: var(--text-muted); }
+  .msg-bubble {
+    border-radius: 12px;
+    padding: 8px 12px;
+    font-size: 12px;
+    line-height: 1.5;
+    max-width: 100%;
+    word-wrap: break-word;
+  }
+  .msg.user .msg-bubble { background: var(--user-bubble); }
+  .msg.bot .msg-bubble { background: transparent; }
+
+  /* ── Right panel (75%) ── */
+  .right-panel {
+    width: 75%;
+    border-left: 1px solid var(--border);
+    background: var(--bg-secondary);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Phase indicator ── */
+  .phase-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    padding: 8px 16px;
+  }
+  .phase-step {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .phase-line {
+    width: 32px;
+    height: 1px;
+    margin: 0 4px;
+  }
+  .phase-line.active { background: var(--accent); }
+  .phase-line.inactive { background: var(--border); }
+  .phase-dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .phase-dot.active { background: var(--accent); color: white; }
+  .phase-dot.completed { background: var(--accent); color: white; }
+  .phase-dot.inactive { background: var(--bg-tertiary); color: var(--text-muted); }
+  .phase-label {
+    font-size: 10px;
+    font-weight: 500;
+  }
+  .phase-label.active { color: var(--accent); }
+  .phase-label.completed { color: var(--text-secondary); }
+  .phase-label.inactive { color: var(--text-muted); }
+
+  /* ── Panel content ── */
+  .panel-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0;
+  }
+  .panel-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .panel-header h3 {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+  }
+
+  /* ── Tabs ── */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-top: 12px;
+    margin-bottom: 12px;
+    align-items: center;
+  }
+  .tab {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 500;
+  }
+  .tab.active { background: var(--accent); color: white; }
+  .tab.inactive { background: var(--bg-tertiary); color: var(--text-muted); }
+  .tab.sample {
+    margin-left: auto;
+    border: 1px dashed var(--border);
+    background: transparent;
+    color: var(--text-muted);
+  }
+  .tab.sample.highlight {
+    border-color: var(--accent);
+    color: var(--accent);
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.3); }
+    50% { box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1); }
+  }
+
+  /* ── Tree view ── */
+  .tree { padding: 12px; }
+  .tree-node {
+    margin-left: 16px;
+    margin-bottom: 4px;
+    animation: fadeIn 0.3s ease-out;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateX(-4px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .tree-node-content {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .tree-node-content:hover { background: var(--bg-tertiary); }
+  .tree-node-content.selected { background: var(--accent-dim); border: 1px solid rgba(139,92,246,0.3); }
+  .tier-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .tree-label {
+    font-size: 11px;
+    color: var(--text-primary);
+    line-height: 1.3;
+  }
+  .tier-badge {
+    font-size: 9px;
+    font-weight: 500;
+    text-transform: uppercase;
+    padding: 1px 6px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+
+  /* ── Graph placeholder ── */
+  .graph-area {
+    display: flex;
+    height: 100%;
+    min-height: 300px;
+  }
+  .graph-canvas {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+  .graph-node {
+    position: absolute;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  .graph-node:hover { transform: scale(1.2); }
+  .graph-node.selected { box-shadow: 0 0 0 2px white; }
+  .graph-node-label {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 8px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .graph-edge {
+    position: absolute;
+    height: 1px;
+    background: rgba(100,100,100,0.4);
+    transform-origin: 0 0;
+  }
+  .graph-detail {
+    width: 35%;
+    border-left: 1px solid var(--border);
+    background: var(--bg-primary);
+    padding: 12px;
+    overflow-y: auto;
+  }
+  .detail-section {
+    margin-bottom: 12px;
+  }
+  .detail-label {
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+  .detail-value {
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+  }
+
+  /* ── Job detail card ── */
+  .job-card {
+    border-top: 1px solid var(--border);
+    padding: 12px 16px;
+  }
+  .job-card-inner {
+    border: 1px solid var(--border);
+    background: var(--bg-primary);
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .job-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .job-statement {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+  .edit-btn {
+    padding: 4px;
+    border-radius: 4px;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  .edit-btn:hover { color: var(--accent); background: var(--accent-dim); }
+  .metrics-hints {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+  .hint-tag {
+    font-size: 9px;
+    padding: 2px 8px;
+    border-radius: 99px;
+    background: var(--bg-tertiary);
+    color: var(--text-muted);
+  }
+  .lock-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  /* ── Target job badge ── */
+  .target-badge {
+    border: 1px solid rgba(139,92,246,0.3);
+    background: var(--accent-dim);
+    border-radius: 8px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 12px 16px 0;
+  }
+  .target-badge .lock-icon { color: var(--accent); font-size: 10px; }
+
+  /* ── Metric templates ── */
+  .template-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 12px 16px;
+  }
+  .template-chip {
+    border: 1px solid var(--border);
+    background: var(--bg-primary);
+    border-radius: 99px;
+    padding: 4px 10px;
+    font-size: 10px;
+    color: var(--text-secondary);
+    cursor: pointer;
+  }
+  .template-chip:hover, .template-chip.selected {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .metric-form {
+    margin: 8px 16px;
+    border: 1px solid var(--border);
+    background: var(--bg-primary);
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .metric-form input {
+    width: 100%;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 11px;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    outline: none;
+  }
+  .metric-item {
+    border: 1px solid var(--border);
+    background: var(--bg-primary);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin: 8px 16px;
+  }
+
+  /* ── Recommendation card ── */
+  .rec-card {
+    border-radius: 8px;
+    padding: 16px;
+    margin: 12px 16px;
+  }
+  .rec-card.switch { background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); }
+  .rec-card.keep { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); }
+  .rec-label { font-size: 14px; font-weight: 700; }
+  .rec-label.switch { color: #60a5fa; }
+  .rec-label.keep { color: #4ade80; }
+  .confidence-bar-track {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--bg-tertiary);
+    margin: 8px 0;
+    overflow: hidden;
+  }
+  .confidence-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 1s ease-out;
+  }
+  .factor-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .factor-name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text-primary);
+  }
+  .factor-arrow { font-size: 12px; }
+  .factor-arrow.up { color: var(--green); }
+  .factor-arrow.down { color: var(--red); }
+  .factor-impact { font-size: 10px; font-weight: 500; }
+  .factor-impact.positive { color: var(--green); }
+  .factor-impact.negative { color: var(--red); }
+  .factor-explain {
+    font-size: 10px;
+    color: var(--text-muted);
+    padding-left: 18px;
+    line-height: 1.4;
+    margin-bottom: 4px;
+  }
+  .how-decided {
+    font-size: 10px;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 8px;
+  }
+  .how-decided:hover { color: var(--text-secondary); }
+  .explanation-box {
+    background: var(--bg-tertiary);
+    border-radius: 6px;
+    padding: 12px;
+    margin-top: 8px;
+  }
+  .criteria-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+  }
+  .criteria-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+  .confirm-btn {
+    margin: 16px;
+    width: calc(100% - 32px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  /* ── Summary badges ── */
+  .summary-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    margin-top: 8px;
+  }
+  .summary-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 99px;
+  }
+
+  /* ── Edit mode ── */
+  .edit-form { padding: 8px 0; }
+  .edit-form label {
+    display: block;
+    font-size: 9px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    margin-top: 8px;
+  }
+  .edit-form label:first-child { margin-top: 0; }
+  .edit-form input {
+    width: 100%;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 12px;
+    color: var(--text-primary);
+    outline: none;
+  }
+  .edit-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .edit-save {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 10px;
+    font-weight: 500;
+  }
+  .edit-cancel {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--bg-tertiary);
+    color: var(--text-muted);
+    border: none;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 10px;
+  }
+
+  /* ── Highlight overlay ── */
+  .highlight-ring {
+    position: absolute;
+    border: 2px solid var(--accent);
+    border-radius: 8px;
+    pointer-events: none;
+    animation: highlightPulse 1.5s ease-in-out infinite;
+    z-index: 50;
+  }
+  @keyframes highlightPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(139,92,246,0.4); }
+    50% { box-shadow: 0 0 0 6px rgba(139,92,246,0.1); }
+  }
+
+  /* ── View toggle ── */
+  .view-toggle {
+    display: flex;
+    gap: 2px;
+    background: var(--bg-tertiary);
+    border-radius: 6px;
+    padding: 2px;
+  }
+  .view-toggle-btn {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  .view-toggle-btn.active {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+  }
+
+  /* ── Empty state ── */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+    padding: 24px;
+  }
+  .empty-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--bg-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  SLIDE 1: Landing — Empty State + Try Sample          -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="slide active" id="slide-1">
+<div class="app-frame">
+  <div class="topbar">
+    <div class="logo">
+      <div class="logo-icon">J</div>
+      <span class="logo-text">JobOS</span>
+      <span class="version">4.0</span>
+    </div>
+  </div>
+  <div class="main-content">
+    <div class="chat-panel">
+      <div class="chat-messages">
+        <div class="chat-welcome">
+          <div class="logo-big">J</div>
+          <h2>JobOS</h2>
+          <p>Describe a goal. I'll structure it into measurable jobs.</p>
+          <div class="chip-stack">
+            <div class="chip">Reduce churn from 8% to 3%</div>
+            <div class="chip">Onboarding is broken</div>
+            <div class="chip">Improve translation pipeline</div>
+          </div>
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <input class="chat-input" placeholder="Describe a goal or task..." readonly>
+      </div>
+    </div>
+    <div class="right-panel">
+      <div class="phase-indicator">
+        <div class="phase-step"><div class="phase-dot active">1</div><span class="phase-label active">Identify</span></div>
+        <div class="phase-line active"></div>
+        <div class="phase-step"><div class="phase-dot inactive">2</div><span class="phase-label inactive">Define</span></div>
+        <div class="phase-line inactive"></div>
+        <div class="phase-step"><div class="phase-dot inactive">3</div><span class="phase-label inactive">Decide</span></div>
+      </div>
+      <div class="panel-content">
+        <div class="panel-header">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <h3>Job Hierarchy</h3>
+          </div>
+          <div class="tabs">
+            <div class="tab active">📄 Text</div>
+            <div class="tab inactive">🌐 URL</div>
+            <div class="tab inactive">📤 Upload</div>
+            <div class="tab sample highlight">▶ Try Sample</div>
+          </div>
+          <textarea style="width:100%;background:var(--bg-primary);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--text-muted);resize:none;height:72px;outline:none" readonly>Paste a job description, goals, or constraints...</textarea>
+        </div>
+        <div style="flex:1">
+          <div class="empty-state">
+            <div class="empty-icon">✨</div>
+            <p style="font-size:12px;color:var(--text-secondary);margin-bottom:4px">No hierarchy yet</p>
+            <p style="font-size:11px;color:var(--text-muted);max-width:200px;margin-bottom:12px">Enter text, a URL, or upload a document to generate a structured job hierarchy.</p>
+            <div style="border:1px dashed var(--border);border-radius:8px;padding:6px 12px;font-size:10px;color:var(--text-muted);display:flex;align-items:center;gap:6px">▶ Try with sample: &ldquo;Manage Translation Projects&rdquo;</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  SLIDE 2: Hierarchy Loaded — Tree View                -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="slide" id="slide-2">
+<div class="app-frame">
+  <div class="topbar">
+    <div class="logo"><div class="logo-icon">J</div><span class="logo-text">JobOS</span><span class="version">4.0</span></div>
+  </div>
+  <div class="main-content">
+    <div class="chat-panel">
+      <div class="chat-messages">
+        <div class="chat-welcome">
+          <div class="logo-big">J</div>
+          <h2>JobOS</h2>
+          <p>Describe a goal. I'll structure it into measurable jobs.</p>
+          <div class="chip-stack">
+            <div class="chip">Reduce churn from 8% to 3%</div>
+            <div class="chip">Onboarding is broken</div>
+          </div>
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <input class="chat-input" placeholder="Describe a goal or task..." readonly>
+      </div>
+    </div>
+    <div class="right-panel">
+      <div class="phase-indicator">
+        <div class="phase-step"><div class="phase-dot active">1</div><span class="phase-label active">Identify</span></div>
+        <div class="phase-line active"></div>
+        <div class="phase-step"><div class="phase-dot inactive">2</div><span class="phase-label inactive">Define</span></div>
+        <div class="phase-line inactive"></div>
+        <div class="phase-step"><div class="phase-dot inactive">3</div><span class="phase-label inactive">Decide</span></div>
+      </div>
+      <div class="panel-content" style="display:flex;flex-direction:column;height:100%">
+        <div class="panel-header">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <h3>Job Hierarchy</h3>
+            <div class="view-toggle">
+              <div class="view-toggle-btn active">🌲 Tree</div>
+              <div class="view-toggle-btn">🔗 Graph</div>
+            </div>
+          </div>
+        </div>
+        <div class="tree" style="flex:1;overflow-y:auto">
+          <!-- T1 -->
+          <div class="tree-node" style="margin-left:0">
+            <div class="tree-node-content">
+              <div class="tier-dot" style="background:var(--violet)"></div>
+              <span class="tree-label" style="font-weight:600">Manage Translation Projects</span>
+              <span class="tier-badge" style="background:rgba(139,92,246,0.15);color:var(--violet)">Strategic</span>
+            </div>
+            <!-- T2 children -->
+            <div class="tree-node">
+              <div class="tree-node-content">
+                <div class="tier-dot" style="background:var(--blue)"></div>
+                <span class="tree-label">Plan and preparation</span>
+                <span class="tier-badge" style="background:rgba(59,130,246,0.15);color:var(--blue)">Core</span>
+              </div>
+              <!-- T3 children -->
+              <div class="tree-node">
+                <div class="tree-node-content">
+                  <div class="tier-dot" style="background:var(--emerald)"></div>
+                  <span class="tree-label">Client submit language requests</span>
+                </div>
+                <div class="tree-node">
+                  <div class="tree-node-content" style="opacity:0.7">
+                    <div class="tier-dot" style="background:var(--amber)"></div>
+                    <span class="tree-label" style="font-size:10px">Minimize the time required to submit language requests</span>
+                  </div>
+                </div>
+                <div class="tree-node">
+                  <div class="tree-node-content" style="opacity:0.7">
+                    <div class="tier-dot" style="background:var(--amber)"></div>
+                    <span class="tree-label" style="font-size:10px">Minimize the likelihood of missing critical requirements</span>
+                  </div>
+                </div>
+              </div>
+              <div class="tree-node">
+                <div class="tree-node-content">
+                  <div class="tier-dot" style="background:var(--emerald)"></div>
+                  <span class="tree-label">Identify project stakeholders</span>
+                </div>
+              </div>
+            </div>
+            <div class="tree-node">
+              <div class="tree-node-content">
+                <div class="tier-dot" style="background:var(--blue)"></div>
+                <span class="tree-label">Locate and assemble project team</span>
+              </div>
+            </div>
+            <div class="tree-node">
+              <div class="tree-node-content">
+                <div class="tier-dot" style="background:var(--blue)"></div>
+                <span class="tree-label">Prepare project plan and schedule</span>
+              </div>
+            </div>
+            <div class="tree-node" style="opacity:0.5">
+              <div class="tree-node-content">
+                <div class="tier-dot" style="background:var(--blue)"></div>
+                <span class="tree-label" style="color:var(--text-muted)">+ 5 more core jobs...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="summary-badges">
+          <span class="summary-badge" style="background:rgba(139,92,246,0.15);color:var(--violet)">Strategic: 1</span>
+          <span class="summary-badge" style="background:rgba(59,130,246,0.15);color:var(--blue)">Core: 8</span>
+          <span class="summary-badge" style="background:rgba(16,185,129,0.15);color:var(--emerald)">Execution: 17</span>
+          <span class="summary-badge" style="background:rgba(245,158,11,0.15);color:var(--amber)">Micro: 68</span>
+          <span class="summary-badge" style="background:var(--bg-tertiary);color:var(--text-muted)">Total: 94</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  SLIDE 3: Graph View + Detail Panel                   -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="slide" id="slide-3">
+<div class="app-frame">
+  <div class="topbar">
+    <div class="logo"><div class="logo-icon">J</div><span class="logo-text">JobOS</span><span class="version">4.0</span></div>
+  </div>
+  <div class="main-content">
+    <div class="chat-panel">
+      <div class="chat-messages" style="justify-content:flex-end;padding-bottom:8px">
+        <div class="msg bot">
+          <div class="msg-avatar bot">J</div>
+          <div class="msg-bubble">I've loaded a sample hierarchy for "Manage Translation Projects" with 94 jobs across 4 tiers.</div>
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <input class="chat-input" placeholder="Describe a goal or task..." readonly>
+      </div>
+    </div>
+    <div class="right-panel">
+      <div class="phase-indicator">
+        <div class="phase-step"><div class="phase-dot active">1</div><span class="phase-label active">Identify</span></div>
+        <div class="phase-line active"></div>
+        <div class="phase-step"><div class="phase-dot inactive">2</div><span class="phase-label inactive">Define</span></div>
+        <div class="phase-line inactive"></div>
+        <div class="phase-step"><div class="phase-dot inactive">3</div><span class="phase-label inactive">Decide</span></div>
+      </div>
+      <div class="panel-content" style="display:flex;flex-direction:column;height:100%">
+        <div class="panel-header">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <h3>Job Hierarchy</h3>
+            <div class="view-toggle">
+              <div class="view-toggle-btn">🌲 Tree</div>
+              <div class="view-toggle-btn active">🔗 Graph</div>
+            </div>
+          </div>
+        </div>
+        <div class="graph-area" style="flex:1">
+          <div class="graph-canvas" style="background:var(--bg-secondary);position:relative">
+            <!-- Simulated graph nodes -->
+            <div class="graph-node selected" style="width:28px;height:28px;background:var(--violet);top:35%;left:38%"><div class="graph-node-label">Manage Translation...</div></div>
+            <div class="graph-node" style="width:20px;height:20px;background:var(--blue);top:18%;left:22%"><div class="graph-node-label">Plan & prep</div></div>
+            <div class="graph-node" style="width:20px;height:20px;background:var(--blue);top:20%;left:52%"><div class="graph-node-label">Locate team</div></div>
+            <div class="graph-node" style="width:20px;height:20px;background:var(--blue);top:55%;left:20%"><div class="graph-node-label">Prepare plan</div></div>
+            <div class="graph-node" style="width:20px;height:20px;background:var(--blue);top:58%;left:50%"><div class="graph-node-label">Execute tasks</div></div>
+            <div class="graph-node" style="width:14px;height:14px;background:var(--emerald);top:8%;left:12%"></div>
+            <div class="graph-node" style="width:14px;height:14px;background:var(--emerald);top:10%;left:30%"></div>
+            <div class="graph-node" style="width:14px;height:14px;background:var(--emerald);top:30%;left:8%"></div>
+            <div class="graph-node" style="width:14px;height:14px;background:var(--emerald);top:12%;left:58%"></div>
+            <div class="graph-node" style="width:14px;height:14px;background:var(--emerald);top:45%;left:55%"></div>
+            <div class="graph-node" style="width:8px;height:8px;background:var(--amber);top:5%;left:6%"></div>
+            <div class="graph-node" style="width:8px;height:8px;background:var(--amber);top:5%;left:18%"></div>
+            <div class="graph-node" style="width:8px;height:8px;background:var(--amber);top:5%;left:35%"></div>
+            <div class="graph-node" style="width:8px;height:8px;background:var(--amber);top:68%;left:15%"></div>
+            <div class="graph-node" style="width:8px;height:8px;background:var(--amber);top:70%;left:28%"></div>
+            <div class="graph-node" style="width:20px;height:20px;background:var(--blue);top:72%;left:42%"><div class="graph-node-label">Monitor progress</div></div>
+            <div class="graph-node" style="width:20px;height:20px;background:var(--blue);top:48%;left:35%"><div class="graph-node-label">Comm tools</div></div>
+          </div>
+          <div class="graph-detail">
+            <div class="detail-section">
+              <div class="detail-label" style="color:var(--violet)">Strategic</div>
+              <div class="detail-value" style="font-weight:500;color:var(--text-primary);font-size:12px">Manage Translation Projects</div>
+            </div>
+            <div class="detail-section">
+              <div class="detail-label">How</div>
+              <div class="detail-value">Project management</div>
+            </div>
+            <div class="detail-section">
+              <div class="detail-label">Why</div>
+              <div class="detail-value">Coordinate multi-language translation workflows across distributed teams</div>
+            </div>
+            <div class="detail-section">
+              <div class="detail-label">Metrics</div>
+              <div style="background:var(--bg-tertiary);border-radius:4px;padding:6px 8px;font-size:10px;color:var(--text-muted);margin-bottom:4px">Project completion rate</div>
+              <div style="background:var(--bg-tertiary);border-radius:4px;padding:6px 8px;font-size:10px;color:var(--text-muted)">Stakeholder satisfaction</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  SLIDE 4: Select Job + Edit + Lock                    -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="slide" id="slide-4">
+<div class="app-frame">
+  <div class="topbar">
+    <div class="logo"><div class="logo-icon">J</div><span class="logo-text">JobOS</span><span class="version">4.0</span></div>
+  </div>
+  <div class="main-content">
+    <div class="chat-panel">
+      <div class="chat-messages" style="justify-content:flex-end;padding-bottom:8px">
+        <div class="msg bot">
+          <div class="msg-avatar bot">J</div>
+          <div class="msg-bubble">Select a job from the hierarchy to focus on. You can edit it before locking.</div>
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <input class="chat-input" placeholder="Describe a goal or task..." readonly>
+      </div>
+    </div>
+    <div class="right-panel">
+      <div class="phase-indicator">
+        <div class="phase-step"><div class="phase-dot active">1</div><span class="phase-label active">Identify</span></div>
+        <div class="phase-line active"></div>
+        <div class="phase-step"><div class="phase-dot inactive">2</div><span class="phase-label inactive">Define</span></div>
+        <div class="phase-line inactive"></div>
+        <div class="phase-step"><div class="phase-dot inactive">3</div><span class="phase-label inactive">Decide</span></div>
+      </div>
+      <div class="panel-content" style="display:flex;flex-direction:column;height:100%">
+        <div class="panel-header">
+          <div style="display:flex;align-items:center;justify-content:space-between"><h3>Job Hierarchy</h3>
+            <div class="view-toggle"><div class="view-toggle-btn active">🌲 Tree</div><div class="view-toggle-btn">🔗 Graph</div></div>
+          </div>
+        </div>
+        <div class="tree" style="flex:1;overflow-y:auto">
+          <div class="tree-node" style="margin-left:0">
+            <div class="tree-node-content">
+              <div class="tier-dot" style="background:var(--violet)"></div>
+              <span class="tree-label" style="font-weight:600">Manage Translation Projects</span>
+            </div>
+            <div class="tree-node">
+              <div class="tree-node-content">
+                <div class="tier-dot" style="background:var(--blue)"></div>
+                <span class="tree-label">Plan and preparation</span>
+              </div>
+              <div class="tree-node">
+                <div class="tree-node-content selected">
+                  <div class="tier-dot" style="background:var(--emerald)"></div>
+                  <span class="tree-label">Client submit language requests to project teams</span>
+                  <span class="tier-badge" style="background:rgba(16,185,129,0.15);color:var(--emerald)">Execution</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Selected job card -->
+        <div class="job-card">
+          <div class="job-card-inner">
+            <div class="job-card-header">
+              <span class="job-statement">Client submit language requests to project teams</span>
+              <div style="display:flex;align-items:center;gap:4px">
+                <span class="tier-badge" style="background:rgba(16,185,129,0.15);color:var(--emerald)">Execution</span>
+                <div class="edit-btn">✏️</div>
+              </div>
+            </div>
+            <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">Category: preparation</div>
+            <div class="metrics-hints">
+              <span class="hint-tag">Time to submit requests</span>
+              <span class="hint-tag">Missing requirements rate</span>
+            </div>
+            <button class="lock-btn">🔒 Lock as Target Job</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  SLIDE 5: Phase 2 — Define Outcomes (Metrics)         -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="slide" id="slide-5">
+<div class="app-frame">
+  <div class="topbar">
+    <div class="logo"><div class="logo-icon">J</div><span class="logo-text">JobOS</span><span class="version">4.0</span></div>
+  </div>
+  <div class="main-content">
+    <div class="chat-panel">
+      <div class="chat-messages" style="justify-content:flex-end;padding-bottom:8px">
+        <div class="msg user">
+          <div class="msg-bubble" style="background:var(--user-bubble)">What does success look like for this job?</div>
+          <div class="msg-avatar usr">U</div>
+        </div>
+        <div class="msg bot">
+          <div class="msg-avatar bot">J</div>
+          <div class="msg-bubble">Define metrics in the right panel. Use the ODI templates to get started.</div>
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <input class="chat-input" placeholder="Define metrics or outcomes..." readonly>
+      </div>
+    </div>
+    <div class="right-panel">
+      <div class="phase-indicator">
+        <div class="phase-step"><div class="phase-dot completed">✓</div><span class="phase-label completed">Identify</span></div>
+        <div class="phase-line active"></div>
+        <div class="phase-step"><div class="phase-dot active">2</div><span class="phase-label active">Define</span></div>
+        <div class="phase-line inactive"></div>
+        <div class="phase-step"><div class="phase-dot inactive">3</div><span class="phase-label inactive">Decide</span></div>
+      </div>
+      <div class="panel-content" style="display:flex;flex-direction:column;height:100%">
+        <div class="panel-header">
+          <h3>Define Outcomes</h3>
+          <div class="target-badge" style="margin:8px 0 0">
+            <span style="color:var(--accent);font-size:10px">🔒</span>
+            <span class="tier-badge" style="background:rgba(16,185,129,0.15);color:var(--emerald)">Execution</span>
+            <span style="font-size:12px;color:var(--text-primary)">Client submit language requests</span>
+          </div>
+        </div>
+        <div style="flex:1;overflow-y:auto;padding:12px 0">
+          <!-- Dimension toggle -->
+          <div style="padding:0 16px;margin-bottom:12px">
+            <div style="display:flex;gap:8px">
+              <div style="padding:4px 12px;border-radius:6px;font-size:12px;font-weight:500;background:var(--bg-tertiary);color:var(--text-muted)">Experience (Dim A)</div>
+              <div style="padding:4px 12px;border-radius:6px;font-size:12px;font-weight:500;background:var(--accent);color:white">Metrics (Dim B)</div>
+            </div>
+          </div>
+
+          <!-- ODI Templates -->
+          <div style="padding:0 16px">
+            <div style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">ODI Templates</div>
+          </div>
+          <div class="template-chips">
+            <div class="template-chip selected">Minimize time</div>
+            <div class="template-chip">Minimize failure</div>
+            <div class="template-chip">Increase success</div>
+            <div class="template-chip">Reduce frequency</div>
+            <div class="template-chip">Maximize output</div>
+          </div>
+
+          <!-- Added metric -->
+          <div class="metric-item">
+            <div style="font-size:12px;font-weight:500;color:var(--text-primary)">Minimize the time to submit language requests</div>
+            <div style="font-size:10px;color:var(--text-muted);margin-top:2px">Target: &lt; 5 min</div>
+            <div style="font-size:10px;color:var(--red);margin-top:2px">Switch: &gt; 15 min</div>
+          </div>
+
+          <!-- Metric form -->
+          <div class="metric-form">
+            <div style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Add Metric</div>
+            <input value="Minimize the likelihood of " readonly style="color:var(--accent)">
+            <input placeholder="Target (e.g. < 5 min)" readonly>
+            <input placeholder="Switch threshold (e.g. > 15 min)" readonly>
+            <div style="font-size:10px;color:var(--text-secondary);background:var(--bg-tertiary);padding:4px 8px;border-radius:4px;display:inline-flex;align-items:center;gap:4px;cursor:pointer">+ Add Metric</div>
+          </div>
+        </div>
+        <div style="border-top:1px solid var(--border);padding:12px 16px">
+          <button class="confirm-btn" style="margin:0;width:100%">Confirm Outcomes & Get Decision →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  SLIDE 6: Phase 3 — Decide (Recommendation)          -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="slide" id="slide-6">
+<div class="app-frame">
+  <div class="topbar">
+    <div class="logo"><div class="logo-icon">J</div><span class="logo-text">JobOS</span><span class="version">4.0</span></div>
+  </div>
+  <div class="main-content">
+    <div class="chat-panel">
+      <div class="chat-messages" style="justify-content:flex-end;padding-bottom:8px">
+        <div class="msg user">
+          <div class="msg-bubble" style="background:var(--user-bubble)">What are the risks of switching?</div>
+          <div class="msg-avatar usr">U</div>
+        </div>
+        <div class="msg bot">
+          <div class="msg-avatar bot">J</div>
+          <div class="msg-bubble">The main risk is contextual variance — this job involves stakeholder negotiation that AI handles poorly. See the factor breakdown in the decision panel.</div>
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <input class="chat-input" placeholder="Ask about the recommendation..." readonly>
+      </div>
+    </div>
+    <div class="right-panel">
+      <div class="phase-indicator">
+        <div class="phase-step"><div class="phase-dot completed">✓</div><span class="phase-label completed">Identify</span></div>
+        <div class="phase-line active"></div>
+        <div class="phase-step"><div class="phase-dot completed">✓</div><span class="phase-label completed">Define</span></div>
+        <div class="phase-line active"></div>
+        <div class="phase-step"><div class="phase-dot active">3</div><span class="phase-label active">Decide</span></div>
+      </div>
+      <div class="panel-content" style="display:flex;flex-direction:column;height:100%;overflow-y:auto">
+        <div class="panel-header">
+          <h3>Decision</h3>
+          <div class="target-badge" style="margin:8px 0 0">
+            <span style="color:var(--accent);font-size:10px">🔒</span>
+            <span class="tier-badge" style="background:rgba(16,185,129,0.15);color:var(--emerald)">Execution</span>
+            <span style="font-size:12px;color:var(--text-primary)">Client submit language requests</span>
+          </div>
+        </div>
+
+        <!-- LLM Preliminary -->
+        <div style="padding:12px 16px 0">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+            <span style="font-size:13px">🧠</span>
+            <span style="font-size:12px;font-weight:600;color:var(--text-secondary)">LLM Preliminary</span>
+          </div>
+        </div>
+
+        <div class="rec-card keep">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span class="rec-label keep">Keep Human</span>
+            <span style="font-size:10px;color:var(--text-muted)">62%</span>
+          </div>
+
+          <!-- Confidence bar -->
+          <div style="margin:8px 0">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+              <span style="font-size:9px;text-transform:uppercase;color:var(--text-muted)">Confidence</span>
+              <span style="font-size:10px;color:var(--text-muted)">62%</span>
+            </div>
+            <div class="confidence-bar-track">
+              <div class="confidence-bar-fill" style="width:62%;background:var(--amber)"></div>
+            </div>
+          </div>
+
+          <p style="font-size:12px;color:var(--text-secondary);line-height:1.5;margin:8px 0">This T3 execution job involves stakeholder communication and contextual judgment. While some sub-tasks could be automated, the core request-handling requires human nuance.</p>
+
+          <!-- Factors -->
+          <div style="margin-top:12px">
+            <div style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Factors</div>
+
+            <div class="factor-row">
+              <div class="factor-name"><span class="factor-arrow up">↗</span> Defined metrics enable evaluation</div>
+              <div style="display:flex;gap:8px;align-items:center"><span class="factor-impact positive">Favors switch</span><span style="font-size:10px;color:var(--text-muted)">20%</span></div>
+            </div>
+            <div class="factor-explain">Having explicit success metrics means performance can be measured objectively.</div>
+
+            <div class="factor-row">
+              <div class="factor-name"><span class="factor-arrow down">↘</span> Experience markers present</div>
+              <div style="display:flex;gap:8px;align-items:center"><span class="factor-impact negative">Favors human</span><span style="font-size:10px;color:var(--text-muted)">20%</span></div>
+            </div>
+            <div class="factor-explain">Feel and To-Be markers indicate emotional outcomes difficult for AI to deliver.</div>
+
+            <div class="factor-row">
+              <div class="factor-name"><span class="factor-arrow down">↘</span> High contextual variance</div>
+              <div style="display:flex;gap:8px;align-items:center"><span class="factor-impact negative">Favors human</span><span style="font-size:10px;color:var(--text-muted)">30%</span></div>
+            </div>
+            <div class="factor-explain">Stakeholder negotiations require situational judgment that varies per project.</div>
+          </div>
+
+          <!-- How was this decided -->
+          <div style="margin-top:12px">
+            <div class="how-decided">ℹ️ How was this decided? ▼</div>
+            <div class="explanation-box">
+              <div style="margin-bottom:8px">
+                <div class="detail-label">Method</div>
+                <div style="font-size:11px;color:var(--text-primary)">Analyzed by Qwen Plus LLM</div>
+              </div>
+              <div>
+                <div class="detail-label" style="margin-bottom:6px">Criteria Evaluated</div>
+                <div class="criteria-item"><div class="criteria-dot"></div>Job tier and complexity</div>
+                <div class="criteria-item"><div class="criteria-dot"></div>Defined metrics coverage</div>
+                <div class="criteria-item"><div class="criteria-dot"></div>Experience marker analysis</div>
+                <div class="criteria-item"><div class="criteria-dot"></div>Sub-job decomposition pattern</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  Controls                                              -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="controls">
+  <button onclick="prevSlide()">← Prev</button>
+  <span class="step-info" id="stepInfo">1 / 6</span>
+  <button class="primary" onclick="nextSlide()">Next →</button>
+  <span class="narration" id="narration">Landing screen — click "Try Sample" to load the translation project hierarchy</span>
+</div>
+
+<script>
+const NARRATIONS = [
+  'Landing screen — click "Try Sample" to load the translation project hierarchy',
+  'Phase 1: Hierarchy loaded as tree view — 94 jobs across 4 tiers (Strategic → Core → Execution → Micro)',
+  'Phase 1: Graph view with force-directed layout — click a node to see 5W1H detail panel (Why, How, Metrics)',
+  'Phase 1: Select an Execution job → view details, edit statement/category, then "Lock as Target Job"',
+  'Phase 2: Define outcomes — ODI-style metric templates auto-fill statements. Add target + switch threshold.',
+  'Phase 3: Decision — LLM recommendation with confidence meter, factor explanations, and evaluation transparency',
+];
+
+let current = 0;
+const slides = document.querySelectorAll('.slide');
+
+function show(idx) {
+  slides.forEach(s => s.classList.remove('active'));
+  slides[idx].classList.add('active');
+  document.getElementById('stepInfo').textContent = `${idx + 1} / ${slides.length}`;
+  document.getElementById('narration').textContent = NARRATIONS[idx];
+}
+
+function nextSlide() {
+  if (current < slides.length - 1) { current++; show(current); }
+}
+function prevSlide() {
+  if (current > 0) { current--; show(current); }
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+});
+</script>
+
+</body>
+</html>
