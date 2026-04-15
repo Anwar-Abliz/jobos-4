@@ -1,0 +1,68 @@
+# Render Blueprint — JobOS 4.0
+# Deploy: backend API + frontend + PostgreSQL
+#
+# Neo4j: use Neo4j Aura free tier (external, configure via env vars)
+# PostgreSQL: Render-managed instance
+# LLM: Qwen via DashScope (configure OPENAI_API_KEY + LLM_BASE_URL)
+
+databases:
+  - name: jobos-db
+    plan: free
+    databaseName: jobos
+    user: jobos
+
+services:
+  # ── Backend API ──────────────────────────────────────
+  - type: web
+    name: jobos-4-api
+    runtime: python
+    plan: free
+    region: oregon
+    buildCommand: pip install -e ".[dev]" && alembic upgrade head
+    startCommand: uvicorn src.jobos.api.app:create_app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      # PostgreSQL (auto-linked from Render database)
+      - key: DATABASE_URL
+        fromDatabase:
+          name: jobos-db
+          property: connectionString
+      # Neo4j Aura (set manually in Render dashboard)
+      - key: NEO4J_URI
+        sync: false
+      - key: NEO4J_USER
+        sync: false
+      - key: NEO4J_PASSWORD
+        sync: false
+      # LLM (optional — set manually)
+      - key: LLM_ENABLED
+        value: "false"
+      - key: LLM_BASE_URL
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: LLM_MODEL
+        value: "qwen-plus"
+      # App config
+      - key: JOBOS_DEBUG
+        value: "false"
+      - key: JOBOS_LOG_LEVEL
+        value: "INFO"
+      - key: PYTHON_VERSION
+        value: "3.12.4"
+
+  # ── Frontend ─────────────────────────────────────────
+  - type: web
+    name: jobos-4-frontend
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: cd frontend && npm ci && npm run build
+    startCommand: cd frontend && npm start -- --port $PORT
+    autoDeploy: true
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        value: https://jobos-4-api.onrender.com/api
+      - key: NODE_VERSION
+        value: "20.18.0"

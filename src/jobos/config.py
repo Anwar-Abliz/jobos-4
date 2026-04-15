@@ -16,9 +16,26 @@ class Neo4jSettings:
     password: str = os.getenv("NEO4J_PASSWORD", "changeme")
 
 
+def _resolve_postgres_uri() -> str:
+    """Resolve PostgreSQL URI with asyncpg driver prefix.
+
+    Render provides DATABASE_URL as postgresql://, but SQLAlchemy async
+    requires postgresql+asyncpg://. This handles both POSTGRES_URI and
+    DATABASE_URL env vars.
+    """
+    uri = os.getenv("POSTGRES_URI", os.getenv(
+        "DATABASE_URL", "postgresql+asyncpg://jobos:jobos@localhost:5432/jobos"
+    ))
+    if uri.startswith("postgres://"):
+        uri = uri.replace("postgres://", "postgresql+asyncpg://", 1)
+    elif uri.startswith("postgresql://") and "+asyncpg" not in uri:
+        uri = uri.replace("postgresql://", "postgresql+asyncpg://", 1)
+    return uri
+
+
 @dataclass(frozen=True)
 class PostgresSettings:
-    uri: str = os.getenv("POSTGRES_URI", "postgresql+asyncpg://jobos:jobos@localhost:5432/jobos")
+    uri: str = _resolve_postgres_uri()
 
 
 @dataclass(frozen=True)
