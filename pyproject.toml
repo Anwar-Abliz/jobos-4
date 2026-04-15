@@ -25,6 +25,10 @@ dependencies = [
     # AI/ML Engines (Phase 1 minimal)
     "networkx>=3.4.0",
 
+    # LLM (OpenAI-compatible adapter — imported at startup)
+    "openai>=1.50.0",
+    "httpx>=0.27.0",
+
     # Utilities
     "structlog>=24.4.0",
     "python-dotenv>=1.0.0",
