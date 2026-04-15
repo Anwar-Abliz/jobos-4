@@ -26,9 +26,14 @@ from jobos.adapters.postgres.models import Base
 config = context.config
 
 # Override sqlalchemy.url from environment
-pg_uri = os.getenv("POSTGRES_URI", config.get_main_option("sqlalchemy.url", ""))
+pg_uri = os.getenv("POSTGRES_URI", os.getenv(
+    "DATABASE_URL", config.get_main_option("sqlalchemy.url", "")
+))
 # Convert async URI to sync for Alembic
 sync_uri = pg_uri.replace("postgresql+asyncpg://", "postgresql://")
+# Also handle Render's postgres:// shorthand
+if sync_uri.startswith("postgres://"):
+    sync_uri = sync_uri.replace("postgres://", "postgresql://", 1)
 config.set_main_option("sqlalchemy.url", sync_uri)
 
 if config.config_file_name is not None:

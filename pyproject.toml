@@ -20,6 +20,7 @@ dependencies = [
     "sqlalchemy[asyncio]>=2.0.35",
     "asyncpg>=0.30.0",
     "alembic>=1.14.0",
+    "psycopg2-binary>=2.9.0",
 
     # AI/ML Engines (Phase 1 minimal)
     "networkx>=3.4.0",

@@ -18,8 +18,8 @@ services:
     runtime: python
     plan: free
     region: oregon
-    buildCommand: pip install -e ".[dev]" && alembic upgrade head
-    startCommand: uvicorn src.jobos.api.app:create_app --host 0.0.0.0 --port $PORT
+    buildCommand: pip install ".[dev]"
+    startCommand: alembic upgrade head && uvicorn src.jobos.api.app:create_app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     autoDeploy: true
     envVars:
