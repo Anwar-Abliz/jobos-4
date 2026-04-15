@@ -48,7 +48,7 @@ def upgrade() -> None:
         sa.Column("accuracy", sa.Float(), nullable=True),
         sa.Column("speed", sa.Float(), nullable=True),
         sa.Column("throughput", sa.Float(), nullable=True),
-        sa.Column("bounds", postgresql.JSONB(), nullable=False, server_default="'{}'"),
+        sa.Column("bounds", postgresql.JSONB(), nullable=False, server_default=sa.text("'{}'")),
         sa.Column("context_hash", sa.String(64), nullable=True),
         sa.Column("context_vector_ref", sa.String(36), nullable=True),
     )

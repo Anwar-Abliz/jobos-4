@@ -37,8 +37,8 @@ def upgrade() -> None:
         sa.Column("id", sa.String(36), primary_key=True, nullable=False),
         sa.Column("job_id", sa.String(36), nullable=False),
         sa.Column("version", sa.Integer(), nullable=False),
-        sa.Column("markers", postgresql.JSONB(), nullable=False, server_default="'{}'"),
-        sa.Column("source", sa.String(20), nullable=False, server_default="'llm'"),
+        sa.Column("markers", postgresql.JSONB(), nullable=False, server_default=sa.text("'{}'")),
+        sa.Column("source", sa.String(20), nullable=False, server_default="llm"),
         sa.Column("confidence", sa.Float(), nullable=True),
         sa.Column("created_by", sa.String(100), nullable=True),
         sa.Column(

@@ -23,8 +23,8 @@ def upgrade() -> None:
         sa.Column("id", sa.String(36), primary_key=True, nullable=False),
         sa.Column("scenario_id", sa.String(36), nullable=False),
         sa.Column("job_id", sa.String(36), nullable=False),
-        sa.Column("metrics", postgresql.JSONB(), nullable=False, server_default="'{}'"),
-        sa.Column("bounds", postgresql.JSONB(), nullable=False, server_default="'{}'"),
+        sa.Column("metrics", postgresql.JSONB(), nullable=False, server_default=sa.text("'{}'")),
+        sa.Column("bounds", postgresql.JSONB(), nullable=False, server_default=sa.text("'{}'")),
         sa.Column(
             "captured_at",
             sa.DateTime(timezone=True),
