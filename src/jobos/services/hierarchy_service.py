@@ -60,12 +60,15 @@ Your task: generate a structured job hierarchy for a given business domain. The 
   - operation: core execution activities
   - monitoring: tracking and controlling
   - adaptation: adjusting when context changes
+  - consumption: the consumption chain — purchasing, receiving, setting up, learning to use, maintaining, and upgrading/disposing. Include 2-4 where relevant.
 
 **T4 Micro-Job (4-8 jobs)**: The EXECUTE. The smallest discrete, self-similar functional actions that decompose T3 steps. Categories:
   - setup: preparing inputs and environment for the action
   - act: performing the atomic action itself
   - verify: checking the outcome against expected results
   - cleanup: releasing resources and handing off
+
+**Related Jobs (2-4 jobs)**: Cross-cutting T2-level jobs that support multiple Core Functional jobs. These handle shared concerns like stakeholder communication, compliance, knowledge management, or cross-functional coordination. They are NOT part of the main hierarchy tree but SUPPORT the T2 jobs.
 
 Rules:
 1. Every job statement MUST start with an action verb (reduce, achieve, build, maintain, ensure, etc.)
@@ -74,22 +77,26 @@ Rules:
 4. T4 jobs are the smallest functional units — concrete, atomic actions with clear completion criteria
 5. Each job should include 1-2 suggested metrics
 6. Jobs should be genuinely relevant to the specified domain, not generic
+7. Assign executor_type "HUMAN" or "AI" per job. HUMAN = requires judgment, creativity, empathy. AI = can be systematically automated. Default HUMAN when uncertain.
 
 Note: Experience (emotional/social FEEL) is Dimension A, orthogonal to this hierarchy. Do not include experience/emotional jobs in the tiers.
 
 Respond with JSON:
 {
   "strategic": [
-    {"statement": "...", "rationale": "...", "metrics_hint": ["..."]}
+    {"statement": "...", "rationale": "...", "metrics_hint": ["..."], "executor_type": "HUMAN"}
   ],
   "core_functional": [
-    {"statement": "...", "rationale": "...", "metrics_hint": ["..."]}
+    {"statement": "...", "rationale": "...", "metrics_hint": ["..."], "executor_type": "HUMAN"}
   ],
   "execution": [
-    {"statement": "...", "category": "acquisition|preparation|operation|monitoring|adaptation", "rationale": "...", "metrics_hint": ["..."]}
+    {"statement": "...", "category": "acquisition|preparation|operation|monitoring|adaptation|consumption", "rationale": "...", "metrics_hint": ["..."], "executor_type": "HUMAN|AI"}
   ],
   "micro_job": [
-    {"statement": "...", "category": "setup|act|verify|cleanup", "rationale": "...", "metrics_hint": ["..."]}
+    {"statement": "...", "category": "setup|act|verify|cleanup", "rationale": "...", "metrics_hint": ["..."], "executor_type": "HUMAN|AI"}
+  ],
+  "related_jobs": [
+    {"statement": "...", "rationale": "...", "metrics_hint": ["..."], "executor_type": "HUMAN|AI"}
   ]
 }"""
 
@@ -101,85 +108,104 @@ Respond with JSON:
 DOMAIN_TEMPLATES: dict[str, dict[str, list[dict]]] = {
     "b2b_saas": {
         "strategic": [
-            {"statement": "achieve sustainable product-market fit and revenue growth", "rationale": "The macro-goal for any B2B SaaS", "metrics_hint": ["MRR growth rate", "Sean Ellis score"]},
+            {"statement": "achieve sustainable product-market fit and revenue growth", "rationale": "The macro-goal for any B2B SaaS", "metrics_hint": ["MRR growth rate", "Sean Ellis score"], "executor_type": "HUMAN"},
         ],
         "core_functional": [
-            {"statement": "reduce customer acquisition cost to sustainable levels", "rationale": "Unit economics must work", "metrics_hint": ["CAC", "CAC/LTV ratio"]},
-            {"statement": "increase product activation and retention rates", "rationale": "PMF requires users staying", "metrics_hint": ["activation rate", "D30 retention"]},
-            {"statement": "maintain reliable and scalable product infrastructure", "rationale": "Growth requires stability", "metrics_hint": ["uptime", "p95 latency"]},
-            {"statement": "build predictable revenue pipeline", "rationale": "Investors and planning require predictability", "metrics_hint": ["MRR", "net revenue retention"]},
+            {"statement": "reduce customer acquisition cost to sustainable levels", "rationale": "Unit economics must work", "metrics_hint": ["CAC", "CAC/LTV ratio"], "executor_type": "HUMAN"},
+            {"statement": "increase product activation and retention rates", "rationale": "PMF requires users staying", "metrics_hint": ["activation rate", "D30 retention"], "executor_type": "HUMAN"},
+            {"statement": "maintain reliable and scalable product infrastructure", "rationale": "Growth requires stability", "metrics_hint": ["uptime", "p95 latency"], "executor_type": "AI"},
+            {"statement": "build predictable revenue pipeline", "rationale": "Investors and planning require predictability", "metrics_hint": ["MRR", "net revenue retention"], "executor_type": "HUMAN"},
         ],
         "execution": [
-            {"statement": "identify and validate ideal customer profile", "category": "acquisition", "rationale": "Must know who to target", "metrics_hint": ["ICP interviews completed"]},
-            {"statement": "build inbound lead generation engine", "category": "acquisition", "rationale": "Scalable demand source", "metrics_hint": ["leads per week", "cost per lead"]},
-            {"statement": "design and optimize onboarding flow", "category": "preparation", "rationale": "First impression drives activation", "metrics_hint": ["time to first value", "onboarding completion rate"]},
-            {"statement": "execute product development sprints", "category": "operation", "rationale": "Core execution activity", "metrics_hint": ["velocity", "feature adoption rate"]},
-            {"statement": "deliver customer success touchpoints", "category": "operation", "rationale": "Retention requires proactive engagement", "metrics_hint": ["NPS", "support ticket volume"]},
-            {"statement": "monitor key SaaS metrics weekly", "category": "monitoring", "rationale": "Can't improve what you don't measure", "metrics_hint": ["MRR", "churn rate", "activation rate"]},
-            {"statement": "track product usage patterns and drop-off points", "category": "monitoring", "rationale": "Data-driven product decisions", "metrics_hint": ["DAU/MAU", "feature usage distribution"]},
-            {"statement": "adjust pricing based on willingness-to-pay signals", "category": "adaptation", "rationale": "Pricing is a lever for growth", "metrics_hint": ["ARPU", "conversion rate by plan"]},
-            {"statement": "pivot acquisition channels based on CAC trends", "category": "adaptation", "rationale": "Channels saturate over time", "metrics_hint": ["CAC by channel", "channel efficiency ratio"]},
+            {"statement": "identify and validate ideal customer profile", "category": "acquisition", "rationale": "Must know who to target", "metrics_hint": ["ICP interviews completed"], "executor_type": "HUMAN"},
+            {"statement": "build inbound lead generation engine", "category": "acquisition", "rationale": "Scalable demand source", "metrics_hint": ["leads per week", "cost per lead"], "executor_type": "HUMAN"},
+            {"statement": "design and optimize onboarding flow", "category": "preparation", "rationale": "First impression drives activation", "metrics_hint": ["time to first value", "onboarding completion rate"], "executor_type": "HUMAN"},
+            {"statement": "execute product development sprints", "category": "operation", "rationale": "Core execution activity", "metrics_hint": ["velocity", "feature adoption rate"], "executor_type": "HUMAN"},
+            {"statement": "deliver customer success touchpoints", "category": "operation", "rationale": "Retention requires proactive engagement", "metrics_hint": ["NPS", "support ticket volume"], "executor_type": "HUMAN"},
+            {"statement": "monitor key SaaS metrics weekly", "category": "monitoring", "rationale": "Can't improve what you don't measure", "metrics_hint": ["MRR", "churn rate", "activation rate"], "executor_type": "AI"},
+            {"statement": "track product usage patterns and drop-off points", "category": "monitoring", "rationale": "Data-driven product decisions", "metrics_hint": ["DAU/MAU", "feature usage distribution"], "executor_type": "AI"},
+            {"statement": "adjust pricing based on willingness-to-pay signals", "category": "adaptation", "rationale": "Pricing is a lever for growth", "metrics_hint": ["ARPU", "conversion rate by plan"], "executor_type": "HUMAN"},
+            {"statement": "pivot acquisition channels based on CAC trends", "category": "adaptation", "rationale": "Channels saturate over time", "metrics_hint": ["CAC by channel", "channel efficiency ratio"], "executor_type": "HUMAN"},
+            {"statement": "manage subscription lifecycle from purchase to renewal", "category": "consumption", "rationale": "Full customer journey requires end-to-end management", "metrics_hint": ["renewal rate", "time to first purchase"], "executor_type": "HUMAN"},
+            {"statement": "automate user provisioning and setup workflows", "category": "consumption", "rationale": "Streamlined setup reduces time-to-value", "metrics_hint": ["setup completion rate", "provisioning time"], "executor_type": "AI"},
         ],
         "micro_job": [
-            {"statement": "prepare customer interview script and schedule session", "category": "setup", "rationale": "Structured discovery yields better ICP data", "metrics_hint": ["interviews scheduled"]},
-            {"statement": "execute A/B test on onboarding variant", "category": "act", "rationale": "Atomic test action for activation improvement", "metrics_hint": ["test completion rate"]},
-            {"statement": "verify feature adoption metric against release target", "category": "verify", "rationale": "Validate sprint outcome at atomic level", "metrics_hint": ["adoption delta"]},
-            {"statement": "archive stale leads and update CRM pipeline status", "category": "cleanup", "rationale": "Clean pipeline improves forecast accuracy", "metrics_hint": ["pipeline hygiene score"]},
-            {"statement": "configure monitoring alert thresholds for SLO breach", "category": "setup", "rationale": "Early detection prevents outages", "metrics_hint": ["alert coverage %"]},
+            {"statement": "prepare customer interview script and schedule session", "category": "setup", "rationale": "Structured discovery yields better ICP data", "metrics_hint": ["interviews scheduled"], "executor_type": "HUMAN"},
+            {"statement": "execute A/B test on onboarding variant", "category": "act", "rationale": "Atomic test action for activation improvement", "metrics_hint": ["test completion rate"], "executor_type": "AI"},
+            {"statement": "verify feature adoption metric against release target", "category": "verify", "rationale": "Validate sprint outcome at atomic level", "metrics_hint": ["adoption delta"], "executor_type": "AI"},
+            {"statement": "archive stale leads and update CRM pipeline status", "category": "cleanup", "rationale": "Clean pipeline improves forecast accuracy", "metrics_hint": ["pipeline hygiene score"], "executor_type": "AI"},
+            {"statement": "configure monitoring alert thresholds for SLO breach", "category": "setup", "rationale": "Early detection prevents outages", "metrics_hint": ["alert coverage %"], "executor_type": "AI"},
+        ],
+        "related_jobs": [
+            {"statement": "coordinate cross-functional communication between product, sales, and engineering", "rationale": "Shared concerns across all core functional jobs", "metrics_hint": ["cross-team meeting cadence", "decision turnaround time"], "executor_type": "HUMAN"},
+            {"statement": "maintain compliance and data privacy standards", "rationale": "Regulatory obligations cut across all operations", "metrics_hint": ["compliance audit score", "data breach incidents"], "executor_type": "HUMAN"},
+            {"statement": "consolidate and share organizational knowledge across teams", "rationale": "Knowledge management supports all pillars", "metrics_hint": ["documentation coverage", "knowledge base usage"], "executor_type": "AI"},
         ],
     },
     "retail_operations": {
         "strategic": [
-            {"statement": "optimize end-to-end retail operations for profitability and customer satisfaction", "rationale": "Dual objective: margin + experience", "metrics_hint": ["gross margin", "CSAT"]},
+            {"statement": "optimize end-to-end retail operations for profitability and customer satisfaction", "rationale": "Dual objective: margin + experience", "metrics_hint": ["gross margin", "CSAT"], "executor_type": "HUMAN"},
         ],
         "core_functional": [
-            {"statement": "reduce inventory carrying costs while maintaining availability", "rationale": "Inventory is the biggest cost lever", "metrics_hint": ["inventory turnover", "stockout rate"]},
-            {"statement": "increase store conversion rate and average transaction value", "rationale": "Revenue per visit drives profitability", "metrics_hint": ["conversion rate", "ATV"]},
-            {"statement": "ensure consistent customer experience across locations", "rationale": "Brand promise requires consistency", "metrics_hint": ["mystery shopper score", "CSAT variance"]},
+            {"statement": "reduce inventory carrying costs while maintaining availability", "rationale": "Inventory is the biggest cost lever", "metrics_hint": ["inventory turnover", "stockout rate"], "executor_type": "HUMAN"},
+            {"statement": "increase store conversion rate and average transaction value", "rationale": "Revenue per visit drives profitability", "metrics_hint": ["conversion rate", "ATV"], "executor_type": "HUMAN"},
+            {"statement": "ensure consistent customer experience across locations", "rationale": "Brand promise requires consistency", "metrics_hint": ["mystery shopper score", "CSAT variance"], "executor_type": "HUMAN"},
         ],
         "execution": [
-            {"statement": "forecast demand using historical and seasonal patterns", "category": "acquisition", "rationale": "Buying right is the first step", "metrics_hint": ["forecast accuracy"]},
-            {"statement": "negotiate vendor terms and manage supplier relationships", "category": "acquisition", "rationale": "Cost of goods determines margin", "metrics_hint": ["cost reduction %", "supplier lead time"]},
-            {"statement": "train staff on product knowledge and service standards", "category": "preparation", "rationale": "Staff capability drives conversion", "metrics_hint": ["training completion rate", "product knowledge score"]},
-            {"statement": "manage daily store operations and merchandising", "category": "operation", "rationale": "Core retail execution", "metrics_hint": ["planogram compliance", "sales per labor hour"]},
-            {"statement": "process returns and handle customer complaints efficiently", "category": "operation", "rationale": "Recovery drives loyalty", "metrics_hint": ["return processing time", "complaint resolution rate"]},
-            {"statement": "monitor foot traffic patterns and conversion funnels", "category": "monitoring", "rationale": "Understand the customer journey", "metrics_hint": ["foot traffic", "dwell time", "conversion funnel"]},
-            {"statement": "adjust staffing levels based on traffic predictions", "category": "adaptation", "rationale": "Labor is the biggest controllable cost", "metrics_hint": ["labor cost ratio", "staff utilization"]},
+            {"statement": "forecast demand using historical and seasonal patterns", "category": "acquisition", "rationale": "Buying right is the first step", "metrics_hint": ["forecast accuracy"], "executor_type": "AI"},
+            {"statement": "negotiate vendor terms and manage supplier relationships", "category": "acquisition", "rationale": "Cost of goods determines margin", "metrics_hint": ["cost reduction %", "supplier lead time"], "executor_type": "HUMAN"},
+            {"statement": "train staff on product knowledge and service standards", "category": "preparation", "rationale": "Staff capability drives conversion", "metrics_hint": ["training completion rate", "product knowledge score"], "executor_type": "HUMAN"},
+            {"statement": "manage daily store operations and merchandising", "category": "operation", "rationale": "Core retail execution", "metrics_hint": ["planogram compliance", "sales per labor hour"], "executor_type": "HUMAN"},
+            {"statement": "process returns and handle customer complaints efficiently", "category": "operation", "rationale": "Recovery drives loyalty", "metrics_hint": ["return processing time", "complaint resolution rate"], "executor_type": "HUMAN"},
+            {"statement": "monitor foot traffic patterns and conversion funnels", "category": "monitoring", "rationale": "Understand the customer journey", "metrics_hint": ["foot traffic", "dwell time", "conversion funnel"], "executor_type": "AI"},
+            {"statement": "adjust staffing levels based on traffic predictions", "category": "adaptation", "rationale": "Labor is the biggest controllable cost", "metrics_hint": ["labor cost ratio", "staff utilization"], "executor_type": "AI"},
+            {"statement": "manage product lifecycle from procurement through disposal", "category": "consumption", "rationale": "Full product journey impacts margin and waste", "metrics_hint": ["shrinkage rate", "product lifecycle cost"], "executor_type": "HUMAN"},
+            {"statement": "automate inventory replenishment based on sales velocity", "category": "consumption", "rationale": "Timely restocking prevents lost sales", "metrics_hint": ["restock lead time", "auto-reorder accuracy"], "executor_type": "AI"},
         ],
         "micro_job": [
-            {"statement": "prepare daily restock list from overnight sales data", "category": "setup", "rationale": "Atomic input for replenishment cycle", "metrics_hint": ["restock accuracy"]},
-            {"statement": "execute planogram reset for promotional display", "category": "act", "rationale": "Smallest merchandising action unit", "metrics_hint": ["planogram compliance"]},
-            {"statement": "verify cash register reconciliation against POS totals", "category": "verify", "rationale": "End-of-shift integrity check", "metrics_hint": ["reconciliation variance"]},
-            {"statement": "archive expired promotional materials and reset signage", "category": "cleanup", "rationale": "Clean visual environment for next promotion", "metrics_hint": ["signage compliance"]},
+            {"statement": "prepare daily restock list from overnight sales data", "category": "setup", "rationale": "Atomic input for replenishment cycle", "metrics_hint": ["restock accuracy"], "executor_type": "AI"},
+            {"statement": "execute planogram reset for promotional display", "category": "act", "rationale": "Smallest merchandising action unit", "metrics_hint": ["planogram compliance"], "executor_type": "HUMAN"},
+            {"statement": "verify cash register reconciliation against POS totals", "category": "verify", "rationale": "End-of-shift integrity check", "metrics_hint": ["reconciliation variance"], "executor_type": "AI"},
+            {"statement": "archive expired promotional materials and reset signage", "category": "cleanup", "rationale": "Clean visual environment for next promotion", "metrics_hint": ["signage compliance"], "executor_type": "HUMAN"},
+        ],
+        "related_jobs": [
+            {"statement": "manage vendor compliance and quality assurance across suppliers", "rationale": "Cross-cutting concern for all inventory and customer experience", "metrics_hint": ["vendor compliance rate", "quality incident count"], "executor_type": "HUMAN"},
+            {"statement": "coordinate marketing and merchandising calendars across locations", "rationale": "Alignment ensures consistent execution", "metrics_hint": ["calendar adherence rate", "promotion sync score"], "executor_type": "HUMAN"},
         ],
     },
     "corporate_transformation": {
         "strategic": [
-            {"statement": "drive successful organizational transformation that delivers measurable business outcomes", "rationale": "Transformation must produce results, not just activity", "metrics_hint": ["transformation ROI", "milestone completion rate"]},
+            {"statement": "drive successful organizational transformation that delivers measurable business outcomes", "rationale": "Transformation must produce results, not just activity", "metrics_hint": ["transformation ROI", "milestone completion rate"], "executor_type": "HUMAN"},
         ],
         "core_functional": [
-            {"statement": "align leadership team around transformation vision and priorities", "rationale": "Without alignment, execution fragments", "metrics_hint": ["leadership alignment score", "decision turnaround time"]},
-            {"statement": "build change capability across the organization", "rationale": "Transformation is ongoing, not a one-time event", "metrics_hint": ["change readiness score", "adoption rate"]},
-            {"statement": "deliver quick wins that demonstrate transformation value", "rationale": "Momentum requires visible progress", "metrics_hint": ["quick wins delivered", "stakeholder confidence"]},
-            {"statement": "establish governance and measurement framework for transformation", "rationale": "Can't manage what you can't measure", "metrics_hint": ["KPI tracking coverage", "review cadence adherence"]},
+            {"statement": "align leadership team around transformation vision and priorities", "rationale": "Without alignment, execution fragments", "metrics_hint": ["leadership alignment score", "decision turnaround time"], "executor_type": "HUMAN"},
+            {"statement": "build change capability across the organization", "rationale": "Transformation is ongoing, not a one-time event", "metrics_hint": ["change readiness score", "adoption rate"], "executor_type": "HUMAN"},
+            {"statement": "deliver quick wins that demonstrate transformation value", "rationale": "Momentum requires visible progress", "metrics_hint": ["quick wins delivered", "stakeholder confidence"], "executor_type": "HUMAN"},
+            {"statement": "establish governance and measurement framework for transformation", "rationale": "Can't manage what you can't measure", "metrics_hint": ["KPI tracking coverage", "review cadence adherence"], "executor_type": "HUMAN"},
         ],
         "execution": [
-            {"statement": "assess current state capabilities and gaps", "category": "acquisition", "rationale": "Start from reality, not assumptions", "metrics_hint": ["capability assessment coverage"]},
-            {"statement": "recruit transformation champions in each business unit", "category": "acquisition", "rationale": "Change needs local advocates", "metrics_hint": ["champions identified per unit"]},
-            {"statement": "design target operating model and transition roadmap", "category": "preparation", "rationale": "Clear destination enables navigation", "metrics_hint": ["roadmap milestones defined"]},
-            {"statement": "conduct workshops to align team understanding of strategy", "category": "preparation", "rationale": "Shared understanding enables autonomous execution", "metrics_hint": ["workshop completion rate", "comprehension score"]},
-            {"statement": "execute pilot programs in selected business units", "category": "operation", "rationale": "Test before scale", "metrics_hint": ["pilot success rate", "lessons captured"]},
-            {"statement": "scale successful pilots across the organization", "category": "operation", "rationale": "Proven approaches reduce risk", "metrics_hint": ["rollout completion rate"]},
-            {"statement": "track adoption metrics and resistance patterns", "category": "monitoring", "rationale": "Early detection enables course correction", "metrics_hint": ["adoption rate", "resistance incidents"]},
-            {"statement": "measure business impact of transformation initiatives", "category": "monitoring", "rationale": "Justify continued investment", "metrics_hint": ["revenue impact", "cost savings realized"]},
-            {"statement": "adjust transformation approach based on feedback loops", "category": "adaptation", "rationale": "Rigid plans fail in complex systems", "metrics_hint": ["pivot count", "stakeholder feedback score"]},
+            {"statement": "assess current state capabilities and gaps", "category": "acquisition", "rationale": "Start from reality, not assumptions", "metrics_hint": ["capability assessment coverage"], "executor_type": "HUMAN"},
+            {"statement": "recruit transformation champions in each business unit", "category": "acquisition", "rationale": "Change needs local advocates", "metrics_hint": ["champions identified per unit"], "executor_type": "HUMAN"},
+            {"statement": "design target operating model and transition roadmap", "category": "preparation", "rationale": "Clear destination enables navigation", "metrics_hint": ["roadmap milestones defined"], "executor_type": "HUMAN"},
+            {"statement": "conduct workshops to align team understanding of strategy", "category": "preparation", "rationale": "Shared understanding enables autonomous execution", "metrics_hint": ["workshop completion rate", "comprehension score"], "executor_type": "HUMAN"},
+            {"statement": "execute pilot programs in selected business units", "category": "operation", "rationale": "Test before scale", "metrics_hint": ["pilot success rate", "lessons captured"], "executor_type": "HUMAN"},
+            {"statement": "scale successful pilots across the organization", "category": "operation", "rationale": "Proven approaches reduce risk", "metrics_hint": ["rollout completion rate"], "executor_type": "HUMAN"},
+            {"statement": "track adoption metrics and resistance patterns", "category": "monitoring", "rationale": "Early detection enables course correction", "metrics_hint": ["adoption rate", "resistance incidents"], "executor_type": "AI"},
+            {"statement": "measure business impact of transformation initiatives", "category": "monitoring", "rationale": "Justify continued investment", "metrics_hint": ["revenue impact", "cost savings realized"], "executor_type": "AI"},
+            {"statement": "adjust transformation approach based on feedback loops", "category": "adaptation", "rationale": "Rigid plans fail in complex systems", "metrics_hint": ["pivot count", "stakeholder feedback score"], "executor_type": "HUMAN"},
+            {"statement": "manage tool and process adoption lifecycle across units", "category": "consumption", "rationale": "Tools go through purchase-learn-use-maintain cycle", "metrics_hint": ["tool adoption rate", "training completion per tool"], "executor_type": "HUMAN"},
         ],
         "micro_job": [
-            {"statement": "prepare stakeholder interview guide for capability assessment", "category": "setup", "rationale": "Structured input for gap analysis", "metrics_hint": ["interviews prepared"]},
-            {"statement": "execute single-unit pilot kickoff session", "category": "act", "rationale": "Atomic launch action for pilot", "metrics_hint": ["kickoff completion"]},
-            {"statement": "verify adoption metric against pilot success threshold", "category": "verify", "rationale": "Go/no-go gate for scale decision", "metrics_hint": ["threshold met (bool)"]},
-            {"statement": "archive completed pilot documentation and lessons learned", "category": "cleanup", "rationale": "Knowledge capture for next unit", "metrics_hint": ["documents archived"]},
-            {"statement": "distribute workshop materials to next business unit cohort", "category": "setup", "rationale": "Preparation for rollout continuation", "metrics_hint": ["materials distributed"]},
+            {"statement": "prepare stakeholder interview guide for capability assessment", "category": "setup", "rationale": "Structured input for gap analysis", "metrics_hint": ["interviews prepared"], "executor_type": "HUMAN"},
+            {"statement": "execute single-unit pilot kickoff session", "category": "act", "rationale": "Atomic launch action for pilot", "metrics_hint": ["kickoff completion"], "executor_type": "HUMAN"},
+            {"statement": "verify adoption metric against pilot success threshold", "category": "verify", "rationale": "Go/no-go gate for scale decision", "metrics_hint": ["threshold met (bool)"], "executor_type": "AI"},
+            {"statement": "archive completed pilot documentation and lessons learned", "category": "cleanup", "rationale": "Knowledge capture for next unit", "metrics_hint": ["documents archived"], "executor_type": "AI"},
+            {"statement": "distribute workshop materials to next business unit cohort", "category": "setup", "rationale": "Preparation for rollout continuation", "metrics_hint": ["materials distributed"], "executor_type": "AI"},
+        ],
+        "related_jobs": [
+            {"statement": "manage stakeholder communication and expectation alignment", "rationale": "Communication cuts across all transformation pillars", "metrics_hint": ["stakeholder satisfaction score", "communication cadence"], "executor_type": "HUMAN"},
+            {"statement": "ensure regulatory and compliance alignment during transformation", "rationale": "Compliance is a shared concern across all business units", "metrics_hint": ["compliance check pass rate", "regulatory incidents"], "executor_type": "HUMAN"},
+            {"statement": "consolidate lessons learned and best practices across pilots", "rationale": "Knowledge management supports scaling", "metrics_hint": ["lessons captured per pilot", "reuse rate"], "executor_type": "AI"},
         ],
     },
 }
@@ -267,6 +293,7 @@ class HierarchyService:
                 category=props.get("hierarchy_category", ""),
                 rationale=props.get("hierarchy_rationale", ""),
                 metrics_hint=props.get("metrics_hint", []),
+                executor_type=props.get("executor_type", "HUMAN"),
             ))
 
             children = await self._graph.get_neighbors(job_id, edge_type="HIRES", direction="outgoing")
@@ -361,6 +388,7 @@ Generate jobs that are specific and relevant to this exact domain. Avoid generic
                 metrics_hint=item.get("metrics_hint", []),
                 root_token="ROOT",
                 scope_id=scope_id,
+                executor_type=item.get("executor_type", "HUMAN"),
             )
             t1_jobs.append(job)
             jobs.append(job)
@@ -374,6 +402,7 @@ Generate jobs that are specific and relevant to this exact domain. Avoid generic
                 statement=stmt,
                 rationale=item.get("rationale", ""),
                 metrics_hint=item.get("metrics_hint", []),
+                executor_type=item.get("executor_type", "HUMAN"),
             )
             t2_jobs.append(job)
             jobs.append(job)
@@ -393,6 +422,7 @@ Generate jobs that are specific and relevant to this exact domain. Avoid generic
                 category=item.get("category", "operation"),
                 rationale=item.get("rationale", ""),
                 metrics_hint=item.get("metrics_hint", []),
+                executor_type=item.get("executor_type", "HUMAN"),
             )
             t3_jobs.append(job)
             jobs.append(job)
@@ -417,6 +447,7 @@ Generate jobs that are specific and relevant to this exact domain. Avoid generic
                 category=item.get("category", "act"),
                 rationale=item.get("rationale", ""),
                 metrics_hint=item.get("metrics_hint", []),
+                executor_type=item.get("executor_type", "HUMAN"),
             )
             t4_jobs.append(job)
             jobs.append(job)
@@ -430,18 +461,39 @@ Generate jobs that are specific and relevant to this exact domain. Avoid generic
                 for t4 in t4_jobs[start:end]:
                     edges.append(HierarchyEdge(parent_id=t3.id, child_id=t4.id))
 
+        # Related jobs: cross-cutting T2-level jobs that support multiple core functional jobs
+        related: list[HierarchyJob] = []
+        for item in raw.get("related_jobs", []):
+            stmt = self._ensure_verb(item.get("statement", ""))
+            job = HierarchyJob(
+                tier=JobTier.CORE_FUNCTIONAL,
+                statement=stmt,
+                category="related",
+                rationale=item.get("rationale", ""),
+                metrics_hint=item.get("metrics_hint", []),
+                executor_type=item.get("executor_type", "HUMAN"),
+            )
+            related.append(job)
+
         # Build GenerativeModel per job (tier → field mapping)
         generative_models: dict[str, GenerativeModel] = {
             job.id: map_tier_to_generative_model(job)
             for job in jobs
         }
 
+        # Count consumption category T3 jobs
+        t3_consumption = sum(
+            1 for j in t3_jobs if j.category == "consumption"
+        )
+
         # Build summary
         summary = {
             "T1_strategic": len(t1_jobs),
             "T2_core": len(t2_jobs),
             "T3_execution": len(t3_jobs),
+            "T3_consumption": t3_consumption,
             "T4_micro": len(t4_jobs),
+            "related_jobs": len(related),
             "total_jobs": len(jobs),
             "total_edges": len(edges),
         }
@@ -454,6 +506,7 @@ Generate jobs that are specific and relevant to this exact domain. Avoid generic
             edges=edges,
             summary=summary,
             generative_models=generative_models,
+            related_jobs=related,
         )
 
     # ─── Persist to Neo4j ────────────────────────────────
@@ -488,6 +541,7 @@ Generate jobs that are specific and relevant to this exact domain. Avoid generic
                 "hierarchy_domain": result.context.domain,
                 "metrics_hint": job.metrics_hint,
                 "vfe_current": 0.0,
+                "executor_type": job.executor_type or "HUMAN",
             }
 
             if is_strategic:
@@ -530,9 +584,46 @@ Generate jobs that are specific and relevant to this exact domain. Avoid generic
                 properties={"strength": edge.strength, "source": "hierarchy_generator"},
             )
 
+        # Persist related jobs as Entity:Job nodes with is_related_job flag
+        t2_ids = [j.id for j in result.jobs if j.tier == JobTier.CORE_FUNCTIONAL]
+        for rj in result.related_jobs:
+            props = {
+                "job_type": "core_functional",
+                "job_nature": "project",
+                "level": 1,
+                "hierarchy_tier": rj.tier.value,
+                "hierarchy_category": "related",
+                "hierarchy_rationale": rj.rationale,
+                "hierarchy_domain": result.context.domain,
+                "metrics_hint": rj.metrics_hint,
+                "vfe_current": 0.0,
+                "executor_type": rj.executor_type or "HUMAN",
+                "is_related_job": True,
+            }
+            entity = EntityBase(
+                id=rj.id,
+                name=rj.statement[:80],
+                statement=rj.statement,
+                entity_type=EntityType.JOB,
+                status="active",
+                labels=["Job"],
+                properties=props,
+            )
+            await self._graph.save_entity(entity)
+
+            # Create SUPPORTS edges from related job to all T2 jobs
+            for t2_id in t2_ids:
+                await self._graph.create_edge(
+                    source_id=rj.id,
+                    target_id=t2_id,
+                    edge_type="SUPPORTS",
+                    properties={"source": "hierarchy_generator"},
+                )
+
         logger.info(
-            "Persisted hierarchy: %d jobs, %d edges for domain '%s'",
-            len(result.jobs), len(result.edges), result.context.domain,
+            "Persisted hierarchy: %d jobs, %d edges, %d related for domain '%s'",
+            len(result.jobs), len(result.edges), len(result.related_jobs),
+            result.context.domain,
         )
 
     # ─── Helpers ─────────────────────────────────────────

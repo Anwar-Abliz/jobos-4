@@ -36,6 +36,11 @@ const TIER_COLORS: Record<string, { bg: string; text: string; label: string }> =
   T4_micro: { bg: "bg-amber-500/15", text: "text-amber-400", label: "Micro" },
 };
 
+const EXECUTOR_COLORS: Record<string, { bg: string; text: string; label: string }> = {
+  HUMAN: { bg: "bg-orange-500/15", text: "text-orange-400", label: "H" },
+  AI: { bg: "bg-cyan-500/15", text: "text-cyan-400", label: "AI" },
+};
+
 type InputTab = "text" | "url" | "upload";
 
 /** Generate a short hex ID (matches backend _uid format). */
@@ -114,6 +119,7 @@ function buildTreeFromResponse(
       statement: j.statement,
       category: j.category,
       metrics_hint: j.metrics_hint,
+      executor_type: j.executor_type || "HUMAN",
     };
     if (kids.length > 0) node.children = kids;
     return node;
@@ -272,6 +278,7 @@ export function PhaseOnePanel() {
       tier: selectedJob.tier,
       category: selectedJob.category,
       metricsHint: selectedJob.metrics_hint,
+      executorType: (selectedJob.executor_type as "HUMAN" | "AI") || "HUMAN",
     });
   }, [selectedJob, lockTargetJob]);
 
@@ -525,6 +532,33 @@ export function PhaseOnePanel() {
                 Total: {hierarchy.summary.total_jobs}
               </span>
             </div>
+
+            {/* Related jobs */}
+            {hierarchy.related_jobs && hierarchy.related_jobs.length > 0 && (
+              <div className="mt-3">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1.5">
+                  Related Jobs
+                </p>
+                <div className="space-y-1">
+                  {hierarchy.related_jobs.map((rj) => {
+                    const exec = EXECUTOR_COLORS[(rj.executor_type as string) || "HUMAN"] || EXECUTOR_COLORS.HUMAN;
+                    return (
+                      <div
+                        key={rj.id}
+                        className="flex items-start gap-1.5 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)] px-2 py-1.5"
+                      >
+                        <span className={`shrink-0 mt-0.5 rounded px-1 py-0 text-[9px] font-medium uppercase ${exec.bg} ${exec.text}`}>
+                          {exec.label}
+                        </span>
+                        <span className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
+                          {rj.statement}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -609,6 +643,14 @@ export function PhaseOnePanel() {
                     >
                       {(TIER_COLORS[selectedJob.tier] || TIER_COLORS.T1_strategic).label}
                     </span>
+                    {(() => {
+                      const exec = EXECUTOR_COLORS[(selectedJob.executor_type as string) || "HUMAN"] || EXECUTOR_COLORS.HUMAN;
+                      return (
+                        <span className={`rounded px-1.5 py-0.5 text-[9px] font-medium uppercase ${exec.bg} ${exec.text}`}>
+                          {exec.label}
+                        </span>
+                      );
+                    })()}
                     <button
                       onClick={() => startEditing(selectedJob)}
                       className="p-1 rounded text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--accent-dim)] transition-colors"

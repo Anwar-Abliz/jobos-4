@@ -64,6 +64,7 @@ class ExecutionCategory(str, Enum):
     OPERATION = "operation"             # Core usage/execution
     MONITORING = "monitoring"           # Track and control
     ADAPTATION = "adaptation"           # Adjust when context changes
+    CONSUMPTION = "consumption"         # Consumption chain lifecycle steps
 
 
 class MicroJobCategory(str, Enum):
@@ -88,6 +89,19 @@ T3_STANDARD_STEPS: list[str] = [
     "Monitor",      # Track progress and detect deviations
     "Modify",       # Adjust mid-course based on feedback
     "Conclude",     # Wrap up, document, and hand off
+]
+
+# ─── Consumption Chain ────────────────────────────────────
+# The canonical consumption lifecycle steps — a T3 sub-sequence
+# that tracks the full journey from acquisition to end-of-life.
+CONSUMPTION_CHAIN_STEPS: list[str] = [
+    "Purchase",
+    "Receive",
+    "Set Up",
+    "Learn",
+    "Use",
+    "Maintain",
+    "Upgrade/Dispose",
 ]
 
 # Neo4j relationship note: CHILD_OF is an alias direction for PART_OF.
@@ -151,6 +165,8 @@ class HierarchyResult(BaseModel):
     summary: dict[str, Any] = Field(default_factory=dict)
     # GenerativeModel per job_id — populated by HierarchyService._build_hierarchy()
     generative_models: dict[str, Any] = Field(default_factory=dict)
+    # Related jobs: cross-cutting T2-level jobs that support multiple core functional jobs
+    related_jobs: list[HierarchyJob] = Field(default_factory=list)
 
     def jobs_at_tier(self, tier: JobTier) -> list[HierarchyJob]:
         return [j for j in self.jobs if j.tier == tier]
@@ -193,6 +209,7 @@ class HierarchyResult(BaseModel):
                 "statement": job.statement,
                 "category": job.category,
                 "metrics_hint": job.metrics_hint,
+                "executor_type": job.executor_type or "HUMAN",
             }
             kids = children_map.get(job_id, [])
             if kids:
@@ -202,9 +219,23 @@ class HierarchyResult(BaseModel):
         # Experience dimension: placeholder for Dimension A nodes (populated externally)
         experience_nodes: list[dict[str, Any]] = []
 
+        # Related jobs: cross-cutting T2-level jobs
+        related_job_dicts = [
+            {
+                "id": rj.id,
+                "tier": rj.tier.value,
+                "statement": rj.statement,
+                "category": rj.category,
+                "metrics_hint": rj.metrics_hint,
+                "executor_type": rj.executor_type or "HUMAN",
+            }
+            for rj in self.related_jobs
+        ]
+
         return {
             "id": self.id,
             "domain": self.context.domain,
             "functional_spine": [build_node(r.id) for r in functional_roots],
             "experience_dimension": experience_nodes,
+            "related_jobs": related_job_dicts,
         }

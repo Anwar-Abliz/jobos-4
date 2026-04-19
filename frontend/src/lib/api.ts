@@ -65,6 +65,7 @@ export interface HierarchyJob {
   category: string;
   rationale: string;
   metrics_hint: string[];
+  executor_type?: "HUMAN" | "AI";
 }
 
 export interface HierarchyEdge {
@@ -79,6 +80,7 @@ export interface HierarchyResponse {
   jobs: HierarchyJob[];
   edges: HierarchyEdge[];
   summary: Record<string, number>;
+  related_jobs?: HierarchyJob[];
 }
 
 export interface HierarchyTree {
@@ -94,6 +96,7 @@ export interface TreeNode {
   statement: string;
   category: string;
   metrics_hint: string[];
+  executor_type?: "HUMAN" | "AI";
   children?: TreeNode[];
 }
 

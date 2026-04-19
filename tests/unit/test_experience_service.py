@@ -337,3 +337,64 @@ class TestExperienceHistory:
         history = await svc.get_history(job.id)
         assert len(history) == 2
         assert history[0]["version"] > history[1]["version"]
+
+
+# ─── AI Executor Guard ───────────────────────────────────
+
+class TestAIExecutorGuard:
+    @pytest.mark.asyncio
+    async def test_generate_refuses_for_ai_executor(self, svc, graph):
+        """Generate should raise ValueError for AI executor jobs."""
+        job = EntityBase(
+            id="ai_job_001",
+            name="Monitor metrics",
+            statement="Monitor key SaaS metrics weekly",
+            entity_type=EntityType.JOB,
+            properties={
+                "job_type": "core_functional",
+                "executor_type": "AI",
+                "hierarchy_tier": "T3_execution",
+            },
+        )
+        await graph.save_entity(job)
+        with pytest.raises(ValueError, match="not applicable to AI"):
+            await svc.generate(job_id=job.id)
+
+    @pytest.mark.asyncio
+    async def test_edit_refuses_for_ai_executor(self, svc, graph):
+        """Edit should raise ValueError for AI executor jobs."""
+        job = EntityBase(
+            id="ai_job_002",
+            name="Track usage patterns",
+            statement="Track product usage patterns",
+            entity_type=EntityType.JOB,
+            properties={
+                "job_type": "core_functional",
+                "executor_type": "AI",
+                "hierarchy_tier": "T3_execution",
+            },
+        )
+        await graph.save_entity(job)
+        with pytest.raises(ValueError, match="not applicable to AI"):
+            await svc.edit(
+                job_id=job.id,
+                markers={"feel_markers": ["Feel empowered"], "to_be_markers": []},
+            )
+
+    @pytest.mark.asyncio
+    async def test_generate_allows_human_executor(self, svc, graph):
+        """Generate should succeed for HUMAN executor jobs."""
+        job = EntityBase(
+            id="human_job_001",
+            name="Deliver touchpoints",
+            statement="Deliver customer success touchpoints",
+            entity_type=EntityType.JOB,
+            properties={
+                "job_type": "core_functional",
+                "executor_type": "HUMAN",
+                "hierarchy_tier": "T3_execution",
+            },
+        )
+        await graph.save_entity(job)
+        result = await svc.generate(job_id=job.id)
+        assert result["source"] in ("manual", "llm")

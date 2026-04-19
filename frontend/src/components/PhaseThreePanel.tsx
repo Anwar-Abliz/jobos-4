@@ -97,6 +97,11 @@ export function PhaseThreePanel() {
           Decision
         </h2>
         <TargetJobBadge />
+        <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
+          {targetJob.executorType === "AI"
+            ? "Evaluating AI performance (no experience dimension)"
+            : "Evaluating human execution (experience + metrics)"}
+        </p>
       </div>
 
       {/* Content */}

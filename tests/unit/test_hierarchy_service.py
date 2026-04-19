@@ -468,3 +468,138 @@ class TestTreeDictFunctionalSpine:
         result = await svc.generate(saas_context())
         tree = result.to_tree_dict()
         assert tree["experience_dimension"] == []
+
+
+# ─── Executor type ──────────────────────────────────────
+
+class TestExecutorType:
+    @pytest.mark.asyncio
+    async def test_all_jobs_have_non_null_executor_type(self, svc):
+        """Every job should have a non-null executor_type after generation."""
+        result = await svc.generate(saas_context())
+        for job in result.jobs:
+            assert job.executor_type is not None, (
+                f"Job {job.id} ({job.tier.value}) has null executor_type"
+            )
+            assert job.executor_type in ("HUMAN", "AI"), (
+                f"Job {job.id} has invalid executor_type: {job.executor_type!r}"
+            )
+
+    @pytest.mark.asyncio
+    async def test_executor_type_persisted_to_graph(self, svc, graph):
+        """executor_type should be stored in Neo4j entity properties."""
+        result = await svc.generate(saas_context())
+        for job in result.jobs:
+            entity = graph._entities.get(job.id)
+            assert entity is not None
+            assert entity.properties.get("executor_type") in ("HUMAN", "AI"), (
+                f"Job {job.id} missing executor_type in graph properties"
+            )
+
+    @pytest.mark.asyncio
+    async def test_backward_compat_missing_executor_type_defaults_human(self, svc):
+        """If a raw dict omits executor_type, it should default to HUMAN."""
+        raw = {
+            "strategic": [
+                {"statement": "achieve growth", "rationale": "test", "metrics_hint": ["MRR"]}
+            ],
+            "core_functional": [],
+            "execution": [],
+            "micro_job": [],
+        }
+        ctx = HierarchyContext(domain="test")
+        result = svc._build_hierarchy(raw, ctx)
+        assert result.jobs[0].executor_type == "HUMAN"
+
+    @pytest.mark.asyncio
+    async def test_tree_dict_includes_executor_type(self, svc):
+        """to_tree_dict() should include executor_type on each node."""
+        result = await svc.generate(saas_context())
+        tree = result.to_tree_dict()
+        def check_node(node):
+            assert "executor_type" in node, (
+                f"Node {node.get('id')} missing executor_type in tree dict"
+            )
+            assert node["executor_type"] in ("HUMAN", "AI")
+            for child in node.get("children", []):
+                check_node(child)
+        for root in tree["functional_spine"]:
+            check_node(root)
+
+
+# ─── Related jobs ────────────────────────────────────────
+
+class TestRelatedJobs:
+    @pytest.mark.asyncio
+    async def test_related_jobs_in_result(self, svc):
+        """Template should produce related_jobs in the result."""
+        result = await svc.generate(saas_context())
+        assert len(result.related_jobs) > 0
+
+    @pytest.mark.asyncio
+    async def test_related_jobs_are_t2_tier(self, svc):
+        """Related jobs should have CORE_FUNCTIONAL tier."""
+        result = await svc.generate(saas_context())
+        for rj in result.related_jobs:
+            assert rj.tier == JobTier.CORE_FUNCTIONAL
+
+    @pytest.mark.asyncio
+    async def test_related_jobs_have_related_category(self, svc):
+        """Related jobs should have category 'related'."""
+        result = await svc.generate(saas_context())
+        for rj in result.related_jobs:
+            assert rj.category == "related"
+
+    @pytest.mark.asyncio
+    async def test_related_jobs_persisted_to_graph(self, svc, graph):
+        """Related jobs should be persisted as entities with is_related_job flag."""
+        result = await svc.generate(saas_context())
+        for rj in result.related_jobs:
+            entity = graph._entities.get(rj.id)
+            assert entity is not None, f"Related job {rj.id} not persisted"
+            assert entity.properties.get("is_related_job") is True
+
+    @pytest.mark.asyncio
+    async def test_related_jobs_have_supports_edges(self, svc, graph):
+        """Related jobs should have SUPPORTS edges to T2 jobs."""
+        result = await svc.generate(saas_context())
+        supports_edges = [
+            e for e in graph._edges if e["edge_type"] == "SUPPORTS"
+        ]
+        assert len(supports_edges) > 0
+
+    @pytest.mark.asyncio
+    async def test_related_jobs_in_summary(self, svc):
+        """Summary should include related_jobs count."""
+        result = await svc.generate(saas_context())
+        assert "related_jobs" in result.summary
+        assert result.summary["related_jobs"] == len(result.related_jobs)
+
+    @pytest.mark.asyncio
+    async def test_related_jobs_in_tree_dict(self, svc):
+        """to_tree_dict() should include related_jobs."""
+        result = await svc.generate(saas_context())
+        tree = result.to_tree_dict()
+        assert "related_jobs" in tree
+        assert len(tree["related_jobs"]) == len(result.related_jobs)
+
+
+# ─── Consumption category ────────────────────────────────
+
+class TestConsumptionCategory:
+    @pytest.mark.asyncio
+    async def test_consumption_jobs_generated(self, svc):
+        """B2B SaaS template should include consumption category T3 jobs."""
+        result = await svc.generate(saas_context())
+        consumption_jobs = [
+            j for j in result.jobs
+            if j.tier == JobTier.EXECUTION and j.category == "consumption"
+        ]
+        assert len(consumption_jobs) > 0, "No consumption category T3 jobs found"
+
+    @pytest.mark.asyncio
+    async def test_consumption_count_in_summary(self, svc):
+        """Summary should include T3_consumption count."""
+        result = await svc.generate(saas_context())
+        assert "T3_consumption" in result.summary
+        assert result.summary["T3_consumption"] > 0

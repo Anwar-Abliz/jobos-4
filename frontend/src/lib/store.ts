@@ -24,6 +24,7 @@ export interface TargetJob {
   tier: string;
   category: string;
   metricsHint: string[];
+  executorType: "HUMAN" | "AI";
 }
 
 export interface MetricDefinition {

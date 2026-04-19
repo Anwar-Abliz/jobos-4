@@ -83,6 +83,15 @@ export function JobGraphView() {
         ctx.stroke();
       }
 
+      // AI executor indicator: cyan ring
+      if (gNode.executorType === "AI") {
+        ctx.beginPath();
+        ctx.arc(x, y, radius + 2, 0, 2 * Math.PI);
+        ctx.strokeStyle = "#22d3ee";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+
       // Draw label
       ctx.font = `${Math.max(3, radius * 0.8)}px sans-serif`;
       ctx.textAlign = "center";
@@ -169,6 +178,17 @@ export function JobGraphView() {
               <p className="text-[9px] font-semibold uppercase text-[var(--text-muted)] mb-1">
                 {TIER_LABELS[selectedNode.tier] || selectedNode.tier}
               </p>
+              <div className="flex items-center gap-1 mb-1">
+                <span
+                  className={`rounded px-1.5 py-0.5 text-[9px] font-medium uppercase ${
+                    selectedNode.executorType === "AI"
+                      ? "bg-cyan-500/15 text-cyan-400"
+                      : "bg-orange-500/15 text-orange-400"
+                  }`}
+                >
+                  {selectedNode.executorType === "AI" ? "AI" : "HUMAN"}
+                </span>
+              </div>
               <p className="text-xs font-medium text-[var(--text-primary)] leading-relaxed">
                 {selectedNode.statement}
               </p>

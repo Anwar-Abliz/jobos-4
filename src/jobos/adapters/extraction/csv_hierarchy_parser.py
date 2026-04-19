@@ -114,6 +114,7 @@ def parse_hierarchy_csv(text: str) -> dict | None:
                     "category": category,
                     "rationale": "",
                     "metrics_hint": metrics_hint,
+                    "executor_type": "HUMAN",
                 })
                 tier_counts[tier_key] += 1
 

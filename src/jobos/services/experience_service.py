@@ -83,6 +83,12 @@ class ExperienceService:
         if not job or job.entity_type != EntityType.JOB:
             raise ValueError(f"Job entity not found: {job_id}")
 
+        # AI executor jobs do not get experience markers (Dimension A)
+        if job.properties.get("executor_type") == "AI":
+            raise ValueError(
+                "Experience markers not applicable to AI executor jobs"
+            )
+
         # Get current version number
         version = await self._get_next_version(job_id)
 
@@ -141,6 +147,13 @@ class ExperienceService:
 
         Creates a new version (source='override') and updates the graph.
         """
+        # AI executor jobs do not get experience markers (Dimension A)
+        job = await self._graph.get_entity(job_id)
+        if job and job.properties.get("executor_type") == "AI":
+            raise ValueError(
+                "Experience markers not applicable to AI executor jobs"
+            )
+
         # Validate all markers against Axiom 5 (experiential format)
         for marker_type in ("feel_markers", "to_be_markers"):
             for marker in markers.get(marker_type, []):

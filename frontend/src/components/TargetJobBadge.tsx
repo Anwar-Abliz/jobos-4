@@ -23,12 +23,18 @@ export function TargetJobBadge({ readOnly = false }: TargetJobBadgeProps) {
   if (!targetJob) return null;
 
   const tierInfo = TIER_LABELS[targetJob.tier] || TIER_LABELS.T1_strategic;
+  const execBadge = targetJob.executorType === "AI"
+    ? { bg: "bg-cyan-500/15", text: "text-cyan-400", label: "AI" }
+    : { bg: "bg-orange-500/15", text: "text-orange-400", label: "HUMAN" };
 
   return (
     <div className="rounded-lg border border-[var(--accent)]/30 bg-[var(--accent-dim)] px-3 py-2">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
           <Lock className="w-3 h-3 text-[var(--accent)] shrink-0" />
+          <span className={`shrink-0 rounded px-1.5 py-0 text-[9px] font-medium uppercase ${execBadge.bg} ${execBadge.text}`}>
+            {execBadge.label}
+          </span>
           <span className={`shrink-0 rounded px-1.5 py-0 text-[9px] font-medium uppercase ${tierInfo.color}`}>
             {tierInfo.label}
           </span>

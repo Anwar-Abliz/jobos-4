@@ -116,6 +116,7 @@ async def _analyze_with_llm(
 Job: {job_statement}
 Tier: {job_tier}
 Category: {job_category}
+Executor type: {entity.properties.get("executor_type", "HUMAN") if entity else "HUMAN"}
 Number of sub-jobs: {num_children}
 Defined metrics: {metrics_desc}
 Experience markers: {exp_desc}
@@ -186,6 +187,7 @@ def _template_recommendation(
         )
 
     tier = entity.properties.get("tier", "")
+    executor_type = entity.properties.get("executor_type", "HUMAN")
     has_metrics = len(body.outcomes.metrics) > 0
     has_experience = bool(
         body.outcomes.experience_markers.get("feel_markers")
@@ -214,6 +216,29 @@ def _template_recommendation(
             ),
             impact="negative",
             weight=0.4,
+        ))
+
+    # Executor type analysis
+    criteria.append("Executor type classification")
+    if executor_type == "AI":
+        factors.append(RecommendationFactor(
+            factor="Job already designated as AI-executable",
+            explanation=(
+                "This job has been classified as suitable for AI execution, "
+                "indicating systematic, repeatable work patterns."
+            ),
+            impact="positive",
+            weight=0.25,
+        ))
+    elif not has_experience:
+        factors.append(RecommendationFactor(
+            factor="Human job without experience markers defined",
+            explanation=(
+                "A human-designated job without experience markers may indicate "
+                "that the emotional/identity dimension hasn't been explored yet."
+            ),
+            impact="positive",
+            weight=0.15,
         ))
 
     if has_experience:

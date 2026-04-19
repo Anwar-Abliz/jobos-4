@@ -14,6 +14,7 @@ export interface GraphNode {
   statement: string;
   rationale: string;
   metricsHint: string[];
+  executorType: "HUMAN" | "AI";
 }
 
 export interface GraphLink {
@@ -62,6 +63,7 @@ export function buildGraphData(
     statement: j.statement,
     rationale: j.rationale,
     metricsHint: j.metrics_hint,
+    executorType: (j.executor_type as "HUMAN" | "AI") || "HUMAN",
   }));
 
   const nodeIds = new Set(jobs.map((j) => j.id));

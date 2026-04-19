@@ -12,6 +12,11 @@ const TIER_COLORS: Record<string, { bg: string; text: string; label: string }> =
   T4_micro: { bg: "bg-amber-500/15", text: "text-amber-400", label: "Micro" },
 };
 
+const EXECUTOR_BADGE: Record<string, { bg: string; text: string; label: string }> = {
+  HUMAN: { bg: "bg-orange-500/15", text: "text-orange-400", label: "H" },
+  AI: { bg: "bg-cyan-500/15", text: "text-cyan-400", label: "AI" },
+};
+
 export function JobTreeView() {
   const functionalSpine = useAppStore((s) => s.hierarchyFunctionalSpine);
   const experienceDimension = useAppStore((s) => s.hierarchyExperienceDimension);
@@ -43,6 +48,7 @@ function TreeNodeComponent({ node, depth }: { node: TreeNode; depth: number }) {
   const setSelectedJobId = useAppStore((s) => s.setSelectedJobId);
   const hasChildren = node.children && node.children.length > 0;
   const style = TIER_COLORS[node.tier] || TIER_COLORS.T1_strategic;
+  const execStyle = EXECUTOR_BADGE[(node.executor_type as string) || "HUMAN"] || EXECUTOR_BADGE.HUMAN;
   const isSelected = node.id === selectedJobId;
 
   return (
@@ -76,6 +82,12 @@ function TreeNodeComponent({ node, depth }: { node: TreeNode; depth: number }) {
         >
           {style.label.charAt(0)}
           {node.tier.split("_")[0].replace("T", "")}
+        </span>
+
+        <span
+          className={`shrink-0 mt-0.5 rounded px-1 py-0 text-[8px] font-medium uppercase ${execStyle.bg} ${execStyle.text}`}
+        >
+          {execStyle.label}
         </span>
 
         <span className="text-xs text-[var(--text-primary)] leading-relaxed">

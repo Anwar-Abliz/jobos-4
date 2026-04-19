@@ -38,6 +38,8 @@ export function PhaseTwoPanel() {
 
   if (!targetJob) return null;
 
+  const isAiJob = targetJob.executorType === "AI";
+
   const handleGenerateExperience = async () => {
     setIsGeneratingExp(true);
     setExpError(null);
@@ -109,7 +111,7 @@ export function PhaseTwoPanel() {
     const metric: MetricDefinition = {
       statement: metricStatement.trim(),
       target: metricTarget.trim(),
-      switchThreshold: metricThreshold.trim(),
+      switchThreshold: isAiJob ? "" : metricThreshold.trim(),
     };
     setOutcomes({ metrics: [...outcomes.metrics, metric] });
     setMetricStatement("");
@@ -138,31 +140,39 @@ export function PhaseTwoPanel() {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
-        {/* Dimension toggle */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setDimensionView("A")}
-            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-              dimensionView === "A"
-                ? "bg-[var(--accent)] text-white"
-                : "bg-[var(--bg-tertiary)] text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
-            }`}
-          >
-            Experience (Dim A)
-          </button>
-          <button
-            onClick={() => setDimensionView("B")}
-            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-              dimensionView === "B"
-                ? "bg-[var(--accent)] text-white"
-                : "bg-[var(--bg-tertiary)] text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
-            }`}
-          >
-            Metrics (Dim B)
-          </button>
-        </div>
+        {/* Dimension toggle — AI jobs get Dim B only */}
+        {isAiJob ? (
+          <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/5 px-3 py-2">
+            <p className="text-[10px] font-medium text-cyan-400">
+              AI Job — no experience dimension. KPI metrics only.
+            </p>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setDimensionView("A")}
+              className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                dimensionView === "A"
+                  ? "bg-[var(--accent)] text-white"
+                  : "bg-[var(--bg-tertiary)] text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+              }`}
+            >
+              Experience (Dim A)
+            </button>
+            <button
+              onClick={() => setDimensionView("B")}
+              className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                dimensionView === "B"
+                  ? "bg-[var(--accent)] text-white"
+                  : "bg-[var(--bg-tertiary)] text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+              }`}
+            >
+              Metrics (Dim B)
+            </button>
+          </div>
+        )}
 
-        {dimensionView === "A" ? (
+        {(!isAiJob && dimensionView === "A") ? (
           <div className="space-y-3">
             {/* Generate button */}
             <button
@@ -297,7 +307,7 @@ export function PhaseTwoPanel() {
                           Target: {m.target}
                         </p>
                       )}
-                      {m.switchThreshold && (
+                      {m.switchThreshold && !isAiJob && (
                         <p className="text-[10px] text-red-400">Switch: {m.switchThreshold}</p>
                       )}
                     </div>
@@ -329,12 +339,14 @@ export function PhaseTwoPanel() {
                 placeholder="Target (e.g. < 5 min)"
                 className="w-full rounded border border-[var(--border)] bg-[var(--bg-secondary)] px-2 py-1 text-[11px] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)]"
               />
-              <input
-                value={metricThreshold}
-                onChange={(e) => setMetricThreshold(e.target.value)}
-                placeholder="Switch threshold (e.g. > 15 min)"
-                className="w-full rounded border border-[var(--border)] bg-[var(--bg-secondary)] px-2 py-1 text-[11px] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)]"
-              />
+              {!isAiJob && (
+                <input
+                  value={metricThreshold}
+                  onChange={(e) => setMetricThreshold(e.target.value)}
+                  placeholder="Switch threshold (e.g. > 15 min)"
+                  className="w-full rounded border border-[var(--border)] bg-[var(--bg-secondary)] px-2 py-1 text-[11px] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)]"
+                />
+              )}
               <button
                 onClick={handleAddMetric}
                 disabled={!metricStatement.trim()}

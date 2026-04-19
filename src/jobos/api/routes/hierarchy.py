@@ -35,6 +35,7 @@ class HierarchyJobOut(BaseModel):
     category: str = ""
     rationale: str = ""
     metrics_hint: list[str] = Field(default_factory=list)
+    executor_type: str = "HUMAN"
 
 
 class HierarchyEdgeOut(BaseModel):
@@ -49,6 +50,7 @@ class HierarchyOut(BaseModel):
     jobs: list[HierarchyJobOut]
     edges: list[HierarchyEdgeOut]
     summary: dict[str, Any]
+    related_jobs: list[HierarchyJobOut] = Field(default_factory=list)
 
 
 # ─── Endpoints ───────────────────────────────────────────
@@ -94,6 +96,7 @@ async def generate_hierarchy(req: HierarchyGenerateIn) -> HierarchyOut:
                 id=j.id, tier=j.tier.value, statement=j.statement,
                 category=j.category, rationale=j.rationale,
                 metrics_hint=j.metrics_hint,
+                executor_type=j.executor_type or "HUMAN",
             )
             for j in result.jobs
         ],
@@ -102,6 +105,15 @@ async def generate_hierarchy(req: HierarchyGenerateIn) -> HierarchyOut:
             for e in result.edges
         ],
         summary=result.summary,
+        related_jobs=[
+            HierarchyJobOut(
+                id=rj.id, tier=rj.tier.value, statement=rj.statement,
+                category=rj.category, rationale=rj.rationale,
+                metrics_hint=rj.metrics_hint,
+                executor_type=rj.executor_type or "HUMAN",
+            )
+            for rj in result.related_jobs
+        ],
     )
 
 
@@ -121,6 +133,7 @@ async def get_hierarchy(hierarchy_id: str) -> HierarchyOut:
                 id=j.id, tier=j.tier.value, statement=j.statement,
                 category=j.category, rationale=j.rationale,
                 metrics_hint=j.metrics_hint,
+                executor_type=j.executor_type or "HUMAN",
             )
             for j in result.jobs
         ],
@@ -129,6 +142,15 @@ async def get_hierarchy(hierarchy_id: str) -> HierarchyOut:
             for e in result.edges
         ],
         summary={},
+        related_jobs=[
+            HierarchyJobOut(
+                id=rj.id, tier=rj.tier.value, statement=rj.statement,
+                category=rj.category, rationale=rj.rationale,
+                metrics_hint=rj.metrics_hint,
+                executor_type=rj.executor_type or "HUMAN",
+            )
+            for rj in result.related_jobs
+        ],
     )
 
 
