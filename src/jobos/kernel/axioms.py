@@ -1,7 +1,13 @@
-"""JobOS 4.0 — The Eight Non-Negotiable Axioms.
+"""JobOS 4.0 — The Eight Operational Axioms.
 
 These are pure functions with zero I/O. They validate that the
 ontological invariants hold for any given set of entities and edges.
+
+These 8 operational axioms are grounded in 3 foundational axioms
+(see ``foundational_axioms.py``):
+    F1 Teleological Action       ← Axioms 1, 4, 6
+    F2 Mechanistic Invariance    ← Axioms 2, 5, 8
+    F3 Multidimensional Utility  ← Axioms 3, 7
 
 Grounding Document Reference:
     Axiom 1-3: Ontology design document §4 (Integrity constraints)

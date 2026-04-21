@@ -19,6 +19,10 @@ from dataclasses import dataclass, field
 
 from jobos.kernel.entity import EntityBase, EntityType
 from jobos.kernel.axioms import JobOSAxioms, AxiomViolation
+from jobos.kernel.foundational_axioms import (
+    FoundationalSatisfaction,
+    compute_foundational_satisfaction,
+)
 
 
 @dataclass
@@ -31,6 +35,7 @@ class AxiomSatisfaction:
     axiom_5_linguistic: float = 1.0
     axiom_6_root_token: float = 1.0
     logic_loss: float = 0.0  # Aggregate violation score
+    foundational: FoundationalSatisfaction | None = None
 
 
 class BeliefEngine:
@@ -117,7 +122,32 @@ class BeliefEngine:
 
         # Compute aggregate Logic Loss
         result.logic_loss = self.compute_logic_loss(result)
+
+        # Compute foundational axiom satisfaction (meta-layer)
+        result.foundational = self.evaluate_foundational(result)
+
         return result
+
+    def evaluate_foundational(
+        self, scores: AxiomSatisfaction,
+    ) -> FoundationalSatisfaction:
+        """Aggregate the 6 evaluated operational axiom scores into 3 foundational pillars.
+
+        Operational axiom 7 (Switch) and 8 (Market Topology) are not directly
+        evaluated by BeliefEngine, so they default to 1.0 in the mapping.
+        """
+        operational_scores: dict[int, float] = {
+            1: scores.axiom_1_hierarchy,
+            2: scores.axiom_2_imperfection,
+            3: scores.axiom_3_contextual,
+            4: scores.axiom_4_singularity,
+            5: scores.axiom_5_linguistic,
+            6: scores.axiom_6_root_token,
+            # 7 and 8 are not evaluated by BeliefEngine; default to 1.0
+            7: 1.0,
+            8: 1.0,
+        }
+        return compute_foundational_satisfaction(operational_scores)
 
     def compute_logic_loss(self, scores: AxiomSatisfaction) -> float:
         """Aggregate axiom violations into a single 'Logic Loss'.

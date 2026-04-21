@@ -175,6 +175,14 @@ class EntityBase(BaseModel):
     )
     created_at: datetime = Field(default_factory=_now)
     updated_at: datetime = Field(default_factory=_now)
+    event_time: datetime | None = Field(
+        default=None,
+        description="Bi-temporal: when this state was true in the real world",
+    )
+    ingestion_time: datetime | None = Field(
+        default=None,
+        description="Bi-temporal: when this state was recorded in the system",
+    )
 
     model_config = {"from_attributes": True}
 
@@ -298,6 +306,11 @@ class ContextProperties(BaseModel):
     The 5W2H structure. Maps to the Architectural Synthesis's
     'Markov Blanket' (separating internal from external states)
     and 'Weights/Parameters' in the Perceptron analogy.
+
+    constraint_factors: Structural limitations that narrow the solution space.
+        Each dict: {name, type, severity, description}.
+    catalyst_factors: Enablers that accelerate or amplify outcomes.
+        Each dict: {name, type, impact, description}.
     """
     who: str = ""
     why: str = ""
@@ -308,6 +321,8 @@ class ContextProperties(BaseModel):
     constraints: str = ""
     scope: Literal["broad", "narrow"] = "broad"
     stability: Literal["stable", "volatile"] = "stable"
+    constraint_factors: list[dict[str, Any]] = Field(default_factory=list)
+    catalyst_factors: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class MetricProperties(BaseModel):
@@ -494,6 +509,23 @@ class DualAsEdge(BaseModel):
 
 
 # ═══════════════════════════════════════════════════════════
+#  Choice Set Model
+# ═══════════════════════════════════════════════════════════
+
+class ChoiceSet(BaseModel):
+    """A set of candidate entities considered for a hiring decision.
+
+    Captures the solution space at a point in time so that downstream
+    audit and analysis can reconstruct why a particular hiree was chosen.
+    """
+    job_id: str
+    context_id: str | None = None
+    candidates: list[dict[str, Any]] = Field(default_factory=list)
+    generated_at: datetime = Field(default_factory=_now)
+    selection_criteria: dict[str, Any] = Field(default_factory=dict)
+
+
+# ═══════════════════════════════════════════════════════════
 #  PostgreSQL DTO Models
 # ═══════════════════════════════════════════════════════════
 
@@ -532,6 +564,7 @@ class HiringEvent(BaseModel):
 
     policy_snapshot: NSAIG policy state at decision time.
     causal_estimate: CDEE causal analysis snapshot.
+    choice_set_snapshot: Snapshot of the ChoiceSet at decision time.
     Together these provide full explainability for every hiring decision.
     """
     id: str = Field(default_factory=_uid)
@@ -542,6 +575,7 @@ class HiringEvent(BaseModel):
     reason: str = ""
     policy_snapshot: dict[str, Any] = Field(default_factory=dict)
     causal_estimate: dict[str, Any] = Field(default_factory=dict)
+    choice_set_snapshot: dict[str, Any] = Field(default_factory=dict)
     occurred_at: datetime = Field(default_factory=_now)
 
 

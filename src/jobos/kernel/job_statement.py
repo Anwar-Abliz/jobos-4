@@ -82,6 +82,11 @@ class ParsedJobStatement:
 def validate_verb(statement: str) -> bool:
     """Check if a job statement starts with a valid action verb.
 
+    For Latin-script text: checks against the ACTION_VERBS set.
+    For non-Latin scripts (Chinese, Arabic, etc.): returns True,
+    as verb validation is English-specific and the LLM enforces
+    linguistic correctness in the user's language.
+
     Returns True if valid, False otherwise.
     """
     if not statement or not statement.strip():
@@ -89,7 +94,9 @@ def validate_verb(statement: str) -> bool:
 
     match = _FIRST_WORD_RE.match(statement.strip())
     if not match:
-        return False
+        # No Latin first word found — likely non-Latin script (Chinese, etc.)
+        # Accept as valid; LLM is responsible for linguistic correctness.
+        return True
 
     first_word = match.group(1).lower()
     return first_word in ACTION_VERBS

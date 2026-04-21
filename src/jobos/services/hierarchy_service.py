@@ -81,6 +81,8 @@ Rules:
 
 Note: Experience (emotional/social FEEL) is Dimension A, orthogonal to this hierarchy. Do not include experience/emotional jobs in the tiers.
 
+**CRITICAL — Language Rule**: You MUST generate ALL job statements, rationales, and metrics_hint values in the SAME LANGUAGE as the user's input. If the user writes in Chinese, output Chinese. If the user writes in French, output French. Match the user's language exactly. Do NOT translate to English unless the user wrote in English.
+
 Respond with JSON:
 {
   "strategic": [
@@ -332,7 +334,7 @@ Generate jobs that are specific and relevant to this exact domain. Avoid generic
             raw = await self._llm.complete_json(
                 system_prompt=HIERARCHY_SYSTEM_PROMPT,
                 user_prompt=user_prompt,
-                max_tokens=2000,
+                max_tokens=4000,
                 temperature=0.4,
             )
             if raw and any(raw.get(k) for k in ["strategic", "core_functional", "execution", "micro_job"]):

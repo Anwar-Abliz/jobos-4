@@ -42,6 +42,12 @@ class MetricReadingRow(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
+    event_time: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    ingestion_time: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, default=lambda: datetime.now(timezone.utc)
+    )
 
 
 class VFEReadingRow(Base):
@@ -55,6 +61,12 @@ class VFEReadingRow(Base):
     policy_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     measured_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+    event_time: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    ingestion_time: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, default=lambda: datetime.now(timezone.utc)
     )
 
 
@@ -70,8 +82,15 @@ class HiringEventRow(Base):
     reason: Mapped[str] = mapped_column(Text, default="")
     policy_snapshot: Mapped[dict] = mapped_column(JSONB, default=dict)
     causal_estimate: Mapped[dict] = mapped_column(JSONB, default=dict)
+    choice_set_snapshot: Mapped[dict] = mapped_column(JSONB, default=dict)
     occurred_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+    event_time: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    ingestion_time: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, default=lambda: datetime.now(timezone.utc)
     )
 
 
@@ -207,3 +226,9 @@ class SwitchEventRow(Base):
         DateTime(timezone=True), nullable=True
     )
     resolution: Mapped[str | None] = mapped_column(Text, nullable=True)
+    event_time: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    ingestion_time: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, default=lambda: datetime.now(timezone.utc)
+    )

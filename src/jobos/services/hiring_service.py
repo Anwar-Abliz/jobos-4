@@ -41,6 +41,7 @@ from jobos.engines.cdee import (
     StabilityResult,
 )
 from jobos.engines.switch_evaluator import switch_evaluator, SwitchDecision
+from jobos.engines.threshold_evaluator import ThresholdEvaluator
 from jobos.ports.graph_port import GraphPort
 from jobos.ports.relational_port import RelationalPort
 
@@ -104,6 +105,7 @@ class HiringService:
         causal_guardian: CausalGuardian | None = None,
         controller: DynamicController | None = None,
         switch_hub: SwitchHub | None = None,
+        threshold_evaluator: ThresholdEvaluator | None = None,
     ) -> None:
         self._graph = graph
         self._db = db
@@ -112,6 +114,7 @@ class HiringService:
         self._causal = causal_guardian or CausalGuardian()
         self._controller = controller or DynamicController()
         self._switch_hub = switch_hub or SwitchHub()
+        self._threshold_evaluator = threshold_evaluator
 
     async def propose_hire(
         self,
@@ -317,13 +320,20 @@ class HiringService:
         scalar_metrics, bounds = self._build_switch_inputs(metrics)
         context_delta = self._estimate_context_delta(vfe_history)
 
-        switch_decision: SwitchDecision = await switch_evaluator(
-            job_id=job_id,
-            latest_metrics=scalar_metrics,
-            context_delta=context_delta,
-            bounds=bounds,
-            _state=switch_state,
-        )
+        if self._threshold_evaluator is not None:
+            switch_decision = await self._threshold_evaluator.evaluate(
+                job_id=job_id,
+                metrics=scalar_metrics,
+                context_delta=context_delta,
+            )
+        else:
+            switch_decision = await switch_evaluator(
+                job_id=job_id,
+                latest_metrics=scalar_metrics,
+                context_delta=context_delta,
+                bounds=bounds,
+                _state=switch_state,
+            )
 
         # ── Combined verdict ────────────────────────────
         # SwitchEvaluator FIRE takes priority; it has explicit metric bounds.

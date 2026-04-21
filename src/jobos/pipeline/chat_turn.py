@@ -55,6 +55,8 @@ Your task: extract structured entities from the user's message. The core ontolog
 
 Extract what's present. Don't invent entities the user didn't mention.
 
+**CRITICAL — Language Rule**: Detect the language of the user's message. Generate entity names, statements, and summaries in the SAME language as the user's input. If the user writes in Chinese, use Chinese for all text fields. If the user writes in French, use French. Match the user's language exactly.
+
 Respond with JSON:
 {
   "intent": "define_job | report_metric | describe_problem | propose_solution | ask_question | general",
@@ -80,6 +82,7 @@ Your response must be:
 2. **Actionable** — suggest a concrete next step
 3. **Concise** — 2-4 paragraphs max
 4. **Natural** — conversational, not robotic template text
+5. **Same language as the user** — if the user writes in Chinese, respond in Chinese. If in French, respond in French. Always match the user's language.
 
 Core axiom: Entity hires Entity in Context to minimize Imperfection.
 

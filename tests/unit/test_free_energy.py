@@ -270,6 +270,32 @@ class TestBeliefEngine:
         # No jobs → default scores all 1.0
         assert sat.axiom_5_linguistic == 1.0
 
+    def test_evaluate_axioms_populates_foundational(self):
+        """evaluate_axioms should set the foundational field."""
+        jobs = [make_job("j1", "Define scope")]
+        imps = {"j1": [make_imp()]}
+        sat = self.engine.evaluate_axioms(jobs, imps)
+        assert sat.foundational is not None
+        assert sat.foundational.f1_teleological == 1.0
+        assert sat.foundational.f2_mechanistic == 1.0
+        assert sat.foundational.f3_multidimensional == 1.0
+        assert abs(sat.foundational.foundational_loss) < 1e-9
+
+    def test_foundational_loss_reflects_operational_violations(self):
+        """Foundational loss should increase when operational axioms are violated."""
+        # Two root jobs → axiom 4 violation (F1 group)
+        # No imperfections → axiom 2 violation (F2 group)
+        j1 = make_job("j1", "Define scope", level=0)
+        j2 = make_job("j2", "Build product", level=0)
+        sat = self.engine.evaluate_axioms([j1, j2], {})
+        assert sat.foundational is not None
+        # F1 group: axiom 4=0.0, axioms 1=1.0(default), 6=1.0(default) → mean < 1.0
+        assert sat.foundational.f1_teleological < 1.0
+        # F2 group: axiom 2=0.0 → mean < 1.0
+        assert sat.foundational.f2_mechanistic < 1.0
+        # Total foundational loss > 0
+        assert sat.foundational.foundational_loss > 0.0
+
 
 # ─── SwitchLogic VFE Monitor ─────────────────────────────
 
