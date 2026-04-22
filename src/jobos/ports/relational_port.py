@@ -10,10 +10,10 @@ from datetime import datetime
 from typing import Any
 
 from jobos.kernel.entity import (
+    ExperimentRecord,
+    HiringEvent,
     MetricReading,
     VFEReading,
-    HiringEvent,
-    ExperimentRecord,
 )
 
 
@@ -210,4 +210,87 @@ class RelationalPort(ABC):
         limit: int = 50,
     ) -> list[dict[str, Any]]:
         """Retrieve switch events for a scenario, most recent first."""
+        ...
+
+    # ── Decision Traces ───────────────────────────────────
+
+    @abstractmethod
+    async def save_decision_trace(
+        self,
+        actor: str,
+        action: str,
+        target_entity_id: str,
+        rationale: str = "",
+        context_snapshot: dict[str, Any] | None = None,
+        policies_evaluated: list[str] | None = None,
+        alternatives: list[dict[str, Any]] | None = None,
+        vfe_before: float | None = None,
+        vfe_after: float | None = None,
+        lineage: list[str] | None = None,
+    ) -> str:
+        """Persist a decision trace. Returns the trace ID."""
+        ...
+
+    @abstractmethod
+    async def get_decision_traces(
+        self,
+        target_entity_id: str | None = None,
+        actor: str | None = None,
+        limit: int = 50,
+    ) -> list[dict[str, Any]]:
+        """Retrieve decision traces with optional filters."""
+        ...
+
+    # ── Survey Responses ──────────────────────────────────
+
+    @abstractmethod
+    async def save_survey_response(
+        self,
+        survey_id: str,
+        outcome_id: str,
+        session_id: str,
+        importance: float,
+        satisfaction: float,
+        opportunity_score: float,
+    ) -> str:
+        """Persist a survey response. Returns the response ID."""
+        ...
+
+    @abstractmethod
+    async def get_survey_responses(
+        self,
+        survey_id: str,
+        outcome_id: str | None = None,
+        limit: int = 500,
+    ) -> list[dict[str, Any]]:
+        """Retrieve survey responses for a survey."""
+        ...
+
+    @abstractmethod
+    async def get_survey_aggregates(
+        self,
+        survey_id: str,
+    ) -> list[dict[str, Any]]:
+        """Aggregate importance/satisfaction/opportunity per outcome."""
+        ...
+
+    # ── Context Snapshots ─────────────────────────────────
+
+    @abstractmethod
+    async def save_context_snapshot(
+        self,
+        entity_id: str,
+        snapshot_data: dict[str, Any],
+        source: str = "system",
+    ) -> str:
+        """Persist a context snapshot. Returns the snapshot ID."""
+        ...
+
+    @abstractmethod
+    async def get_context_snapshots(
+        self,
+        entity_id: str,
+        limit: int = 10,
+    ) -> list[dict[str, Any]]:
+        """Retrieve context snapshots for an entity, most recent first."""
         ...

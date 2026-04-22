@@ -52,9 +52,12 @@ def create_app() -> FastAPI:
     from jobos.api.routes import (
         baseline,
         chat,
+        context,
+        decisions,
         entities,
         experience,
         extraction,
+        governance,
         health,
         hierarchy,
         hiring,
@@ -62,8 +65,10 @@ def create_app() -> FastAPI:
         jobs,
         metrics,
         recommendation,
+        sap,
         scenarios,
         segments,
+        surveys,
     )
     app.include_router(health.router, tags=["health"])
     app.include_router(chat.router, prefix="/api", tags=["chat"])
@@ -79,5 +84,11 @@ def create_app() -> FastAPI:
     app.include_router(hiring.router, prefix="/api", tags=["hiring"])
     app.include_router(imperfections.router, prefix="/api", tags=["imperfections"])
     app.include_router(metrics.router, prefix="/api", tags=["metrics"])
+    # Context Graph routes
+    app.include_router(context.router, prefix="/api", tags=["context"])
+    app.include_router(sap.router, prefix="/api", tags=["sap"])
+    app.include_router(decisions.router, prefix="/api", tags=["decisions"])
+    app.include_router(governance.router, prefix="/api", tags=["governance"])
+    app.include_router(surveys.router, prefix="/api", tags=["surveys"])
 
     return app

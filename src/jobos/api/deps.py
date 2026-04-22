@@ -8,25 +8,30 @@ from __future__ import annotations
 import logging
 from functools import lru_cache
 
-from jobos.config import get_settings
 from jobos.adapters.neo4j.connection import Neo4jConnection
 from jobos.adapters.neo4j.entity_repo import Neo4jEntityRepo
+from jobos.adapters.openai.llm_adapter import OpenAIAdapter
 from jobos.adapters.postgres.connection import PostgresConnection
 from jobos.adapters.postgres.metric_repo import PostgresRepo
-from jobos.engines.nsaig import PolicyOptimizer, SwitchLogic, BeliefEngine
+from jobos.adapters.sap_simulation.ingestion_adapter import SAPIngestionAdapter
+from jobos.config import get_settings
 from jobos.engines.cdee import CausalGuardian, DynamicController, SwitchHub
+from jobos.engines.nsaig import BeliefEngine, PolicyOptimizer, SwitchLogic
+from jobos.pipeline.chat_turn import ChatTurnPipeline
 from jobos.ports.graph_port import GraphPort
 from jobos.ports.relational_port import RelationalPort
+from jobos.services.baseline_service import BaselineService
+from jobos.services.context_service import ContextService
+from jobos.services.decision_service import DecisionService
 from jobos.services.entity_service import EntityService
+from jobos.services.experience_service import ExperienceService
+from jobos.services.governance_service import GovernanceService
+from jobos.services.hierarchy_service import HierarchyService
 from jobos.services.hiring_service import HiringService
 from jobos.services.imperfection_service import ImperfectionService
 from jobos.services.metric_service import MetricService
-from jobos.adapters.openai.llm_adapter import OpenAIAdapter
-from jobos.pipeline.chat_turn import ChatTurnPipeline
-from jobos.services.hierarchy_service import HierarchyService
 from jobos.services.pilot_service import PilotService
-from jobos.services.experience_service import ExperienceService
-from jobos.services.baseline_service import BaselineService
+from jobos.services.survey_service import SurveyService
 
 logger = logging.getLogger(__name__)
 
@@ -228,4 +233,40 @@ def get_baseline_service() -> BaselineService:
     return BaselineService(
         graph=get_graph_port(),
         db=get_relational_port(),
+    )
+
+
+# ═══════════════════════════════════════════════════════════
+#  Context Graph Services
+# ═══════════════════════════════════════════════════════════
+
+def get_context_service() -> ContextService:
+    return ContextService(
+        graph=get_graph_port(),
+        db=get_relational_port(),
+        llm=_llm,
+    )
+
+
+def get_decision_service() -> DecisionService:
+    return DecisionService(
+        graph=get_graph_port(),
+        db=get_relational_port(),
+        llm=_llm,
+    )
+
+
+def get_governance_service() -> GovernanceService:
+    return GovernanceService(graph=get_graph_port())
+
+
+def get_sap_ingestion_adapter() -> SAPIngestionAdapter:
+    return SAPIngestionAdapter(graph=get_graph_port())
+
+
+def get_survey_service() -> SurveyService:
+    return SurveyService(
+        graph=get_graph_port(),
+        db=get_relational_port(),
+        llm=_llm,
     )

@@ -420,3 +420,222 @@ export function updateEntity(
     body: JSON.stringify(updates),
   });
 }
+
+// ── SAP Context Graph ──────────────────────────────────
+
+export interface SAPProcess {
+  id: string;
+  name: string;
+  sap_module: string;
+  process_type: string;
+  automation_level: number;
+  context_freshness: string;
+}
+
+export interface ContextSnapshot {
+  snapshot_id: string;
+  entity_id: string;
+}
+
+export interface FreshnessStatus {
+  entity_id: string;
+  stale: boolean;
+  age_hours: number;
+  freshness: "live" | "snapshot" | "stale";
+  threshold_hours: number;
+}
+
+export interface ContextCoverage {
+  scope_id: string;
+  total_steps: number;
+  covered_steps: number;
+  coverage_pct: number;
+}
+
+export function ingestProcess(templateName: string): Promise<{ entity_id: string }> {
+  return apiFetch("/sap/ingest/process", {
+    method: "POST",
+    body: JSON.stringify({ template_name: templateName }),
+  });
+}
+
+export function ingestOrgStructure(): Promise<{ entity_id: string }> {
+  return apiFetch("/sap/ingest/org-structure", {
+    method: "POST",
+    body: JSON.stringify({}),
+  });
+}
+
+export function listSAPProcesses(): Promise<SAPProcess[]> {
+  return apiFetch("/sap/processes");
+}
+
+export function getSAPProcessContext(processId: string): Promise<Record<string, unknown>> {
+  return apiFetch(`/sap/processes/${processId}/context`);
+}
+
+export function captureContextSnapshot(entityId: string): Promise<ContextSnapshot> {
+  return apiFetch(`/context/snapshot/${entityId}`, { method: "POST" });
+}
+
+export function checkFreshness(entityId: string): Promise<FreshnessStatus> {
+  return apiFetch(`/context/freshness/${entityId}`);
+}
+
+export function getContextCoverage(scopeId: string): Promise<ContextCoverage> {
+  return apiFetch(`/context/coverage/${scopeId}`);
+}
+
+// ── Decisions ──────────────────────────────────────────
+
+export interface DecisionRecord {
+  decision_id: string;
+  actor: string;
+  action: string;
+  target_entity_id: string;
+  rationale: string;
+}
+
+export interface DecisionTrailEntry {
+  id: string;
+  actor: string;
+  action: string;
+  rationale: string;
+  created_at: string;
+  context_snapshot: Record<string, unknown>;
+}
+
+export function recordDecision(req: {
+  actor: string;
+  action: string;
+  target_entity_id: string;
+  rationale?: string;
+}): Promise<DecisionRecord> {
+  return apiFetch("/decisions", {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export function getDecisionTrail(entityId: string): Promise<DecisionTrailEntry[]> {
+  return apiFetch(`/decisions/${entityId}/trail`);
+}
+
+// ── Governance ─────────────────────────────────────────
+
+export interface PolicyRecord {
+  id: string;
+  name: string;
+  policy_type: string;
+  enforcement: string;
+}
+
+export function createPolicy(req: {
+  name: string;
+  policy_type?: string;
+  enforcement?: string;
+}): Promise<PolicyRecord> {
+  return apiFetch("/governance/policies", {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+export function checkPermission(req: {
+  actor: string;
+  action: string;
+  target_entity_id: string;
+}): Promise<{ allowed: boolean; reason: string }> {
+  return apiFetch("/governance/check", {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+// ── Surveys ────────────────────────────────────────────
+
+export interface Survey {
+  id: string;
+  name: string;
+  status: string;
+  total_outcomes: number;
+}
+
+export interface SurveyOutcome {
+  id: string;
+  statement: string;
+  context_label: string;
+  direction: string;
+  importance_mean?: number;
+  satisfaction_mean?: number;
+  opportunity_score?: number;
+}
+
+export interface SurveyResults {
+  survey_id: string;
+  outcomes: Array<SurveyOutcome & {
+    opportunity_mean: number;
+    response_count: number;
+  }>;
+  total_outcomes: number;
+}
+
+export interface ScatterPoint {
+  outcome_id: string;
+  statement: string;
+  importance: number;
+  satisfaction: number;
+  opportunity: number;
+  response_count: number;
+}
+
+export function createSurvey(name: string, processId?: string): Promise<Survey> {
+  return apiFetch("/surveys", {
+    method: "POST",
+    body: JSON.stringify({ name, process_id: processId || "" }),
+  });
+}
+
+export function generateOutcomes(
+  surveyId: string,
+  jobId?: string,
+  processId?: string,
+): Promise<{ survey_id: string; outcomes_generated: number; outcomes: SurveyOutcome[] }> {
+  return apiFetch(`/surveys/${surveyId}/generate-outcomes`, {
+    method: "POST",
+    body: JSON.stringify({ job_id: jobId, process_id: processId }),
+  });
+}
+
+export function getSurvey(surveyId: string): Promise<Survey & { outcomes: SurveyOutcome[] }> {
+  return apiFetch(`/surveys/${surveyId}`);
+}
+
+export function submitSurveyResponses(
+  surveyId: string,
+  responses: Array<{
+    outcome_id: string;
+    session_id: string;
+    importance: number;
+    satisfaction: number;
+  }>,
+): Promise<{ survey_id: string; responses_recorded: number }> {
+  return apiFetch(`/surveys/${surveyId}/responses`, {
+    method: "POST",
+    body: JSON.stringify({ responses }),
+  });
+}
+
+export function getSurveyResults(surveyId: string): Promise<SurveyResults> {
+  return apiFetch(`/surveys/${surveyId}/results`);
+}
+
+export function getSurveyScatter(surveyId: string): Promise<{ points: ScatterPoint[] }> {
+  return apiFetch(`/surveys/${surveyId}/scatter`);
+}
+
+export function syncSurveyImperfections(
+  surveyId: string,
+): Promise<{ imperfections_created: number }> {
+  return apiFetch(`/surveys/${surveyId}/sync-imperfections`, { method: "POST" });
+}

@@ -98,6 +98,12 @@ class FakeGraphPort(GraphPort):
     async def ensure_schema(self) -> int:
         return 0
 
+    async def find_path(self, source_id, target_id, max_depth=5):
+        return []
+
+    async def get_subgraph_by_label(self, label, limit=100):
+        return []
+
     async def verify_connectivity(self) -> bool:
         return True
 

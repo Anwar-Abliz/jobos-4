@@ -14,9 +14,9 @@ import json
 import logging
 from typing import Any
 
+from jobos.adapters.neo4j.connection import Neo4jConnection
 from jobos.kernel.entity import EntityBase, EntityType
 from jobos.ports.graph_port import GraphPort
-from jobos.adapters.neo4j.connection import Neo4jConnection
 
 logger = logging.getLogger(__name__)
 
@@ -177,6 +177,10 @@ class Neo4jEntityRepo(GraphPort):
             "MEASURED_BY", "OCCURS_IN", "IMPACTS", "ABOUT",
             "SUPPORTS", "REFUTES", "DUAL_AS", "DEPENDS_ON", "HAS_STEP",
             "CHILD_OF", "CONTAINS", "TARGETS", "EXPERIENCE_OF",
+            # SAP Context Graph relationship types
+            "EXECUTED_BY", "OPERATES_ON", "BELONGS_TO", "GOVERNED_BY",
+            "DECIDED_BY", "INGESTED_FROM", "SURVEYED_BY", "HAS_OUTCOME",
+            "RESPONDS_TO", "PRECEDED_BY", "VARIANT_OF",
         }
         if edge_type not in allowed_types:
             logger.warning("Unknown edge type: %s", edge_type)
@@ -231,7 +235,7 @@ class Neo4jEntityRepo(GraphPort):
         else:
             pattern = "(e:Entity {id: $id})-[r]-(n:Entity)"
 
-        type_filter = f"AND type(r) = $edge_type" if edge_type else ""
+        type_filter = "AND type(r) = $edge_type" if edge_type else ""
 
         query = f"""
         MATCH {pattern}
@@ -259,7 +263,7 @@ class Neo4jEntityRepo(GraphPort):
         else:
             pattern = "(e:Entity {id: $id})-[r]-(n:Entity)"
 
-        type_filter = f"AND type(r) = $edge_type" if edge_type else ""
+        type_filter = "AND type(r) = $edge_type" if edge_type else ""
 
         query = f"""
         MATCH {pattern}
@@ -350,3 +354,54 @@ class Neo4jEntityRepo(GraphPort):
     async def verify_connectivity(self) -> bool:
         """Health check."""
         return await self._conn.verify_connectivity()
+
+    # ── Graph Path Queries ────────────────────────────────
+
+    async def find_path(
+        self,
+        source_id: str,
+        target_id: str,
+        max_depth: int = 5,
+    ) -> list[dict[str, Any]]:
+        """Find shortest path between two entities."""
+        query = f"""
+        MATCH p = shortestPath(
+            (src:Entity {{id: $source_id}})-[*..{max_depth}]-(tgt:Entity {{id: $target_id}})
+        )
+        RETURN [n IN nodes(p) | n {{.*}}] AS nodes,
+               [r IN relationships(p) | type(r)] AS edge_types
+        """
+        rows = await self._conn.run(query, {
+            "source_id": source_id,
+            "target_id": target_id,
+        })
+        if not rows:
+            return []
+        row = rows[0]
+        nodes = row.get("nodes", [])
+        edge_types = row.get("edge_types", [])
+        result = []
+        for i, node in enumerate(nodes):
+            entry: dict[str, Any] = {"node": node}
+            if i < len(edge_types):
+                entry["edge_type"] = edge_types[i]
+            result.append(entry)
+        return result
+
+    async def get_subgraph_by_label(
+        self,
+        label: str,
+        limit: int = 100,
+    ) -> list[EntityBase]:
+        """Query entities by dynamic Neo4j label."""
+        safe_label = "".join(c for c in label if c.isalnum() or c == "_")
+        if not safe_label:
+            return []
+        query = f"""
+        MATCH (e:Entity:{safe_label})
+        RETURN e {{.*}} AS e
+        ORDER BY e.updated_at DESC
+        LIMIT $limit
+        """
+        rows = await self._conn.run(query, {"limit": limit})
+        return [_row_to_entity(r) for r in rows]

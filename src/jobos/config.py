@@ -47,6 +47,26 @@ class LLMSettings:
 
 
 @dataclass(frozen=True)
+class SAPSettings:
+    simulation_enabled: bool = os.getenv("SAP_SIMULATION_ENABLED", "true").lower() == "true"
+    default_org_structure: str = os.getenv("SAP_DEFAULT_ORG", "DEFAULT")
+    ingestion_batch_size: int = int(os.getenv("SAP_INGESTION_BATCH_SIZE", "100"))
+
+
+@dataclass(frozen=True)
+class GovernanceSettings:
+    enforcement_mode: str = os.getenv("GOVERNANCE_ENFORCEMENT", "advisory")
+    audit_all_decisions: bool = os.getenv("GOVERNANCE_AUDIT_ALL", "true").lower() == "true"
+
+
+@dataclass(frozen=True)
+class ContextSettings:
+    freshness_threshold_hours: float = float(os.getenv("CONTEXT_FRESHNESS_THRESHOLD", "24.0"))
+    max_decay_hours: float = float(os.getenv("CONTEXT_MAX_DECAY_HOURS", "168.0"))
+    auto_snapshot_enabled: bool = os.getenv("CONTEXT_AUTO_SNAPSHOT", "false").lower() == "true"
+
+
+@dataclass(frozen=True)
 class JobOSSettings:
     debug: bool = os.getenv("JOBOS_DEBUG", "false").lower() == "true"
     log_level: str = os.getenv("JOBOS_LOG_LEVEL", "INFO")
@@ -55,6 +75,9 @@ class JobOSSettings:
     neo4j: Neo4jSettings = Neo4jSettings()
     postgres: PostgresSettings = PostgresSettings()
     llm: LLMSettings = LLMSettings()
+    sap: SAPSettings = SAPSettings()
+    governance: GovernanceSettings = GovernanceSettings()
+    context: ContextSettings = ContextSettings()
 
 
 def get_settings() -> JobOSSettings:

@@ -8,28 +8,31 @@ import logging
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import select, desc
+from sqlalchemy import desc, select
 
-from jobos.kernel.entity import (
-    MetricReading,
-    VFEReading,
-    HiringEvent,
-    ExperimentRecord,
-    HiringEventType,
-    ExperimentDecision,
-)
-from jobos.ports.relational_port import RelationalPort
 from jobos.adapters.postgres.connection import PostgresConnection
 from jobos.adapters.postgres.models import (
-    MetricReadingRow,
-    VFEReadingRow,
-    HiringEventRow,
-    ExperimentRow,
-    JobMetricsRow,
-    ExperienceVersionRow,
     BaselineSnapshotRow,
+    ContextSnapshotRow,
+    DecisionTraceRow,
+    ExperienceVersionRow,
+    ExperimentRow,
+    HiringEventRow,
+    JobMetricsRow,
+    MetricReadingRow,
+    SurveyResponseRow,
     SwitchEventRow,
+    VFEReadingRow,
 )
+from jobos.kernel.entity import (
+    ExperimentDecision,
+    ExperimentRecord,
+    HiringEvent,
+    HiringEventType,
+    MetricReading,
+    VFEReading,
+)
+from jobos.ports.relational_port import RelationalPort
 
 logger = logging.getLogger(__name__)
 
@@ -418,6 +421,213 @@ class PostgresRepo(RelationalPort):
             ]
 
     # ── Row Mappers ──────────────────────────────────────
+
+    # ── Decision Traces ────────────────────────────────────
+
+    async def save_decision_trace(
+        self,
+        actor: str,
+        action: str,
+        target_entity_id: str,
+        rationale: str = "",
+        context_snapshot: dict[str, Any] | None = None,
+        policies_evaluated: list[str] | None = None,
+        alternatives: list[dict[str, Any]] | None = None,
+        vfe_before: float | None = None,
+        vfe_after: float | None = None,
+        lineage: list[str] | None = None,
+    ) -> str:
+        import uuid as _uuid
+        row_id = _uuid.uuid4().hex[:12]
+        async with self._conn.session() as session:
+            row = DecisionTraceRow(
+                id=row_id,
+                actor=actor,
+                action=action,
+                target_entity_id=target_entity_id,
+                rationale=rationale,
+                context_snapshot=context_snapshot or {},
+                policies_evaluated=policies_evaluated or [],
+                alternatives=alternatives or [],
+                vfe_before=vfe_before,
+                vfe_after=vfe_after,
+                lineage=lineage or [],
+            )
+            session.add(row)
+            await session.commit()
+            return row_id
+
+    async def get_decision_traces(
+        self,
+        target_entity_id: str | None = None,
+        actor: str | None = None,
+        limit: int = 50,
+    ) -> list[dict[str, Any]]:
+        async with self._conn.session() as session:
+            stmt = (
+                select(DecisionTraceRow)
+                .order_by(desc(DecisionTraceRow.created_at))
+                .limit(limit)
+            )
+            if target_entity_id:
+                stmt = stmt.where(DecisionTraceRow.target_entity_id == target_entity_id)
+            if actor:
+                stmt = stmt.where(DecisionTraceRow.actor == actor)
+            result = await session.execute(stmt)
+            rows = result.scalars().all()
+            return [
+                {
+                    "id": r.id,
+                    "actor": r.actor,
+                    "action": r.action,
+                    "target_entity_id": r.target_entity_id,
+                    "context_snapshot": r.context_snapshot,
+                    "rationale": r.rationale,
+                    "policies_evaluated": r.policies_evaluated,
+                    "alternatives": r.alternatives,
+                    "vfe_before": r.vfe_before,
+                    "vfe_after": r.vfe_after,
+                    "lineage": r.lineage,
+                    "created_at": r.created_at,
+                }
+                for r in rows
+            ]
+
+    # ── Survey Responses ──────────────────────────────────
+
+    async def save_survey_response(
+        self,
+        survey_id: str,
+        outcome_id: str,
+        session_id: str,
+        importance: float,
+        satisfaction: float,
+        opportunity_score: float,
+    ) -> str:
+        import uuid as _uuid
+        row_id = _uuid.uuid4().hex[:12]
+        async with self._conn.session() as session:
+            row = SurveyResponseRow(
+                id=row_id,
+                survey_id=survey_id,
+                outcome_id=outcome_id,
+                session_id=session_id,
+                importance=importance,
+                satisfaction=satisfaction,
+                opportunity_score=opportunity_score,
+            )
+            session.add(row)
+            await session.commit()
+            return row_id
+
+    async def get_survey_responses(
+        self,
+        survey_id: str,
+        outcome_id: str | None = None,
+        limit: int = 500,
+    ) -> list[dict[str, Any]]:
+        async with self._conn.session() as session:
+            stmt = (
+                select(SurveyResponseRow)
+                .where(SurveyResponseRow.survey_id == survey_id)
+                .order_by(desc(SurveyResponseRow.created_at))
+                .limit(limit)
+            )
+            if outcome_id:
+                stmt = stmt.where(SurveyResponseRow.outcome_id == outcome_id)
+            result = await session.execute(stmt)
+            rows = result.scalars().all()
+            return [
+                {
+                    "id": r.id,
+                    "survey_id": r.survey_id,
+                    "outcome_id": r.outcome_id,
+                    "session_id": r.session_id,
+                    "importance": r.importance,
+                    "satisfaction": r.satisfaction,
+                    "opportunity_score": r.opportunity_score,
+                    "created_at": r.created_at,
+                }
+                for r in rows
+            ]
+
+    async def get_survey_aggregates(
+        self,
+        survey_id: str,
+    ) -> list[dict[str, Any]]:
+        from sqlalchemy import func
+        async with self._conn.session() as session:
+            stmt = (
+                select(
+                    SurveyResponseRow.outcome_id,
+                    func.avg(SurveyResponseRow.importance).label("importance_mean"),
+                    func.avg(SurveyResponseRow.satisfaction).label("satisfaction_mean"),
+                    func.avg(SurveyResponseRow.opportunity_score).label("opportunity_mean"),
+                    func.count().label("response_count"),
+                )
+                .where(SurveyResponseRow.survey_id == survey_id)
+                .group_by(SurveyResponseRow.outcome_id)
+            )
+            result = await session.execute(stmt)
+            rows = result.all()
+            return [
+                {
+                    "outcome_id": r.outcome_id,
+                    "importance_mean": float(r.importance_mean) if r.importance_mean else 0.0,
+                    "satisfaction_mean": float(r.satisfaction_mean) if r.satisfaction_mean else 0.0,
+                    "opportunity_mean": float(r.opportunity_mean) if r.opportunity_mean else 0.0,
+                    "response_count": r.response_count,
+                }
+                for r in rows
+            ]
+
+    # ── Context Snapshots ─────────────────────────────────
+
+    async def save_context_snapshot(
+        self,
+        entity_id: str,
+        snapshot_data: dict[str, Any],
+        source: str = "system",
+    ) -> str:
+        import uuid as _uuid
+        row_id = _uuid.uuid4().hex[:12]
+        async with self._conn.session() as session:
+            row = ContextSnapshotRow(
+                id=row_id,
+                entity_id=entity_id,
+                snapshot_data=snapshot_data,
+                source=source,
+            )
+            session.add(row)
+            await session.commit()
+            return row_id
+
+    async def get_context_snapshots(
+        self,
+        entity_id: str,
+        limit: int = 10,
+    ) -> list[dict[str, Any]]:
+        async with self._conn.session() as session:
+            stmt = (
+                select(ContextSnapshotRow)
+                .where(ContextSnapshotRow.entity_id == entity_id)
+                .order_by(desc(ContextSnapshotRow.captured_at))
+                .limit(limit)
+            )
+            result = await session.execute(stmt)
+            rows = result.scalars().all()
+            return [
+                {
+                    "id": r.id,
+                    "entity_id": r.entity_id,
+                    "snapshot_data": r.snapshot_data,
+                    "source": r.source,
+                    "captured_at": r.captured_at,
+                }
+                for r in rows
+            ]
+
+    # ── Row Mappers (original) ────────────────────────────
 
     @staticmethod
     def _row_to_metric_reading(row: MetricReadingRow) -> MetricReading:

@@ -5,20 +5,18 @@ VFE time-series, hiring audit logs, experiments, and sessions.
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+import uuid
+from datetime import UTC, datetime
 
 from sqlalchemy import (
-    Column,
     DateTime,
     Float,
     Index,
     String,
     Text,
-    func,
 )
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-import uuid
 
 
 class Base(DeclarativeBase):
@@ -37,16 +35,16 @@ class MetricReadingRow(Base):
     source: Mapped[str] = mapped_column(String(50), default="user")
     confidence: Mapped[float] = mapped_column(Float, default=1.0)
     observed_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
     event_time: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
     ingestion_time: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True, default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), nullable=True, default=lambda: datetime.now(UTC)
     )
 
 
@@ -60,13 +58,13 @@ class VFEReadingRow(Base):
     efe_value: Mapped[float | None] = mapped_column(Float, nullable=True)
     policy_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     measured_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
     event_time: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
     ingestion_time: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True, default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), nullable=True, default=lambda: datetime.now(UTC)
     )
 
 
@@ -84,13 +82,13 @@ class HiringEventRow(Base):
     causal_estimate: Mapped[dict] = mapped_column(JSONB, default=dict)
     choice_set_snapshot: Mapped[dict] = mapped_column(JSONB, default=dict)
     occurred_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
     event_time: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
     ingestion_time: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True, default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), nullable=True, default=lambda: datetime.now(UTC)
     )
 
 
@@ -109,7 +107,7 @@ class ExperimentRow(Base):
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
 
 
@@ -124,10 +122,10 @@ class SessionRow(Base):
     stage: Mapped[str] = mapped_column(String(50), default="INIT")
     metadata_json: Mapped[dict] = mapped_column(JSONB, default=dict)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
 
 
@@ -149,7 +147,7 @@ class JobMetricsRow(Base):
     )
     job_id: Mapped[str] = mapped_column(String(36), nullable=False)
     timestamp: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
     accuracy: Mapped[float | None] = mapped_column(Float, nullable=True)
     speed: Mapped[float | None] = mapped_column(Float, nullable=True)
@@ -180,7 +178,7 @@ class ExperienceVersionRow(Base):
     confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
     created_by: Mapped[str | None] = mapped_column(String(100), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
 
     __table_args__ = (
@@ -200,7 +198,7 @@ class BaselineSnapshotRow(Base):
     metrics: Mapped[dict] = mapped_column(JSONB, default=dict)
     bounds: Mapped[dict] = mapped_column(JSONB, default=dict)
     captured_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
     captured_by: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
@@ -220,7 +218,7 @@ class SwitchEventRow(Base):
     action: Mapped[str] = mapped_column(String(20), nullable=False)
     reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     occurred_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
     resolved_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
@@ -230,5 +228,87 @@ class SwitchEventRow(Base):
         DateTime(timezone=True), nullable=True
     )
     ingestion_time: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True, default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), nullable=True, default=lambda: datetime.now(UTC)
+    )
+
+
+# ═══════════════════════════════════════════════════════════
+#  Context Graph Tables (Phase 0)
+# ═══════════════════════════════════════════════════════════
+
+class DecisionTraceRow(Base):
+    """Immutable decision audit log with context snapshots."""
+    __tablename__ = "decision_traces"
+
+    id: Mapped[str] = mapped_column(
+        String(36), primary_key=True, default=lambda: uuid.uuid4().hex[:12]
+    )
+    actor: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
+    action: Mapped[str] = mapped_column(String(50), nullable=False)
+    target_entity_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    context_snapshot: Mapped[dict] = mapped_column(JSONB, default=dict)
+    rationale: Mapped[str] = mapped_column(Text, default="")
+    policies_evaluated: Mapped[dict] = mapped_column(JSONB, default=list)
+    alternatives: Mapped[dict] = mapped_column(JSONB, default=list)
+    vfe_before: Mapped[float | None] = mapped_column(Float, nullable=True)
+    vfe_after: Mapped[float | None] = mapped_column(Float, nullable=True)
+    lineage: Mapped[dict] = mapped_column(JSONB, default=list)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
+
+
+class SurveyResponseRow(Base):
+    """ODI importance/satisfaction per respondent per outcome."""
+    __tablename__ = "survey_responses"
+
+    id: Mapped[str] = mapped_column(
+        String(36), primary_key=True, default=lambda: uuid.uuid4().hex[:12]
+    )
+    survey_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    outcome_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    session_id: Mapped[str] = mapped_column(String(100), nullable=False)
+    importance: Mapped[float] = mapped_column(Float, nullable=False)
+    satisfaction: Mapped[float] = mapped_column(Float, nullable=False)
+    opportunity_score: Mapped[float] = mapped_column(Float, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
+
+    __table_args__ = (
+        Index("ix_survey_responses_survey_outcome", "survey_id", "outcome_id"),
+    )
+
+
+class ContextSnapshotRow(Base):
+    """Point-in-time context captures for freshness tracking."""
+    __tablename__ = "context_snapshots"
+
+    id: Mapped[str] = mapped_column(
+        String(36), primary_key=True, default=lambda: uuid.uuid4().hex[:12]
+    )
+    entity_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    snapshot_data: Mapped[dict] = mapped_column(JSONB, default=dict)
+    source: Mapped[str] = mapped_column(String(50), default="system")
+    captured_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
+
+
+class DataIngestionLogRow(Base):
+    """Tracks when data was ingested from each source."""
+    __tablename__ = "data_ingestion_log"
+
+    id: Mapped[str] = mapped_column(
+        String(36), primary_key=True, default=lambda: uuid.uuid4().hex[:12]
+    )
+    data_source_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    records_ingested: Mapped[int] = mapped_column(nullable=False, default=0)
+    status: Mapped[str] = mapped_column(String(20), default="success")
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
     )

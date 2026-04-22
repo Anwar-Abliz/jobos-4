@@ -74,6 +74,12 @@ class FakeGraphPort(GraphPort):
     async def ensure_schema(self) -> int:
         return 0
 
+    async def find_path(self, source_id, target_id, max_depth=5):
+        return []
+
+    async def get_subgraph_by_label(self, label, limit=100):
+        return []
+
     async def verify_connectivity(self) -> bool:
         return True
 
@@ -154,6 +160,31 @@ class FakeRelationalPort(RelationalPort):
         return "se_fake"
 
     async def get_switch_events(self, scenario_id, limit=50):
+        return []
+
+    async def save_decision_trace(self, actor, action, target_entity_id, rationale="",
+                                   context_snapshot=None, policies_evaluated=None,
+                                   alternatives=None, vfe_before=None, vfe_after=None,
+                                   lineage=None):
+        return "trace-id"
+
+    async def get_decision_traces(self, target_entity_id=None, actor=None, limit=50):
+        return []
+
+    async def save_survey_response(self, survey_id, outcome_id, session_id,
+                                    importance, satisfaction, opportunity_score):
+        return "resp-id"
+
+    async def get_survey_responses(self, survey_id, outcome_id=None, limit=500):
+        return []
+
+    async def get_survey_aggregates(self, survey_id):
+        return []
+
+    async def save_context_snapshot(self, entity_id, snapshot_data, source="system"):
+        return "snap-id"
+
+    async def get_context_snapshots(self, entity_id, limit=10):
         return []
 
 

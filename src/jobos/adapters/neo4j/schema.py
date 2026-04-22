@@ -32,6 +32,14 @@ SCHEMA_STATEMENTS: list[str] = [
     # Slug-based lookups for Segment and Scenario entities
     "CREATE INDEX segment_slug_idx IF NOT EXISTS FOR (e:Segment) ON (e.slug)",
     "CREATE INDEX scenario_slug_idx IF NOT EXISTS FOR (e:Scenario) ON (e.slug)",
+
+    # SAP Context Graph indexes
+    "CREATE INDEX sap_process_module_idx IF NOT EXISTS FOR (e:Sap_process) ON (e.entity_type)",
+    "CREATE INDEX sap_object_type_idx IF NOT EXISTS FOR (e:Sap_object) ON (e.entity_type)",
+    "CREATE INDEX sap_org_unit_type_idx IF NOT EXISTS FOR (e:Sap_org_unit) ON (e.entity_type)",
+    "CREATE INDEX decision_actor_idx IF NOT EXISTS FOR (e:Decision) ON (e.entity_type)",
+    "CREATE INDEX policy_type_idx IF NOT EXISTS FOR (e:Policy) ON (e.entity_type)",
+    "CREATE INDEX survey_status_idx IF NOT EXISTS FOR (e:Survey) ON (e.entity_type)",
 ]
 
 # Fulltext index requires separate handling (may fail on Community Edition)

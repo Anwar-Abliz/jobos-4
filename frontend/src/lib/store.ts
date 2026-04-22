@@ -8,6 +8,12 @@ import type {
   SwitchEvent,
   PhaseEvaluation,
   PreliminaryRecommendation,
+  SAPProcess,
+  FreshnessStatus,
+  Survey,
+  SurveyOutcome,
+  ScatterPoint,
+  DecisionTrailEntry,
 } from "./api";
 
 export interface ChatMessage {
@@ -73,6 +79,13 @@ interface AppState {
   // Panel
   rightPanelVisible: boolean;
 
+  // SAP Context Graph
+  sapProcesses: SAPProcess[];
+  activeSurvey: (Survey & { outcomes: SurveyOutcome[] }) | null;
+  surveyScatter: ScatterPoint[];
+  decisionTrail: DecisionTrailEntry[];
+  contextFreshness: Record<string, FreshnessStatus>;
+
   // Actions — Chat
   addUserMessage: (content: string) => void;
   addAssistantMessage: (response: ChatResponse) => void;
@@ -108,6 +121,13 @@ interface AppState {
   // Actions — Panel
   toggleRightPanel: () => void;
   reset: () => void;
+
+  // Actions — SAP Context Graph
+  setSAPProcesses: (processes: SAPProcess[]) => void;
+  setActiveSurvey: (survey: (Survey & { outcomes: SurveyOutcome[] }) | null) => void;
+  setSurveyScatter: (points: ScatterPoint[]) => void;
+  setDecisionTrail: (trail: DecisionTrailEntry[]) => void;
+  setContextFreshness: (entityId: string, freshness: FreshnessStatus) => void;
 }
 
 const DEFAULT_OUTCOMES: Outcomes = {
@@ -140,6 +160,12 @@ export const useAppStore = create<AppState>((set) => ({
   baselineSummary: null,
 
   rightPanelVisible: true,
+
+  sapProcesses: [],
+  activeSurvey: null,
+  surveyScatter: [],
+  decisionTrail: [],
+  contextFreshness: {},
 
   // Chat
   addUserMessage: (content) =>
@@ -224,6 +250,16 @@ export const useAppStore = create<AppState>((set) => ({
   // Panel
   toggleRightPanel: () => set((s) => ({ rightPanelVisible: !s.rightPanelVisible })),
 
+  // SAP Context Graph
+  setSAPProcesses: (processes) => set({ sapProcesses: processes }),
+  setActiveSurvey: (survey) => set({ activeSurvey: survey }),
+  setSurveyScatter: (points) => set({ surveyScatter: points }),
+  setDecisionTrail: (trail) => set({ decisionTrail: trail }),
+  setContextFreshness: (entityId, freshness) =>
+    set((s) => ({
+      contextFreshness: { ...s.contextFreshness, [entityId]: freshness },
+    })),
+
   reset: () =>
     set({
       currentPhase: 1,
@@ -243,5 +279,10 @@ export const useAppStore = create<AppState>((set) => ({
       phaseEvaluation: null,
       switchEvents: [],
       baselineSummary: null,
+      sapProcesses: [],
+      activeSurvey: null,
+      surveyScatter: [],
+      decisionTrail: [],
+      contextFreshness: {},
     }),
 }));

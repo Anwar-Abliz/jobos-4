@@ -134,3 +134,27 @@ class GraphPort(ABC):
     async def verify_connectivity(self) -> bool:
         """Health check. Returns True if reachable."""
         ...
+
+    # ── Graph Path Queries ────────────────────────────────
+
+    @abstractmethod
+    async def find_path(
+        self,
+        source_id: str,
+        target_id: str,
+        max_depth: int = 5,
+    ) -> list[dict[str, Any]]:
+        """Find shortest path between two entities.
+
+        Returns list of dicts with node/edge info along the path.
+        """
+        ...
+
+    @abstractmethod
+    async def get_subgraph_by_label(
+        self,
+        label: str,
+        limit: int = 100,
+    ) -> list[EntityBase]:
+        """Query entities by dynamic Neo4j label."""
+        ...

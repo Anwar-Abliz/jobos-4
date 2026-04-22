@@ -43,6 +43,15 @@ class EntityType(str, Enum):
     METRIC = "metric"
     SEGMENT = "segment"
     SCENARIO = "scenario"
+    SAP_PROCESS = "sap_process"
+    SAP_OBJECT = "sap_object"
+    SAP_TRANSACTION = "sap_transaction"
+    SAP_ORG_UNIT = "sap_org_unit"
+    DECISION = "decision"
+    POLICY = "policy"
+    DATA_SOURCE = "data_source"
+    SURVEY = "survey"
+    OUTCOME = "outcome"
 
 
 class JobType(str, Enum):
@@ -386,6 +395,14 @@ ENTITY_PROPERTY_MODELS: dict[EntityType, type[BaseModel]] = {
     EntityType.SEGMENT: SegmentProperties,
     EntityType.SCENARIO: ScenarioProperties,
 }
+
+# Extended SAP/Context Graph property models are registered at import time
+# via register_sap_property_models() — called from sap_entities module.
+
+
+def register_property_model(entity_type: EntityType, model_cls: type[BaseModel]) -> None:
+    """Register a property model for an entity type."""
+    ENTITY_PROPERTY_MODELS[entity_type] = model_cls
 
 
 def validate_entity(entity: EntityBase) -> EntityBase:
