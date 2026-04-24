@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Depends
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
 
 from jobos.api.deps import get_survey_service
 from jobos.services.survey_service import SurveyService
@@ -177,3 +177,58 @@ async def scatter_data(
             "response_count": agg.get("response_count", 0),
         })
     return {"survey_id": survey_id, "points": points}
+
+
+# ─── Bulk / Machine-to-Machine Endpoints ────────────────
+
+class BulkDiscoveryIn(BaseModel):
+    job_ids: list[str] = Field(default_factory=list)
+    outcomes_per_job: int = 10
+    deduplicate: bool = True
+
+
+class HierarchySurveyIn(BaseModel):
+    hierarchy_id: str
+    name: str = ""
+    outcomes_per_job: int = 5
+
+
+@router.post("/surveys/{survey_id}/discover-bulk")
+async def discover_outcomes_bulk(survey_id: str, req: BulkDiscoveryIn):
+    """Bulk outcome discovery: generate outcomes for multiple jobs at once."""
+    svc = get_survey_service()
+    outcomes = await svc.discover_outcomes_bulk(
+        survey_id=survey_id,
+        job_ids=req.job_ids,
+        outcomes_per_job=req.outcomes_per_job,
+        deduplicate=req.deduplicate,
+    )
+    return {
+        "survey_id": survey_id,
+        "outcomes_generated": len(outcomes),
+        "outcomes": [
+            {"id": o.id, "statement": o.statement}
+            for o in outcomes
+        ],
+    }
+
+
+@router.post("/surveys/from-hierarchy")
+async def create_survey_from_hierarchy(req: HierarchySurveyIn):
+    """Auto-create a survey from a hierarchy, generating outcomes per T2-T3 job."""
+    svc = get_survey_service()
+    result = await svc.create_survey_from_hierarchy(
+        hierarchy_id=req.hierarchy_id,
+        name=req.name,
+        outcomes_per_job=req.outcomes_per_job,
+    )
+    if "error" in result:
+        raise HTTPException(status_code=404, detail=result["error"])
+    return result
+
+
+@router.get("/surveys/{survey_id}/scatter")
+async def get_scatter_data(survey_id: str):
+    """Get scatter plot data (importance vs satisfaction per outcome)."""
+    svc = get_survey_service()
+    return await svc.get_scatter_data(survey_id)

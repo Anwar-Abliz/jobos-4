@@ -1,15 +1,24 @@
 """JobOS 4.0 — Survey Service.
 
 ODI survey integration: create surveys, generate outcomes (LLM or template),
-collect responses, aggregate results, and sync to imperfections.
+collect responses, aggregate results, sync to imperfections, and bulk
+outcome discovery for machine-to-machine data flows.
 """
 from __future__ import annotations
 
 import logging
 from typing import Any
 
+from jobos.kernel.dedup import similarity
 from jobos.kernel.entity import EntityBase, EntityType, _uid
-from jobos.kernel.odi import compute_opportunity_score, map_opportunity_to_vfe
+from jobos.kernel.odi import (
+    classify_opportunity,
+    compute_opportunity_score,
+    generate_outcome_prompt,
+    map_opportunity_to_vfe,
+    template_outcomes,
+    validate_outcome_statement,
+)
 from jobos.ports.graph_port import GraphPort
 from jobos.ports.relational_port import RelationalPort
 
@@ -333,3 +342,195 @@ class SurveyService:
             survey_id,
         )
         return imperfections
+
+    # ─── Bulk Discovery (Machine-to-Machine) ────────────
+
+    async def discover_outcomes_bulk(
+        self,
+        survey_id: str,
+        job_ids: list[str],
+        outcomes_per_job: int = 10,
+        deduplicate: bool = True,
+    ) -> list[EntityBase]:
+        """Generate outcomes for multiple jobs in batch.
+
+        Designed for programmatic use — generates outcomes_per_job
+        statements per job, optionally deduplicates across all results.
+        """
+        all_outcomes: list[EntityBase] = []
+
+        for job_id in job_ids:
+            job = await self._graph.get_entity(job_id)
+            if not job or job.entity_type != EntityType.JOB:
+                continue
+
+            tier = job.properties.get("tier", 2)
+            if isinstance(tier, str):
+                tier = int(tier) if tier.isdigit() else 2
+
+            if self._llm:
+                outcomes = await self._discover_outcomes_llm(
+                    survey_id, job, tier, outcomes_per_job,
+                )
+            else:
+                outcomes = await self._discover_outcomes_template(
+                    survey_id, job, outcomes_per_job,
+                )
+            all_outcomes.extend(outcomes)
+
+        if deduplicate and len(all_outcomes) > 1:
+            all_outcomes = self._deduplicate_outcomes(all_outcomes)
+
+        # Update survey total
+        survey = await self._graph.get_entity(survey_id)
+        if survey:
+            survey.properties["total_outcomes"] = len(all_outcomes)
+            await self._graph.save_entity(survey)
+
+        logger.info(
+            "Bulk discovery: %d outcomes for %d jobs (survey %s)",
+            len(all_outcomes), len(job_ids), survey_id,
+        )
+        return all_outcomes
+
+    async def _discover_outcomes_llm(
+        self,
+        survey_id: str,
+        job: EntityBase,
+        tier: int,
+        count: int,
+    ) -> list[EntityBase]:
+        """LLM-powered outcome discovery for a single job."""
+        prompt = generate_outcome_prompt(job, tier, count)
+        try:
+            raw = await self._llm.complete_json(
+                system_prompt=prompt,
+                user_prompt=f"Job: \"{job.statement}\"",
+                max_tokens=2000,
+            )
+            outcome_dicts = raw.get("outcomes", [])
+        except Exception as e:
+            logger.warning("LLM discovery failed for %s: %s", job.id, e)
+            return await self._discover_outcomes_template(
+                survey_id, job, count,
+            )
+
+        outcomes: list[EntityBase] = []
+        for od in outcome_dicts[:count]:
+            stmt = od.get("statement", "")
+            if not stmt:
+                continue
+            outcome = await self.add_outcome(
+                survey_id=survey_id,
+                text=stmt,
+                context_label=od.get("context", ""),
+                llm_generated=True,
+            )
+            outcomes.append(outcome)
+        return outcomes
+
+    async def _discover_outcomes_template(
+        self,
+        survey_id: str,
+        job: EntityBase,
+        count: int,
+    ) -> list[EntityBase]:
+        """Template outcome discovery for a single job."""
+        domain = job.statement[:50]
+        raw_outcomes = template_outcomes(domain, count)
+        outcomes: list[EntityBase] = []
+        for od in raw_outcomes:
+            outcome = await self.add_outcome(
+                survey_id=survey_id,
+                text=od["statement"],
+                context_label=od.get("context", ""),
+                llm_generated=False,
+            )
+            outcomes.append(outcome)
+        return outcomes
+
+    def _deduplicate_outcomes(
+        self, outcomes: list[EntityBase], threshold: float = 0.85,
+    ) -> list[EntityBase]:
+        """Remove near-duplicate outcomes by statement similarity."""
+        unique: list[EntityBase] = []
+        for outcome in outcomes:
+            is_dup = False
+            for existing in unique:
+                if similarity(outcome.statement, existing.statement) > threshold:
+                    is_dup = True
+                    break
+            if not is_dup:
+                unique.append(outcome)
+        removed = len(outcomes) - len(unique)
+        if removed:
+            logger.info("Deduplicated %d outcomes (%d removed)", len(unique), removed)
+        return unique
+
+    async def create_survey_from_hierarchy(
+        self,
+        hierarchy_id: str,
+        name: str = "",
+        outcomes_per_job: int = 5,
+    ) -> dict[str, Any]:
+        """Auto-create a survey from a hierarchy, generating outcomes for each T2-T3 job.
+
+        Returns survey entity + generated outcomes.
+        """
+        hierarchy = await self._graph.get_entity(hierarchy_id)
+        if not hierarchy:
+            return {"error": f"Hierarchy {hierarchy_id} not found"}
+
+        survey_name = name or f"Survey for {hierarchy.name or hierarchy_id}"
+        survey = await self.create_survey(survey_name)
+
+        # Get all jobs in the hierarchy via HIRES traversal
+        job_ids: list[str] = []
+        visited: set[str] = set()
+
+        async def traverse(eid: str) -> None:
+            if eid in visited:
+                return
+            visited.add(eid)
+            entity = await self._graph.get_entity(eid)
+            if entity and entity.entity_type == EntityType.JOB:
+                tier = entity.properties.get("tier", 0)
+                tier_num = int(tier) if isinstance(tier, (int, float)) else 0
+                if tier_num in (2, 3):
+                    job_ids.append(eid)
+            children = await self._graph.get_neighbors(
+                eid, edge_type="HIRES", direction="outgoing",
+            )
+            for child in children:
+                await traverse(child.id)
+
+        await traverse(hierarchy_id)
+
+        outcomes = await self.discover_outcomes_bulk(
+            survey.id, job_ids, outcomes_per_job,
+        )
+
+        return {
+            "survey_id": survey.id,
+            "survey_name": survey_name,
+            "job_count": len(job_ids),
+            "outcome_count": len(outcomes),
+        }
+
+    async def get_scatter_data(self, survey_id: str) -> list[dict[str, Any]]:
+        """Get scatter plot data (importance vs satisfaction per outcome)."""
+        aggregates = await self._db.get_survey_aggregates(survey_id)
+        points: list[dict[str, Any]] = []
+        for agg in aggregates:
+            outcome = await self._graph.get_entity(agg["outcome_id"])
+            opp = agg.get("opportunity_mean", 0)
+            points.append({
+                "outcome_id": agg["outcome_id"],
+                "statement": outcome.statement if outcome else "",
+                "importance": agg.get("importance_mean", 5),
+                "satisfaction": agg.get("satisfaction_mean", 5),
+                "opportunity": opp,
+                "classification": classify_opportunity(opp) if opp else "unknown",
+                "response_count": agg.get("count", 0),
+            })
+        return points
