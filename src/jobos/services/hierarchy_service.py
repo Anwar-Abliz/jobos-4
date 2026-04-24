@@ -210,13 +210,133 @@ DOMAIN_TEMPLATES: dict[str, dict[str, list[dict]]] = {
             {"statement": "consolidate lessons learned and best practices across pilots", "rationale": "Knowledge management supports scaling", "metrics_hint": ["lessons captured per pilot", "reuse rate"], "executor_type": "AI"},
         ],
     },
+    "healthcare": {
+        "strategic": [
+            {"statement": "reduce preventable adverse patient outcomes across care settings", "rationale": "Patient safety is the overarching strategic goal", "metrics_hint": ["adverse event rate", "30-day readmission rate", "patient safety index"], "executor_type": "HUMAN"},
+        ],
+        "core_functional": [
+            {"statement": "ensure timely and accurate clinical decision-making at point of care", "rationale": "Clinical decisions drive outcomes", "metrics_hint": ["time to diagnosis", "diagnostic accuracy", "guideline adherence rate"], "executor_type": "HUMAN"},
+            {"statement": "maintain continuity of care across handoffs and transitions", "rationale": "Care fragmentation causes errors", "metrics_hint": ["handoff error rate", "information loss rate", "follow-up completion rate"], "executor_type": "HUMAN"},
+            {"statement": "reduce operational waste in clinical workflows", "rationale": "Waste diverts resources from patient care", "metrics_hint": ["wait time per encounter", "staff utilization", "unnecessary test rate"], "executor_type": "HUMAN"},
+        ],
+        "execution": [
+            {"statement": "standardize clinical assessment protocols per specialty", "category": "preparation", "rationale": "Reduces variation in care quality", "metrics_hint": ["protocol adherence rate"], "executor_type": "HUMAN"},
+            {"statement": "implement real-time patient deterioration alerting", "category": "monitoring", "rationale": "Early detection prevents escalation", "metrics_hint": ["alert sensitivity", "time to intervention"], "executor_type": "AI"},
+            {"statement": "coordinate discharge planning from admission", "category": "operation", "rationale": "Early planning reduces length of stay", "metrics_hint": ["length of stay", "discharge readiness score"], "executor_type": "HUMAN"},
+            {"statement": "automate medication reconciliation across care settings", "category": "operation", "rationale": "Manual reconciliation is error-prone", "metrics_hint": ["reconciliation error rate", "time per reconciliation"], "executor_type": "AI"},
+            {"statement": "track patient-reported outcome measures post-discharge", "category": "monitoring", "rationale": "Outcomes beyond clinical metrics", "metrics_hint": ["PROM completion rate", "patient satisfaction score"], "executor_type": "AI"},
+        ],
+        "micro_job": [
+            {"statement": "verify patient identity using two independent identifiers", "category": "verify", "rationale": "Foundation of patient safety", "metrics_hint": ["identification error rate"], "executor_type": "HUMAN"},
+            {"statement": "prepare structured handoff using SBAR format", "category": "setup", "rationale": "Standardized handoffs reduce information loss", "metrics_hint": ["SBAR completion rate"], "executor_type": "HUMAN"},
+            {"statement": "execute medication barcode scan before administration", "category": "act", "rationale": "Last line of defense against med errors", "metrics_hint": ["scan compliance rate"], "executor_type": "HUMAN"},
+            {"statement": "archive completed order sets and clinical notes", "category": "cleanup", "rationale": "Legal and continuity requirement", "metrics_hint": ["documentation completeness"], "executor_type": "AI"},
+        ],
+    },
+    "logistics": {
+        "strategic": [
+            {"statement": "achieve end-to-end supply chain visibility and on-time delivery performance", "rationale": "Reliability is the core value proposition", "metrics_hint": ["OTIF rate", "order cycle time", "supply chain visibility index"], "executor_type": "HUMAN"},
+        ],
+        "core_functional": [
+            {"statement": "minimize order fulfillment cycle time from receipt to delivery", "rationale": "Speed directly impacts customer satisfaction", "metrics_hint": ["order cycle time", "processing time per order"], "executor_type": "HUMAN"},
+            {"statement": "reduce inventory carrying costs while maintaining service levels", "rationale": "Capital efficiency vs availability trade-off", "metrics_hint": ["inventory turnover", "stockout rate", "carrying cost ratio"], "executor_type": "HUMAN"},
+            {"statement": "ensure shipment integrity and regulatory compliance", "rationale": "Damage and non-compliance erode trust", "metrics_hint": ["damage rate", "compliance audit score", "claims rate"], "executor_type": "HUMAN"},
+        ],
+        "execution": [
+            {"statement": "optimize warehouse pick-pack-ship sequencing", "category": "operation", "rationale": "Warehouse efficiency drives fulfillment speed", "metrics_hint": ["picks per hour", "packing error rate"], "executor_type": "AI"},
+            {"statement": "coordinate carrier selection based on cost-speed-reliability", "category": "acquisition", "rationale": "Carrier choice impacts delivery performance", "metrics_hint": ["freight cost per unit", "carrier reliability score"], "executor_type": "AI"},
+            {"statement": "monitor in-transit shipment status and exceptions", "category": "monitoring", "rationale": "Proactive exception handling reduces delays", "metrics_hint": ["exception rate", "mean time to resolve"], "executor_type": "AI"},
+            {"statement": "manage returns processing and reverse logistics", "category": "operation", "rationale": "Returns impact customer experience and cost", "metrics_hint": ["return processing time", "restocking rate"], "executor_type": "HUMAN"},
+            {"statement": "forecast demand to drive replenishment planning", "category": "preparation", "rationale": "Accurate forecasts prevent stockouts and overstock", "metrics_hint": ["forecast accuracy", "bias"], "executor_type": "AI"},
+        ],
+        "micro_job": [
+            {"statement": "scan inbound shipment barcodes against purchase order", "category": "verify", "rationale": "Receipt accuracy prevents downstream errors", "metrics_hint": ["receipt accuracy rate"], "executor_type": "HUMAN"},
+            {"statement": "prepare shipping labels and customs documentation", "category": "setup", "rationale": "Documentation errors cause border delays", "metrics_hint": ["documentation error rate"], "executor_type": "AI"},
+            {"statement": "execute bin location assignment for received goods", "category": "act", "rationale": "Correct putaway enables efficient picking", "metrics_hint": ["putaway accuracy"], "executor_type": "HUMAN"},
+            {"statement": "archive proof of delivery and carrier settlement documents", "category": "cleanup", "rationale": "Required for dispute resolution and audit", "metrics_hint": ["POD capture rate"], "executor_type": "AI"},
+        ],
+    },
+    "manufacturing": {
+        "strategic": [
+            {"statement": "maximize production throughput while maintaining quality and safety standards", "rationale": "Throughput, quality, and safety form the manufacturing iron triangle", "metrics_hint": ["OEE", "first-pass yield", "TRIR"], "executor_type": "HUMAN"},
+        ],
+        "core_functional": [
+            {"statement": "reduce unplanned downtime across production lines", "rationale": "Downtime is the largest source of capacity loss", "metrics_hint": ["unplanned downtime hours", "MTBF", "MTTR"], "executor_type": "HUMAN"},
+            {"statement": "maintain product quality within specification limits", "rationale": "Quality failures cause scrap, rework, and recalls", "metrics_hint": ["defect rate", "Cpk index", "scrap rate"], "executor_type": "HUMAN"},
+            {"statement": "optimize production scheduling and changeover efficiency", "rationale": "Changeovers are non-value-add time", "metrics_hint": ["changeover time", "schedule adherence", "utilization rate"], "executor_type": "HUMAN"},
+        ],
+        "execution": [
+            {"statement": "implement predictive maintenance using sensor data", "category": "monitoring", "rationale": "Predict failures before they cause downtime", "metrics_hint": ["prediction accuracy", "false alarm rate"], "executor_type": "AI"},
+            {"statement": "execute statistical process control on critical parameters", "category": "monitoring", "rationale": "SPC detects process drift before defects occur", "metrics_hint": ["out-of-control rate", "Cp index"], "executor_type": "AI"},
+            {"statement": "coordinate raw material availability with production schedule", "category": "preparation", "rationale": "Material shortages halt production", "metrics_hint": ["material availability rate", "lead time variance"], "executor_type": "HUMAN"},
+            {"statement": "manage work order lifecycle from creation to closure", "category": "operation", "rationale": "Work orders are the unit of production control", "metrics_hint": ["work order completion rate", "cycle time"], "executor_type": "HUMAN"},
+            {"statement": "conduct root cause analysis on quality deviations", "category": "adaptation", "rationale": "Prevent recurrence of quality issues", "metrics_hint": ["CAPA closure rate", "recurrence rate"], "executor_type": "HUMAN"},
+        ],
+        "micro_job": [
+            {"statement": "verify machine parameters against work order specifications", "category": "verify", "rationale": "Incorrect setup causes scrap", "metrics_hint": ["setup verification compliance"], "executor_type": "HUMAN"},
+            {"statement": "prepare tooling and fixtures for next production run", "category": "setup", "rationale": "Preparation minimizes changeover time", "metrics_hint": ["preparation time"], "executor_type": "HUMAN"},
+            {"statement": "execute first article inspection on batch start", "category": "act", "rationale": "Catches issues before full batch runs", "metrics_hint": ["first article pass rate"], "executor_type": "HUMAN"},
+            {"statement": "archive batch records and quality certificates", "category": "cleanup", "rationale": "Traceability requirement for regulated industries", "metrics_hint": ["record completeness"], "executor_type": "AI"},
+        ],
+    },
+    "education": {
+        "strategic": [
+            {"statement": "improve measurable student learning outcomes across programs", "rationale": "Learning outcomes are the core purpose of education", "metrics_hint": ["course completion rate", "assessment score improvement", "graduate employment rate"], "executor_type": "HUMAN"},
+        ],
+        "core_functional": [
+            {"statement": "ensure curriculum alignment with learning objectives and competency frameworks", "rationale": "Misaligned curriculum wastes student and instructor time", "metrics_hint": ["alignment coverage rate", "competency gap score"], "executor_type": "HUMAN"},
+            {"statement": "reduce barriers to student engagement and participation", "rationale": "Engagement predicts retention and outcomes", "metrics_hint": ["attendance rate", "assignment submission rate", "LMS login frequency"], "executor_type": "HUMAN"},
+            {"statement": "provide timely and actionable feedback on student performance", "rationale": "Feedback is the primary lever for learning improvement", "metrics_hint": ["feedback turnaround time", "feedback specificity score"], "executor_type": "HUMAN"},
+        ],
+        "execution": [
+            {"statement": "design assessments that measure higher-order thinking skills", "category": "preparation", "rationale": "Assessments drive what students focus on", "metrics_hint": ["Bloom's taxonomy level distribution", "assessment validity"], "executor_type": "HUMAN"},
+            {"statement": "identify at-risk students using early warning indicators", "category": "monitoring", "rationale": "Early intervention prevents dropout", "metrics_hint": ["at-risk identification accuracy", "intervention response time"], "executor_type": "AI"},
+            {"statement": "adapt instructional methods based on formative assessment data", "category": "adaptation", "rationale": "One-size-fits-all instruction leaves students behind", "metrics_hint": ["differentiation frequency", "student progress variance"], "executor_type": "HUMAN"},
+            {"statement": "facilitate peer learning and collaborative problem-solving", "category": "operation", "rationale": "Peer interaction deepens understanding", "metrics_hint": ["collaboration frequency", "peer assessment quality"], "executor_type": "HUMAN"},
+            {"statement": "curate and maintain digital learning resources", "category": "acquisition", "rationale": "Outdated resources reduce learning quality", "metrics_hint": ["resource freshness", "usage rate per resource"], "executor_type": "AI"},
+        ],
+        "micro_job": [
+            {"statement": "prepare lesson plan with clear learning objectives", "category": "setup", "rationale": "Structured planning improves instruction quality", "metrics_hint": ["planning completion rate"], "executor_type": "HUMAN"},
+            {"statement": "execute formative check-for-understanding during session", "category": "act", "rationale": "Real-time comprehension checks guide instruction", "metrics_hint": ["check frequency per session"], "executor_type": "HUMAN"},
+            {"statement": "verify assessment rubric consistency across graders", "category": "verify", "rationale": "Grading inconsistency undermines trust", "metrics_hint": ["inter-rater reliability"], "executor_type": "HUMAN"},
+            {"statement": "archive student work samples and grade records", "category": "cleanup", "rationale": "Portfolio evidence for accreditation", "metrics_hint": ["record completeness"], "executor_type": "AI"},
+        ],
+    },
+    "fintech": {
+        "strategic": [
+            {"statement": "reduce friction in financial transactions while maintaining regulatory compliance", "rationale": "Speed and compliance are the dual mandate", "metrics_hint": ["transaction completion rate", "compliance violation rate", "customer effort score"], "executor_type": "HUMAN"},
+        ],
+        "core_functional": [
+            {"statement": "minimize transaction processing time across payment channels", "rationale": "Processing speed is a competitive differentiator", "metrics_hint": ["mean transaction time", "timeout rate", "STP rate"], "executor_type": "HUMAN"},
+            {"statement": "prevent fraudulent transactions without blocking legitimate ones", "rationale": "Fraud prevention vs false positive trade-off", "metrics_hint": ["fraud detection rate", "false positive rate", "fraud loss rate"], "executor_type": "HUMAN"},
+            {"statement": "ensure continuous compliance with evolving regulatory requirements", "rationale": "Non-compliance risks fines and license revocation", "metrics_hint": ["regulatory finding count", "audit readiness score", "reporting timeliness"], "executor_type": "HUMAN"},
+        ],
+        "execution": [
+            {"statement": "implement real-time transaction monitoring and scoring", "category": "monitoring", "rationale": "Batch processing misses fast-moving fraud", "metrics_hint": ["scoring latency", "model accuracy"], "executor_type": "AI"},
+            {"statement": "automate KYC and AML verification workflows", "category": "operation", "rationale": "Manual verification doesn't scale", "metrics_hint": ["verification time", "automation rate", "false match rate"], "executor_type": "AI"},
+            {"statement": "manage API gateway rate limiting and partner integrations", "category": "operation", "rationale": "API reliability underpins the platform", "metrics_hint": ["API uptime", "p99 latency", "error rate"], "executor_type": "AI"},
+            {"statement": "conduct periodic stress testing of payment infrastructure", "category": "monitoring", "rationale": "Peak load failures are catastrophic", "metrics_hint": ["max TPS achieved", "degradation threshold"], "executor_type": "AI"},
+            {"statement": "reconcile ledger entries across payment rails daily", "category": "operation", "rationale": "Reconciliation gaps indicate errors or fraud", "metrics_hint": ["unreconciled rate", "reconciliation time"], "executor_type": "AI"},
+        ],
+        "micro_job": [
+            {"statement": "verify identity document authenticity against issuing authority", "category": "verify", "rationale": "Identity fraud is the gateway to financial fraud", "metrics_hint": ["verification accuracy"], "executor_type": "AI"},
+            {"statement": "prepare regulatory filing with required data fields", "category": "setup", "rationale": "Incomplete filings trigger regulatory scrutiny", "metrics_hint": ["filing completeness rate"], "executor_type": "AI"},
+            {"statement": "execute sanctions screening on counterparty before settlement", "category": "act", "rationale": "Sanctions violations carry severe penalties", "metrics_hint": ["screening coverage", "hit resolution time"], "executor_type": "AI"},
+            {"statement": "archive transaction audit trail with immutable timestamps", "category": "cleanup", "rationale": "Audit trail is a regulatory requirement", "metrics_hint": ["audit trail completeness"], "executor_type": "AI"},
+        ],
+    },
 }
 
 # Normalize lookup keys
 _TEMPLATE_ALIASES: dict[str, str] = {
     "saas": "b2b_saas", "b2b saas": "b2b_saas", "b2b_saas": "b2b_saas", "software": "b2b_saas",
-    "retail": "retail_operations", "retail operations": "retail_operations", "retail_operations": "retail_operations", "store": "retail_operations", "ecommerce": "retail_operations",
-    "transformation": "corporate_transformation", "corporate transformation": "corporate_transformation", "corporate_transformation": "corporate_transformation", "change management": "corporate_transformation",
+    "retail": "retail_operations", "retail operations": "retail_operations", "retail_operations": "retail_operations", "store": "retail_operations", "ecommerce": "retail_operations", "e-commerce": "retail_operations",
+    "transformation": "corporate_transformation", "corporate transformation": "corporate_transformation", "corporate_transformation": "corporate_transformation", "change management": "corporate_transformation", "change": "corporate_transformation",
+    "healthcare": "healthcare", "health": "healthcare", "hospital": "healthcare", "clinical": "healthcare", "medical": "healthcare", "patient": "healthcare", "pharma": "healthcare",
+    "logistics": "logistics", "supply chain": "logistics", "supply_chain": "logistics", "warehouse": "logistics", "shipping": "logistics", "freight": "logistics", "transportation": "logistics",
+    "manufacturing": "manufacturing", "production": "manufacturing", "factory": "manufacturing", "plant": "manufacturing", "assembly": "manufacturing", "industrial": "manufacturing",
+    "education": "education", "learning": "education", "school": "education", "university": "education", "training": "education", "teaching": "education", "academic": "education",
+    "fintech": "fintech", "finance": "fintech", "banking": "fintech", "payments": "fintech", "financial": "fintech", "insurance": "fintech", "lending": "fintech",
 }
 
 

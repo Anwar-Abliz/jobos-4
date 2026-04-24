@@ -27,11 +27,11 @@ def discover_market_clusters(
     jobs: list[EntityBase],
     imperfection_map: dict[str, list[EntityBase]] | None = None,
 ) -> list[dict[str, Any]]:
-    """Axiom 8 Phase 1: Discover market clusters from unmet outcome patterns.
+    """Axiom 8: Discover market clusters from unmet outcome patterns.
 
     Args:
         jobs:             All Job entities to analyze.
-        imperfection_map: job_id → list of Imperfection entities associated with it.
+        imperfection_map: job_id -> list of Imperfection entities associated with it.
                           If None, clustering is done without imperfection context.
 
     Returns:
@@ -39,38 +39,90 @@ def discover_market_clusters(
             cluster_id:   Unique cluster identifier.
             job_ids:      List of job entity IDs in this cluster.
             pattern:      Human-readable description of the shared outcome pattern.
-            centroid:     IPS vector centroid (Phase 2; None in Phase 1).
+            centroid:     VFE vector centroid (mean of per-job VFE vectors).
             size:         Number of jobs in this cluster.
 
-    Phase 1 behaviour:
-        Returns a single cluster containing all jobs. This is the correct
-        degenerate case: we have insufficient data to distinguish segments.
-
-    Phase 2 implementation plan:
-        1. Compute VFE vector for each job:
-           VFE = 3*Blocker + 2*Severity + Frequency + EntropyRisk + (1-Fixability)
-        2. Normalize vectors to unit length.
-        3. Apply KMeans(k=sqrt(n)) on the VFE vectors.
-        4. Label each cluster with the dominant imperfection pattern.
-
-    Phase 3 implementation plan:
-        1. Build imperfection co-occurrence graph in Neo4j.
-        2. Run Louvain / label propagation community detection.
-        3. Map communities back to job clusters.
+    Phase 1: VFE-vector-based clustering using simple distance grouping.
+             Groups jobs by dominant imperfection dimension (highest VFE component).
+    Phase 2: KMeans on normalized VFE vectors.
+    Phase 3: Louvain community detection on imperfection co-occurrence graph.
     """
     job_ids = [j.id for j in jobs if j.entity_type == EntityType.JOB]
     if not job_ids:
         return []
 
-    return [
-        {
-            "cluster_id": "stub_cluster_0",
-            "job_ids": job_ids,
-            "pattern": "unimplemented — Phase 2 will use VFE vector clustering",
-            "centroid": None,
-            "size": len(job_ids),
-        }
-    ]
+    imp_map = imperfection_map or {}
+
+    # Compute VFE vectors for all jobs
+    vectors: dict[str, dict[str, float]] = {}
+    for job in jobs:
+        if job.entity_type != EntityType.JOB:
+            continue
+        imps = imp_map.get(job.id, [])
+        vectors[job.id] = compute_vfe_vector(job, imps)
+
+    # Group by dominant imperfection dimension
+    dimension_groups: dict[str, list[str]] = {}
+    for job_id, vec in vectors.items():
+        dominant = _dominant_dimension(vec)
+        dimension_groups.setdefault(dominant, []).append(job_id)
+
+    clusters: list[dict[str, Any]] = []
+    for idx, (dimension, jids) in enumerate(sorted(dimension_groups.items())):
+        # Compute centroid for this cluster
+        centroid = _compute_centroid([vectors[jid] for jid in jids])
+        clusters.append({
+            "cluster_id": f"cluster_{idx}",
+            "job_ids": jids,
+            "pattern": _dimension_to_pattern(dimension),
+            "centroid": centroid,
+            "size": len(jids),
+        })
+
+    return clusters
+
+
+_DIMENSION_PATTERNS: dict[str, str] = {
+    "blocker": "Jobs blocked by critical impediments requiring immediate resolution",
+    "severity": "Jobs with high-severity imperfections degrading outcomes",
+    "frequency": "Jobs with frequently recurring imperfections (high friction)",
+    "entropy_risk": "Jobs with high entropy risk (unpredictable failure modes)",
+    "fixability": "Jobs with low fixability (systemic/structural issues)",
+    "none": "Jobs with no measured imperfections (potentially underspecified)",
+}
+
+
+def _dominant_dimension(vec: dict[str, float]) -> str:
+    """Determine which imperfection dimension dominates a VFE vector."""
+    if vec.get("vfe_total", 0.0) == 0.0:
+        return "none"
+
+    dimension_scores = {
+        "blocker": vec.get("blocker_count", 0) * 3.0,
+        "severity": vec.get("severity_mean", 0.0) * 2.0,
+        "frequency": vec.get("frequency_mean", 0.0),
+        "entropy_risk": vec.get("entropy_risk_mean", 0.0),
+        "fixability": 1.0 - vec.get("fixability_mean", 1.0),
+    }
+    return max(dimension_scores, key=lambda k: dimension_scores[k])
+
+
+def _dimension_to_pattern(dimension: str) -> str:
+    """Map a dominant dimension to a human-readable pattern description."""
+    return _DIMENSION_PATTERNS.get(dimension, f"Shared {dimension} pattern")
+
+
+def _compute_centroid(vectors: list[dict[str, float]]) -> dict[str, float]:
+    """Compute the mean VFE vector for a cluster."""
+    if not vectors:
+        return {}
+    keys = ["vfe_total", "blocker_count", "severity_mean",
+            "frequency_mean", "entropy_risk_mean", "fixability_mean"]
+    centroid: dict[str, float] = {}
+    for key in keys:
+        vals = [v.get(key, 0.0) for v in vectors]
+        centroid[key] = round(sum(vals) / len(vals), 4)
+    return centroid
 
 
 def compute_vfe_vector(
@@ -103,9 +155,17 @@ def compute_vfe_vector(
             "fixability_mean": 1.0,
         }
 
-    blocker_count = sum(1 for i in imperfections if i.properties.get("is_blocker", False))
-    severity_mean = sum(i.properties.get("severity", 0.0) for i in imperfections) / len(imperfections)
-    frequency_mean = sum(i.properties.get("frequency", 0.0) for i in imperfections) / len(imperfections)
+    blocker_count = sum(
+        1 for i in imperfections if i.properties.get("is_blocker", False)
+    )
+    severity_mean = (
+        sum(i.properties.get("severity", 0.0) for i in imperfections)
+        / len(imperfections)
+    )
+    frequency_mean = (
+        sum(i.properties.get("frequency", 0.0) for i in imperfections)
+        / len(imperfections)
+    )
     entropy_risk_mean = sum(
         i.properties.get("entropy_risk", 0.0) for i in imperfections
     ) / len(imperfections)

@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from jobos.api.deps import close_connections, initialize_connections
+from jobos.api.middleware import CorrelationMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +41,9 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
+    # Middleware: correlation IDs for request tracing
+    app.add_middleware(CorrelationMiddleware)
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -62,6 +66,7 @@ def create_app() -> FastAPI:
         hierarchy,
         hiring,
         imperfections,
+        ingest,
         jobs,
         metrics,
         recommendation,
@@ -84,6 +89,7 @@ def create_app() -> FastAPI:
     app.include_router(hiring.router, prefix="/api", tags=["hiring"])
     app.include_router(imperfections.router, prefix="/api", tags=["imperfections"])
     app.include_router(metrics.router, prefix="/api", tags=["metrics"])
+    app.include_router(ingest.router, prefix="/api", tags=["ingest"])
     # Context Graph routes
     app.include_router(context.router, prefix="/api", tags=["context"])
     app.include_router(sap.router, prefix="/api", tags=["sap"])

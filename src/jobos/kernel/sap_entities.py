@@ -181,6 +181,15 @@ class OutcomeProperties(BaseModel):
     llm_generated: bool = False
 
 
+class LessonProperties(BaseModel):
+    """Properties for entity_type='lesson' — captured lessons learned."""
+    lesson_type: Literal["success", "failure", "insight"] = "insight"
+    job_id: str = ""
+    context: str = ""
+    impact: str = ""
+    recommendation: str = ""
+
+
 # ═══════════════════════════════════════════════════════════
 #  Registration
 # ═══════════════════════════════════════════════════════════
@@ -198,6 +207,7 @@ def register_sap_property_models() -> None:
     register_property_model(EntityType.DATA_SOURCE, DataSourceProperties)
     register_property_model(EntityType.SURVEY, SurveyProperties)
     register_property_model(EntityType.OUTCOME, OutcomeProperties)
+    register_property_model(EntityType.LESSON, LessonProperties)
 
 
 # Auto-register on import

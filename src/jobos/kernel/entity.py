@@ -52,6 +52,7 @@ class EntityType(str, Enum):
     DATA_SOURCE = "data_source"
     SURVEY = "survey"
     OUTCOME = "outcome"
+    LESSON = "lesson"
 
 
 class JobType(str, Enum):
@@ -191,6 +192,14 @@ class EntityBase(BaseModel):
     ingestion_time: datetime | None = Field(
         default=None,
         description="Bi-temporal: when this state was recorded in the system",
+    )
+    provenance: str = Field(
+        default="user",
+        description="How this entity was created: user, llm, import, system, template, sop_ingest",
+    )
+    provenance_source: str = Field(
+        default="",
+        description="Source identifier: session_id, filename, LLM model, template name",
     )
 
     model_config = {"from_attributes": True}
