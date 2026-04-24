@@ -69,6 +69,7 @@ def create_app() -> FastAPI:
         ingest,
         jobs,
         metrics,
+        pipeline,
         recommendation,
         sap,
         scenarios,
@@ -90,6 +91,7 @@ def create_app() -> FastAPI:
     app.include_router(imperfections.router, prefix="/api", tags=["imperfections"])
     app.include_router(metrics.router, prefix="/api", tags=["metrics"])
     app.include_router(ingest.router, prefix="/api", tags=["ingest"])
+    app.include_router(pipeline.router, prefix="/api", tags=["pipeline"])
     # Context Graph routes
     app.include_router(context.router, prefix="/api", tags=["context"])
     app.include_router(sap.router, prefix="/api", tags=["sap"])

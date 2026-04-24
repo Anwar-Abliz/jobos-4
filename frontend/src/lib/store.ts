@@ -77,7 +77,7 @@ interface AppState {
   baselineSummary: BaselineSummary | null;
 
   // View toggle
-  activeView: "jtbd" | "context";
+  activeView: "jtbd" | "context" | "ingest";
 
   // Panel
   rightPanelVisible: boolean;
@@ -122,7 +122,7 @@ interface AppState {
   setBaselineSummary: (summary: BaselineSummary | null) => void;
 
   // Actions — View toggle
-  setActiveView: (view: "jtbd" | "context") => void;
+  setActiveView: (view: "jtbd" | "context" | "ingest") => void;
 
   // Actions — Panel
   toggleRightPanel: () => void;
