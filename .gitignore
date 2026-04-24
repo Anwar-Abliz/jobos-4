@@ -58,6 +58,7 @@ hier_result.json
 CLAUDE.md
 DEV-SESSION.md
 TECHNICAL-SUMMARY.md
+docs/
 
 # Ad-hoc scratch/debug scripts (root level only)
 /check_health.ps1
