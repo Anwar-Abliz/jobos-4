@@ -76,6 +76,9 @@ interface AppState {
   switchEvents: SwitchEvent[];
   baselineSummary: BaselineSummary | null;
 
+  // View toggle
+  activeView: "jtbd" | "context";
+
   // Panel
   rightPanelVisible: boolean;
 
@@ -117,6 +120,9 @@ interface AppState {
   setPhaseEvaluation: (evaluation: PhaseEvaluation | null) => void;
   setSwitchEvents: (events: SwitchEvent[]) => void;
   setBaselineSummary: (summary: BaselineSummary | null) => void;
+
+  // Actions — View toggle
+  setActiveView: (view: "jtbd" | "context") => void;
 
   // Actions — Panel
   toggleRightPanel: () => void;
@@ -160,6 +166,8 @@ export const useAppStore = create<AppState>((set) => ({
   baselineSummary: null,
 
   rightPanelVisible: true,
+
+  activeView: "jtbd",
 
   sapProcesses: [],
   activeSurvey: null,
@@ -247,6 +255,9 @@ export const useAppStore = create<AppState>((set) => ({
   setSwitchEvents: (events) => set({ switchEvents: events }),
   setBaselineSummary: (summary) => set({ baselineSummary: summary }),
 
+  // View toggle
+  setActiveView: (view) => set({ activeView: view }),
+
   // Panel
   toggleRightPanel: () => set((s) => ({ rightPanelVisible: !s.rightPanelVisible })),
 
@@ -279,6 +290,7 @@ export const useAppStore = create<AppState>((set) => ({
       phaseEvaluation: null,
       switchEvents: [],
       baselineSummary: null,
+      activeView: "jtbd",
       sapProcesses: [],
       activeSurvey: null,
       surveyScatter: [],
