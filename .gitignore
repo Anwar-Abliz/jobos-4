@@ -53,3 +53,8 @@ frontend/.next/
 # Scratch / test files
 nul
 hier_result.json
+
+# Project-local docs (not for GitHub)
+CLAUDE.md
+DEV-SESSION.md
+TECHNICAL-SUMMARY.md
