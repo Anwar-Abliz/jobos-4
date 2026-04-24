@@ -58,3 +58,14 @@ hier_result.json
 CLAUDE.md
 DEV-SESSION.md
 TECHNICAL-SUMMARY.md
+
+# Ad-hoc scratch/debug scripts (root level only)
+/check_health.ps1
+/check_hier.py
+/start_backend.ps1
+/test_live.ps1
+/test_live.py
+/test_routes.py
+/test_tree_and_chat.ps1
+/test_tree_existing.ps1
+/test_tree_only.ps1
