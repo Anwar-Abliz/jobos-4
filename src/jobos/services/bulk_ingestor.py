@@ -190,10 +190,10 @@ class BulkIngestor:
     ) -> BulkIngestResult:
         """Ingest structured JSON records (DB exports, API responses).
 
-        Each record is treated as a potential job or process step.
-        The text_field is used as the job statement.
+        Treats all records as process steps in a single hierarchy,
+        not as separate sources (avoids per-record LLM calls).
         """
-        sources: list[SourceSpec] = []
+        statements: list[str] = []
         for record in records:
             text = record.get(text_field, "")
             if not text:
@@ -202,17 +202,56 @@ class BulkIngestor:
                         text = str(record[key])
                         break
             if text:
-                sources.append(SourceSpec(
-                    type="text",
-                    content=text,
-                    metadata=record,
-                ))
+                statements.append(text)
 
-        request = BulkIngestRequest(
-            sources=sources, domain=domain, goal=goal,
-            merge_strategy="deduplicate",
+        if not statements:
+            return BulkIngestResult(total_sources=0)
+
+        # Combine all statements as numbered steps for SOP extraction
+        numbered = "\n".join(
+            f"{i+1}. {s}" for i, s in enumerate(statements)
         )
-        return await self.ingest_bulk(request)
+
+        result = BulkIngestResult(total_sources=1)
+        try:
+            ingest_result = await self._ingestor.ingest(IngestRequest(
+                text=numbered, domain=domain, goal=goal,
+            ))
+            result.results.append(ingest_result)
+            result.successful = 1
+            result.merged_hierarchy = (
+                ingest_result.hierarchy_raw
+                if ingest_result.hierarchy_raw
+                else self._extract_hierarchy_dict(ingest_result)
+            )
+            result.total_jobs = len(
+                result.merged_hierarchy.get("jobs", [])
+            )
+            result.total_edges = len(
+                result.merged_hierarchy.get("edges", [])
+            )
+        except Exception as e:
+            result.failed = 1
+            result.warnings.append(f"JSON records ingestion failed: {e}")
+
+        return result
+
+    def _extract_hierarchy_dict(self, result: IngestResult) -> dict:
+        """Convert IngestResult hierarchy to dict."""
+        if not result.hierarchy:
+            return {}
+        return {
+            "domain": result.hierarchy.context.domain,
+            "jobs": [
+                {"id": j.id, "statement": j.statement,
+                 "tier": j.tier.value if hasattr(j.tier, "value") else str(j.tier)}
+                for j in result.hierarchy.jobs
+            ],
+            "edges": [
+                {"parent_id": e.parent_id, "child_id": e.child_id}
+                for e in result.hierarchy.edges
+            ],
+        }
 
     async def ingest_jsonl(
         self, content: bytes, domain: str = "", goal: str = "",

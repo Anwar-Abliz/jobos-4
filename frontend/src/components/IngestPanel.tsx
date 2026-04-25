@@ -68,7 +68,7 @@ export function IngestPanel() {
         if (domain) formData.append("domain", domain);
         if (goal) formData.append("goal", goal);
         files.forEach((f) => formData.append("files", f));
-        response = await fetch(`${API_BASE}/pipeline/ingest`, {
+        response = await fetch(`${API_BASE}/pipeline/ingest/upload`, {
           method: "POST",
           body: formData,
         });

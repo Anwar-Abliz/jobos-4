@@ -73,15 +73,28 @@ def _get_bulk() -> BulkIngestor:
 
 
 @router.post("/pipeline/ingest")
-async def pipeline_ingest(
-    req: TextIngestIn | None = None,
+async def pipeline_ingest(req: TextIngestIn) -> dict[str, Any]:
+    """Universal ingestion via JSON — text, URL, or URLs."""
+    ingest_req = IngestRequest(
+        text=req.text, url=req.url, urls=req.urls,
+        domain=req.domain, goal=req.goal,
+    )
+    if not ingest_req.text and not ingest_req.url and not ingest_req.urls:
+        raise HTTPException(400, "Provide at least one of: text, url, or urls")
+
+    result = await _get_ingestor().ingest(ingest_req)
+    return result.to_dict()
+
+
+@router.post("/pipeline/ingest/upload")
+async def pipeline_ingest_upload(
     text: str = Form(default=""),
     url: str = Form(default=""),
     domain: str = Form(default=""),
     goal: str = Form(default=""),
     files: list[UploadFile] = File(default=[]),
 ) -> dict[str, Any]:
-    """Universal ingestion — text, URL, files, or any combination."""
+    """Universal ingestion via multipart form — files + optional text/URL."""
     file_tuples: list[tuple[bytes, str]] = []
     for f in files:
         if f.filename:
@@ -90,19 +103,13 @@ async def pipeline_ingest(
                 raise HTTPException(413, f"File {f.filename} too large (max 10MB)")
             file_tuples.append((content, f.filename))
 
-    if req and not file_tuples:
-        ingest_req = IngestRequest(
-            text=req.text, url=req.url, urls=req.urls,
-            domain=req.domain, goal=req.goal,
-        )
-    else:
-        ingest_req = IngestRequest(
-            text=text, url=url, domain=domain,
-            goal=goal, files=file_tuples,
-        )
+    ingest_req = IngestRequest(
+        text=text, url=url, domain=domain,
+        goal=goal, files=file_tuples,
+    )
 
-    if not ingest_req.text and not ingest_req.url and not ingest_req.urls and not ingest_req.files:
-        raise HTTPException(400, "Provide at least one of: text, url, urls, or files")
+    if not ingest_req.text and not ingest_req.url and not ingest_req.files:
+        raise HTTPException(400, "Provide at least one of: text, url, or files")
 
     result = await _get_ingestor().ingest(ingest_req)
     return result.to_dict()
@@ -195,11 +202,13 @@ async def pipeline_crawl(req: CrawlIn) -> dict[str, Any]:
     return result.to_dict()
 
 
+class EnrichIn(BaseModel):
+    entity_ids: list[str] = Field(default_factory=list)
+    scope_id: str = ""
+
+
 @router.post("/pipeline/enrich")
-async def pipeline_enrich(
-    entity_ids: list[str] = [],
-    scope_id: str = "",
-) -> dict[str, Any]:
+async def pipeline_enrich(req: EnrichIn) -> dict[str, Any]:
     """Run context enrichment on specified entities or entire scope.
 
     Infers missing relationships, scores context coverage, and
@@ -215,8 +224,8 @@ async def pipeline_enrich(
 
     engine = ContextEnrichmentEngine(graph=graph)
     result = await engine.enrich(
-        entity_ids=entity_ids or None,
-        scope_id=scope_id,
+        entity_ids=req.entity_ids or None,
+        scope_id=req.scope_id,
     )
     return {
         "entities_enriched": result.entities_enriched,
