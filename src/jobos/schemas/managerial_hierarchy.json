@@ -1,0 +1,465 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jobos.ai/schemas/managerial-hierarchy/v1.0",
+  "title": "JobOS.ai — Managerial Job Hierarchy Schema",
+  "description": "Schema for the human-centric 2D orthogonal job model. T-1 anchors purpose (WHY), T-2 anchors outcomes (WHAT), T-3 anchors processes (HOW). The orthogonal axis (Dimension A) captures the experience domain (FEEL). This schema is IP-safe: terminology derived from open JTBD literature (Ulwick, Christensen, Moesta).",
+  "version": "1.0.0",
+
+  "definitions": {
+    "uid": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{12}$",
+      "description": "12-char hex UUID"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "source": { "type": "string", "description": "origin system or user" },
+        "method": { "enum": ["llm", "user", "import", "inferred"], "default": "user" },
+        "created_at": { "$ref": "#/definitions/timestamp" },
+        "version": { "type": "integer", "minimum": 1, "default": 1 }
+      },
+      "required": ["source", "method", "created_at"]
+    },
+    "placement_2d": {
+      "type": "object",
+      "description": "2D orthogonal coordinates for the managerial hierarchy. X-axis: functional abstraction level (1=strategic, 5=operational). Y-axis: experience intensity (1=purely functional, 5=highly experiential).",
+      "properties": {
+        "x": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 5,
+          "description": "Functional abstraction axis: 1=strategic/WHY, 5=operational/HOW"
+        },
+        "y": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 5,
+          "description": "Experience (Dimension A) intensity axis: 1=purely functional, 5=highly experiential"
+        },
+        "quadrant": {
+          "enum": [
+            "strategic-functional",
+            "strategic-experiential",
+            "operational-functional",
+            "operational-experiential"
+          ]
+        }
+      },
+      "required": ["x", "y", "quadrant"]
+    },
+
+    "t1_job": {
+      "type": "object",
+      "description": "T-1 Strategic Job — the overarching purpose (WHY). One per scope. Starts with a goal-oriented verb (Achieve, Ensure, Establish, Build, Grow, Protect, Sustain, Lead).",
+      "properties": {
+        "id": { "$ref": "#/definitions/uid" },
+        "tier": { "const": "T1_strategic" },
+        "statement": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 200,
+          "description": "Must start with a goal-oriented action verb. Solution-independent. Addresses a fundamental human or organizational purpose.",
+          "examples": [
+            "Achieve sustainable revenue growth in the mid-market segment",
+            "Ensure seamless customer onboarding across all digital channels",
+            "Build organizational capability for rapid product iteration"
+          ]
+        },
+        "scope_id": {
+          "type": "string",
+          "description": "Logical boundary for Axiom 6 (one root per scope). Typically an organization, product, or program identifier."
+        },
+        "root_token": { "const": "ROOT" },
+        "executor_type": { "enum": ["HUMAN", "MIXED"], "default": "HUMAN" },
+        "placement": { "$ref": "#/definitions/placement_2d" },
+        "rationale": {
+          "type": "string",
+          "description": "Why this is the governing purpose — what imperfection it minimizes at the strategic level."
+        },
+        "metrics_hint": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Suggested outcome metrics (OKR-level). These become ODI outcome statements at T-2.",
+          "examples": [["NRR > 110%", "CAC payback < 18 months", "Logo churn < 5% annually"]]
+        },
+        "children": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/t2_job" },
+          "minItems": 2,
+          "maxItems": 12,
+          "description": "T-2 Core Functional jobs this T-1 hires. Canonical range: 3–7."
+        },
+        "experience_dimension": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/experience_node" },
+          "description": "Dimension A (FEEL) nodes orthogonal to this strategic job."
+        },
+        "provenance": { "$ref": "#/definitions/provenance" }
+      },
+      "required": ["id", "tier", "statement", "scope_id", "root_token", "placement", "provenance"]
+    },
+
+    "t2_job": {
+      "type": "object",
+      "description": "T-2 Core Functional Job — solution-agnostic desired outcomes (WHAT). Derived from ODI/JTBD outcome statements. Starts with a functional verb (Reduce, Increase, Improve, Minimize, Maximize, Maintain, Ensure).",
+      "properties": {
+        "id": { "$ref": "#/definitions/uid" },
+        "tier": { "const": "T2_core" },
+        "statement": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 200,
+          "description": "Solution-agnostic outcome statement. Must be measurable in principle. No technology or product names. Ulwick ODI-compatible.",
+          "examples": [
+            "Reduce the time it takes to qualify an inbound lead",
+            "Minimize the likelihood of contract renewal failure due to delayed stakeholder alignment",
+            "Increase the predictability of quarterly revenue delivery"
+          ]
+        },
+        "parent_id": { "$ref": "#/definitions/uid" },
+        "executor_type": { "enum": ["HUMAN", "AI", "MIXED"], "default": "HUMAN" },
+        "placement": { "$ref": "#/definitions/placement_2d" },
+        "odi_opportunity_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 20,
+          "description": "Ulwick Opportunity Score = importance + max(0, importance - satisfaction). ≥10 = underserved opportunity."
+        },
+        "importance": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "ODI importance rating (1-10 scale)"
+        },
+        "satisfaction": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "ODI satisfaction rating (1-10 scale)"
+        },
+        "category": {
+          "enum": [
+            "reduce_time",
+            "reduce_variability",
+            "reduce_effort",
+            "increase_output",
+            "increase_quality",
+            "increase_access",
+            "ensure_compliance",
+            "ensure_continuity"
+          ]
+        },
+        "children": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/t3_job" },
+          "minItems": 1,
+          "maxItems": 20,
+          "description": "T-3 Execution jobs that enact this outcome. Canonical range: 3–8."
+        },
+        "provenance": { "$ref": "#/definitions/provenance" }
+      },
+      "required": ["id", "tier", "statement", "parent_id", "placement", "provenance"]
+    },
+
+    "t3_job": {
+      "type": "object",
+      "description": "T-3 Execution Job — concrete process step or action (HOW). For HUMAN executors: standard imperative statement. For AI executors: T-3 DSL constraint statement (see agent_hierarchy schema for full DSL spec). Starts with an action verb (Define, Locate, Prepare, Execute, Monitor, Adjust, Validate, Report).",
+      "properties": {
+        "id": { "$ref": "#/definitions/uid" },
+        "tier": { "const": "T3_execution" },
+        "statement": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 500,
+          "description": "For HUMAN: plain imperative statement. For AI/MIXED: T-3 DSL constraint (see t3_constraint_dsl).",
+          "examples": [
+            "Define qualification criteria and scoring rubric for inbound leads",
+            "Minimize the time to qualify a lead from first contact to CRM stage update, measured in hours, target ≤ 4"
+          ]
+        },
+        "parent_id": { "$ref": "#/definitions/uid" },
+        "executor_type": { "enum": ["HUMAN", "AI", "MIXED"], "default": "HUMAN" },
+        "execution_category": {
+          "enum": [
+            "acquisition",
+            "preparation",
+            "operation",
+            "monitoring",
+            "adaptation",
+            "consumption"
+          ]
+        },
+        "standard_step": {
+          "enum": ["Define", "Locate", "Prepare", "Confirm", "Execute", "Monitor", "Modify", "Conclude", null],
+          "description": "Which of the 8 canonical T3 steps this job corresponds to, if applicable."
+        },
+        "t3_constraint": {
+          "$ref": "#/definitions/t3_constraint_dsl",
+          "description": "Populated when executor_type is AI or MIXED. See t3_constraint_dsl definition."
+        },
+        "children": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/t4_job" },
+          "description": "Optional T-4 Micro-Jobs. Use for highly granular agent task decomposition."
+        },
+        "provenance": { "$ref": "#/definitions/provenance" }
+      },
+      "required": ["id", "tier", "statement", "parent_id", "provenance"]
+    },
+
+    "t4_job": {
+      "type": "object",
+      "description": "T-4 Micro-Job — smallest discrete, self-similar functional action (EXECUTE). Atomic — cannot be meaningfully split. Maps to a single tool call or procedure step.",
+      "properties": {
+        "id": { "$ref": "#/definitions/uid" },
+        "tier": { "const": "T4_micro" },
+        "statement": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 200
+        },
+        "parent_id": { "$ref": "#/definitions/uid" },
+        "executor_type": { "enum": ["HUMAN", "AI"], "default": "AI" },
+        "micro_category": {
+          "enum": ["setup", "act", "verify", "cleanup"]
+        },
+        "tool_hint": {
+          "type": "string",
+          "description": "For AI executors: suggested tool or API (e.g., 'CRM.updateStage', 'email.send')"
+        },
+        "provenance": { "$ref": "#/definitions/provenance" }
+      },
+      "required": ["id", "tier", "statement", "parent_id", "micro_category", "provenance"]
+    },
+
+    "t3_constraint_dsl": {
+      "type": "object",
+      "description": "T-3 DSL constraint for AI/agent executor jobs. Two canonical patterns: Pattern A (time minimization) and Pattern B (likelihood minimization). Both specify the measurable constraint that defines success.",
+      "oneOf": [
+        {
+          "title": "Pattern A — Time Minimization",
+          "description": "Minimize the time to [verb-noun] from [start_state] to [end_state], measured in [unit], target ≤ [threshold]",
+          "properties": {
+            "pattern": { "const": "A_time" },
+            "verb_noun": {
+              "type": "string",
+              "description": "The action being timed. E.g., 'qualify a lead', 'process an invoice', 'onboard a user'.",
+              "examples": ["qualify a lead", "resolve a support ticket", "close a purchase order"]
+            },
+            "start_state": {
+              "type": "string",
+              "description": "Observable start condition. E.g., 'first contact', 'ticket created', 'form submitted'."
+            },
+            "end_state": {
+              "type": "string",
+              "description": "Observable end condition. E.g., 'CRM stage updated to Qualified', 'ticket closed', 'account active'."
+            },
+            "unit": {
+              "enum": ["seconds", "minutes", "hours", "business_days", "calendar_days", "weeks"],
+              "description": "Time unit for the constraint."
+            },
+            "threshold": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Maximum acceptable value (≤ threshold = success)."
+            },
+            "baseline": {
+              "type": "number",
+              "description": "Current measured value (if known)."
+            }
+          },
+          "required": ["pattern", "verb_noun", "start_state", "end_state", "unit", "threshold"]
+        },
+        {
+          "title": "Pattern B — Likelihood Minimization",
+          "description": "Minimize the likelihood of [event], measured as [rate_type], target ≤ [threshold]",
+          "properties": {
+            "pattern": { "const": "B_likelihood" },
+            "event": {
+              "type": "string",
+              "description": "The undesirable event to minimize. E.g., 'contract renewal failure', 'data entry error', 'SLA breach'.",
+              "examples": [
+                "contract renewal failure due to delayed stakeholder alignment",
+                "invoice processing error",
+                "customer escalation"
+              ]
+            },
+            "rate_type": {
+              "enum": ["error_rate", "failure_rate", "churn_rate", "breach_rate", "defect_rate", "escalation_rate"],
+              "description": "How the likelihood is measured."
+            },
+            "unit": {
+              "enum": ["percent", "per_1000", "per_10000", "ratio"],
+              "description": "Unit for the rate measurement."
+            },
+            "threshold": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Maximum acceptable rate (≤ threshold = success)."
+            },
+            "baseline": {
+              "type": "number",
+              "description": "Current measured rate (if known)."
+            },
+            "measurement_window": {
+              "type": "string",
+              "description": "Time window for rate calculation. E.g., 'per quarter', 'rolling 30 days'."
+            }
+          },
+          "required": ["pattern", "event", "rate_type", "unit", "threshold"]
+        }
+      ]
+    },
+
+    "experience_node": {
+      "type": "object",
+      "description": "Dimension A — Experience/FEEL node. Orthogonal to the functional hierarchy. Captures the emotional or social dimension of job execution for human executors. Statements begin with 'To Be' or 'Feel'.",
+      "properties": {
+        "id": { "$ref": "#/definitions/uid" },
+        "dimension": { "const": "A_experience" },
+        "statement": {
+          "type": "string",
+          "description": "Starts with 'To Be [adjective]' or 'Feel [adjective/noun]'.",
+          "examples": [
+            "To Be recognized as a trusted partner",
+            "Feel confident in the accuracy of the forecast",
+            "To Be free from manual reporting overhead"
+          ]
+        },
+        "intensity": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 5,
+          "description": "How central this experience is to job execution. 5=defining, 1=peripheral."
+        },
+        "related_job_id": {
+          "$ref": "#/definitions/uid",
+          "description": "The functional job (T1/T2/T3) this experience node is attached to."
+        },
+        "provenance": { "$ref": "#/definitions/provenance" }
+      },
+      "required": ["id", "dimension", "statement", "intensity", "related_job_id", "provenance"]
+    }
+  },
+
+  "type": "object",
+  "description": "Root document: a complete Managerial Job Hierarchy.",
+  "properties": {
+    "$schema": { "type": "string" },
+    "schema_version": { "const": "1.0.0" },
+    "hierarchy_id": { "$ref": "#/definitions/uid" },
+    "created_at": { "$ref": "#/definitions/timestamp" },
+    "last_modified_at": { "$ref": "#/definitions/timestamp" },
+    "hierarchy_version": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 1,
+      "description": "Monotonic version counter for change tracking."
+    },
+    "scope": {
+      "type": "object",
+      "description": "The organizational or logical scope this hierarchy belongs to.",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "domain": {
+          "type": "string",
+          "description": "Industry or functional domain. E.g., 'B2B SaaS', 'Healthcare Ops', 'Manufacturing'."
+        },
+        "organization": { "type": "string" },
+        "program": { "type": "string" }
+      },
+      "required": ["id", "domain"]
+    },
+    "root": {
+      "$ref": "#/definitions/t1_job",
+      "description": "The single T-1 root job (Axiom 4: Singularity). All T-2 jobs are children."
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "total_jobs": { "type": "integer" },
+        "jobs_by_tier": {
+          "type": "object",
+          "properties": {
+            "T1": { "type": "integer" },
+            "T2": { "type": "integer" },
+            "T3": { "type": "integer" },
+            "T4": { "type": "integer" }
+          }
+        },
+        "experience_nodes": { "type": "integer" },
+        "avg_opportunity_score": { "type": "number" },
+        "underserved_outcomes": { "type": "integer" }
+      }
+    }
+  },
+  "required": ["schema_version", "hierarchy_id", "created_at", "scope", "root"],
+
+  "examples": [
+    {
+      "schema_version": "1.0.0",
+      "hierarchy_id": "a1b2c3d4e5f6",
+      "created_at": "2026-04-30T00:00:00Z",
+      "scope": {
+        "id": "saas-smb-sales",
+        "domain": "B2B SaaS",
+        "organization": "Acme Corp",
+        "program": "SMB Go-to-Market"
+      },
+      "root": {
+        "id": "001122334455",
+        "tier": "T1_strategic",
+        "statement": "Achieve predictable revenue growth in the SMB segment",
+        "scope_id": "saas-smb-sales",
+        "root_token": "ROOT",
+        "executor_type": "HUMAN",
+        "placement": { "x": 1.5, "y": 2.0, "quadrant": "strategic-functional" },
+        "rationale": "SMB segment is underpenetrated; revenue predictability is the primary strategic imperfection.",
+        "metrics_hint": ["ARR growth > 30% YoY", "NRR > 110%", "SMB logo churn < 8%"],
+        "children": [
+          {
+            "id": "aabbccddeeff",
+            "tier": "T2_core",
+            "statement": "Reduce the time it takes to convert a qualified lead to a closed deal",
+            "parent_id": "001122334455",
+            "executor_type": "HUMAN",
+            "placement": { "x": 2.0, "y": 1.5, "quadrant": "strategic-functional" },
+            "category": "reduce_time",
+            "importance": 8.5,
+            "satisfaction": 4.0,
+            "odi_opportunity_score": 13.0,
+            "children": [
+              {
+                "id": "112233445566",
+                "tier": "T3_execution",
+                "statement": "Minimize the time to complete a deal qualification from discovery call to CRM stage update, measured in hours, target ≤ 24",
+                "parent_id": "aabbccddeeff",
+                "executor_type": "AI",
+                "execution_category": "operation",
+                "standard_step": "Execute",
+                "t3_constraint": {
+                  "pattern": "A_time",
+                  "verb_noun": "complete a deal qualification",
+                  "start_state": "discovery call completed",
+                  "end_state": "CRM stage updated to Qualified",
+                  "unit": "hours",
+                  "threshold": 24,
+                  "baseline": 72
+                },
+                "provenance": { "source": "llm", "method": "llm", "created_at": "2026-04-30T00:00:00Z", "version": 1 }
+              }
+            ],
+            "provenance": { "source": "llm", "method": "llm", "created_at": "2026-04-30T00:00:00Z", "version": 1 }
+          }
+        ],
+        "provenance": { "source": "user", "method": "user", "created_at": "2026-04-30T00:00:00Z", "version": 1 }
+      }
+    }
+  ]
+}

@@ -73,6 +73,7 @@ def create_app() -> FastAPI:
         recommendation,
         sap,
         scenarios,
+        schemas,
         segments,
         surveys,
     )
@@ -98,5 +99,6 @@ def create_app() -> FastAPI:
     app.include_router(decisions.router, prefix="/api", tags=["decisions"])
     app.include_router(governance.router, prefix="/api", tags=["governance"])
     app.include_router(surveys.router, prefix="/api", tags=["surveys"])
+    app.include_router(schemas.router, prefix="/api", tags=["schemas"])
 
     return app

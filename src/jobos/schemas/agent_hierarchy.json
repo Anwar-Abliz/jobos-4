@@ -1,0 +1,465 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jobos.ai/schemas/agent-hierarchy/v1.0",
+  "title": "JobOS.ai — Agent Job Hierarchy Schema",
+  "description": "Schema for the AI-agent-centric fractal job hierarchy. Key properties: (1) Self-similar: T-3 nodes at any depth follow the same T-3 DSL. (2) Fractal: a T-3 node can have child T-3 nodes (sub-tasks) to arbitrary depth. (3) Strict DSL: every leaf must be a valid Pattern A or Pattern B T-3 constraint. (4) Machine-readable: designed for LLM agent consumption via tool APIs.",
+  "version": "1.0.0",
+
+  "definitions": {
+    "uid": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{12}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "source": { "type": "string" },
+        "method": { "enum": ["llm", "user", "import", "inferred", "agent"] },
+        "created_at": { "$ref": "#/definitions/timestamp" },
+        "version": { "type": "integer", "minimum": 1, "default": 1 },
+        "parent_agent_id": {
+          "type": "string",
+          "description": "ID of the agent that generated this node (for agent-authored hierarchies)."
+        }
+      },
+      "required": ["source", "method", "created_at"]
+    },
+
+    "t3_constraint_a": {
+      "title": "Pattern A — Time Minimization",
+      "description": "Minimize the time to [verb_noun] from [start_state] to [end_state], measured in [unit], target ≤ [threshold]",
+      "type": "object",
+      "properties": {
+        "pattern": { "const": "A_time" },
+        "verb_noun": {
+          "type": "string",
+          "description": "The action being timed — verb + direct object.",
+          "examples": [
+            "qualify a lead",
+            "process a purchase order",
+            "onboard a new user account",
+            "resolve a P2 support ticket",
+            "generate a financial forecast"
+          ]
+        },
+        "start_state": {
+          "type": "string",
+          "description": "Observable, unambiguous start condition.",
+          "examples": [
+            "lead record created in CRM",
+            "PO submitted by requester",
+            "user email verified",
+            "ticket created with priority P2",
+            "forecast period defined"
+          ]
+        },
+        "end_state": {
+          "type": "string",
+          "description": "Observable, unambiguous completion condition.",
+          "examples": [
+            "CRM opportunity stage set to Qualified or Disqualified",
+            "PO approved and dispatched to supplier",
+            "user account active with first login recorded",
+            "ticket resolved and customer confirmed",
+            "forecast published to stakeholder dashboard"
+          ]
+        },
+        "unit": {
+          "enum": ["seconds", "minutes", "hours", "business_days", "calendar_days", "weeks"]
+        },
+        "threshold": {
+          "type": "number",
+          "minimum": 0,
+          "description": "≤ threshold = job succeeded."
+        },
+        "baseline": {
+          "type": "number",
+          "description": "Current measured value before optimization."
+        },
+        "p50": {
+          "type": "number",
+          "description": "Median current performance (more robust than mean for skewed distributions)."
+        },
+        "p95": {
+          "type": "number",
+          "description": "95th percentile current performance (tail latency)."
+        }
+      },
+      "required": ["pattern", "verb_noun", "start_state", "end_state", "unit", "threshold"]
+    },
+
+    "t3_constraint_b": {
+      "title": "Pattern B — Likelihood Minimization",
+      "description": "Minimize the likelihood of [event], measured as [rate_type] in [unit], target ≤ [threshold]",
+      "type": "object",
+      "properties": {
+        "pattern": { "const": "B_likelihood" },
+        "event": {
+          "type": "string",
+          "description": "Specific, observable undesirable event.",
+          "examples": [
+            "invoice processing error due to mismatched PO line items",
+            "contract renewal lapse due to delayed stakeholder sign-off",
+            "SLA breach on P1 ticket response",
+            "data sync failure between CRM and billing system",
+            "incorrect inventory count at cycle audit"
+          ]
+        },
+        "rate_type": {
+          "enum": [
+            "error_rate",
+            "failure_rate",
+            "churn_rate",
+            "breach_rate",
+            "defect_rate",
+            "escalation_rate",
+            "exception_rate",
+            "miss_rate"
+          ]
+        },
+        "unit": {
+          "enum": ["percent", "per_1000", "per_10000", "ratio"]
+        },
+        "threshold": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Maximum acceptable rate (≤ threshold = success)."
+        },
+        "baseline": {
+          "type": "number",
+          "description": "Current measured rate."
+        },
+        "measurement_window": {
+          "type": "string",
+          "description": "Time window: 'rolling_30d', 'per_quarter', 'fiscal_year', etc."
+        },
+        "denominator": {
+          "type": "string",
+          "description": "Denominator population for the rate. E.g., 'per 1000 invoices processed', 'per 100 tickets created'."
+        }
+      },
+      "required": ["pattern", "event", "rate_type", "unit", "threshold"]
+    },
+
+    "agent_node": {
+      "type": "object",
+      "description": "A single node in the fractal agent job hierarchy. All nodes at depth > 0 are T-3 constraints (Pattern A or B). The structure is self-similar: any node can decompose into child nodes following the same DSL. Leaves are atomic tool-call-ready instructions.",
+      "properties": {
+        "id": { "$ref": "#/definitions/uid" },
+        "depth": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Depth in the fractal tree. 0 = root mission, 1 = primary sub-tasks, 2+ = recursive decomposition."
+        },
+        "tier_label": {
+          "type": "string",
+          "description": "Human-readable tier label for display. E.g., 'Mission', 'Task', 'Subtask', 'Action'.",
+          "examples": ["Mission", "Task", "Subtask", "Action", "Step"]
+        },
+        "statement": {
+          "type": "string",
+          "description": "Natural language summary of this constraint (auto-generated from the constraint fields for display).",
+          "examples": [
+            "Minimize the time to qualify a lead from first contact to CRM stage update, measured in hours, target ≤ 4",
+            "Minimize the likelihood of invoice processing error due to PO mismatch, measured as error_rate in percent, target ≤ 0.5"
+          ]
+        },
+        "constraint": {
+          "oneOf": [
+            { "$ref": "#/definitions/t3_constraint_a" },
+            { "$ref": "#/definitions/t3_constraint_b" }
+          ],
+          "description": "Machine-readable constraint definition. Required for all non-root nodes."
+        },
+        "agent_role": {
+          "type": "string",
+          "description": "Which agent archetype handles this node. E.g., 'orchestrator', 'researcher', 'writer', 'validator', 'executor'.",
+          "enum": [
+            "orchestrator",
+            "researcher",
+            "writer",
+            "validator",
+            "executor",
+            "monitor",
+            "planner",
+            "communicator"
+          ]
+        },
+        "tool_calls": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "tool": { "type": "string", "description": "Tool name. E.g., 'crm.updateStage', 'email.send', 'db.query'" },
+              "description": { "type": "string" },
+              "required_inputs": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "expected_outputs": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            },
+            "required": ["tool"]
+          },
+          "description": "Tool calls needed to execute this node. Only populated at leaf nodes."
+        },
+        "success_criteria": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Observable binary checks that confirm the constraint is met.",
+          "examples": [
+            ["CRM opportunity has stage = Qualified or Disqualified", "Timestamp of stage update - discovery call timestamp ≤ 4 hours"],
+            ["Invoice error_rate for period ≤ 0.5%", "No P0 invoice exceptions open for > 24h"]
+          ]
+        },
+        "failure_conditions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Observable conditions that indicate the constraint is violated and recovery is needed."
+        },
+        "retry_policy": {
+          "type": "object",
+          "properties": {
+            "max_attempts": { "type": "integer", "minimum": 1, "default": 3 },
+            "backoff_seconds": { "type": "number", "minimum": 0, "default": 60 },
+            "escalate_after_attempts": { "type": "integer", "description": "Escalate to parent agent after N failures." }
+          }
+        },
+        "children": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/agent_node" },
+          "description": "Fractal decomposition: child nodes follow the same DSL. Depth N → Depth N+1. Max practical depth: 5."
+        },
+        "crosswalk": {
+          "$ref": "#/definitions/crosswalk_ref",
+          "description": "Reference to corresponding managerial hierarchy node(s)."
+        },
+        "provenance": { "$ref": "#/definitions/provenance" }
+      },
+      "required": ["id", "depth", "statement", "provenance"]
+    },
+
+    "crosswalk_ref": {
+      "type": "object",
+      "description": "Bidirectional mapping between an agent hierarchy node and managerial hierarchy node(s).",
+      "properties": {
+        "managerial_job_ids": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/uid" },
+          "description": "IDs of corresponding T-1/T-2/T-3 nodes in the managerial hierarchy."
+        },
+        "translation_type": {
+          "enum": [
+            "direct",
+            "decomposition",
+            "aggregation",
+            "analog",
+            "no_equivalent"
+          ],
+          "description": "How the agent and managerial nodes relate: direct (1:1 translation), decomposition (1 managerial → N agent), aggregation (N agent → 1 managerial), analog (similar but different framing), no_equivalent (agent-only task with no human parallel)."
+        },
+        "translation_note": {
+          "type": "string",
+          "description": "Explanation of any non-obvious translation or framing differences."
+        }
+      }
+    }
+  },
+
+  "type": "object",
+  "description": "Root document: a complete Agent Job Hierarchy.",
+  "properties": {
+    "$schema": { "type": "string" },
+    "schema_version": { "const": "1.0.0" },
+    "hierarchy_id": { "$ref": "#/definitions/uid" },
+    "created_at": { "$ref": "#/definitions/timestamp" },
+    "last_modified_at": { "$ref": "#/definitions/timestamp" },
+    "hierarchy_version": { "type": "integer", "minimum": 1, "default": 1 },
+    "scope": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "domain": { "type": "string" },
+        "agent_system": {
+          "type": "string",
+          "description": "The AI system or agent framework this hierarchy targets. E.g., 'claude-code', 'openai-agents', 'langchain', 'custom'."
+        },
+        "managerial_hierarchy_id": {
+          "$ref": "#/definitions/uid",
+          "description": "ID of the corresponding managerial hierarchy (for crosswalk)."
+        }
+      },
+      "required": ["id", "domain"]
+    },
+    "mission": {
+      "type": "object",
+      "description": "The root mission statement for this agent hierarchy. Analogous to T-1 in the managerial hierarchy but expressed as an agent objective.",
+      "properties": {
+        "id": { "$ref": "#/definitions/uid" },
+        "statement": {
+          "type": "string",
+          "description": "Clear, outcome-oriented mission. Should map to a T-1 managerial job.",
+          "examples": [
+            "Automate the end-to-end lead qualification process to reduce conversion cycle time by 50%",
+            "Continuously monitor and minimize invoice processing errors across all procurement workflows"
+          ]
+        },
+        "success_definition": {
+          "type": "string",
+          "description": "What 'done' looks like for the agent system at a mission level."
+        },
+        "constraints": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Hard constraints the agent system must respect. E.g., 'never modify approved contracts', 'always notify human on >$10k decisions'."
+        }
+      },
+      "required": ["id", "statement"]
+    },
+    "tasks": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/agent_node" },
+      "description": "Top-level tasks (depth=1) — direct decomposition of the mission into primary T-3 constraint nodes.",
+      "minItems": 1
+    },
+    "fractal_depth": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 8,
+      "description": "Actual maximum depth reached in this hierarchy instance."
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "total_nodes": { "type": "integer" },
+        "leaf_nodes": { "type": "integer" },
+        "pattern_a_count": { "type": "integer" },
+        "pattern_b_count": { "type": "integer" },
+        "agents_required": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of distinct agent_role values used across all nodes."
+        }
+      }
+    }
+  },
+  "required": ["schema_version", "hierarchy_id", "created_at", "scope", "mission", "tasks"],
+
+  "examples": [
+    {
+      "schema_version": "1.0.0",
+      "hierarchy_id": "beef01234567",
+      "created_at": "2026-04-30T00:00:00Z",
+      "scope": {
+        "id": "saas-smb-sales",
+        "domain": "B2B SaaS",
+        "agent_system": "claude-agents",
+        "managerial_hierarchy_id": "a1b2c3d4e5f6"
+      },
+      "mission": {
+        "id": "aaa000111222",
+        "statement": "Automate lead qualification to reduce conversion cycle from 72h to < 4h for all inbound SMB leads",
+        "success_definition": "98% of inbound leads have CRM stage set within 4h of form submission, with qualification rationale logged",
+        "constraints": [
+          "Never disqualify a lead without logging a reason code",
+          "Always notify account owner when a lead is qualified",
+          "Do not send outbound communication without human approval for deals > $50k ACV"
+        ]
+      },
+      "tasks": [
+        {
+          "id": "bbb111222333",
+          "depth": 1,
+          "tier_label": "Task",
+          "statement": "Minimize the time to enrich a lead record from CRM creation to ICP score computed, measured in minutes, target ≤ 15",
+          "constraint": {
+            "pattern": "A_time",
+            "verb_noun": "enrich a lead record",
+            "start_state": "lead record created in CRM",
+            "end_state": "ICP score computed and saved to lead record",
+            "unit": "minutes",
+            "threshold": 15,
+            "baseline": 240
+          },
+          "agent_role": "researcher",
+          "tool_calls": [
+            {
+              "tool": "crm.getLeadById",
+              "description": "Fetch full lead record",
+              "required_inputs": ["lead_id"],
+              "expected_outputs": ["lead_record"]
+            },
+            {
+              "tool": "enrichment.lookupCompany",
+              "description": "Pull firmographic data",
+              "required_inputs": ["company_name", "domain"],
+              "expected_outputs": ["employee_count", "revenue", "industry", "tech_stack"]
+            },
+            {
+              "tool": "scoring.computeICP",
+              "description": "Score ICP fit",
+              "required_inputs": ["lead_record", "firmographics"],
+              "expected_outputs": ["icp_score", "icp_tier"]
+            },
+            {
+              "tool": "crm.updateLead",
+              "description": "Write score back to CRM",
+              "required_inputs": ["lead_id", "icp_score", "icp_tier"],
+              "expected_outputs": ["updated_at"]
+            }
+          ],
+          "success_criteria": [
+            "lead.icp_score is not null",
+            "Elapsed time from lead.created_at to lead.icp_score_updated_at ≤ 15 minutes"
+          ],
+          "failure_conditions": [
+            "Enrichment API returns no data for company",
+            "CRM update fails after 3 retries"
+          ],
+          "retry_policy": {
+            "max_attempts": 3,
+            "backoff_seconds": 30,
+            "escalate_after_attempts": 3
+          },
+          "provenance": { "source": "llm", "method": "llm", "created_at": "2026-04-30T00:00:00Z", "version": 1 }
+        },
+        {
+          "id": "ccc222333444",
+          "depth": 1,
+          "tier_label": "Task",
+          "statement": "Minimize the likelihood of a qualified lead going uncontacted for > 1 business day, measured as miss_rate in percent, target ≤ 2",
+          "constraint": {
+            "pattern": "B_likelihood",
+            "event": "qualified lead going uncontacted for > 1 business day after qualification",
+            "rate_type": "miss_rate",
+            "unit": "percent",
+            "threshold": 2,
+            "baseline": 18,
+            "measurement_window": "rolling_30d",
+            "denominator": "per 100 qualified leads"
+          },
+          "agent_role": "monitor",
+          "success_criteria": [
+            "Every qualified lead has an outreach_scheduled_at within 1 business day",
+            "miss_rate for rolling 30d < 2%"
+          ],
+          "provenance": { "source": "llm", "method": "llm", "created_at": "2026-04-30T00:00:00Z", "version": 1 }
+        }
+      ],
+      "fractal_depth": 2,
+      "metadata": {
+        "total_nodes": 3,
+        "leaf_nodes": 2,
+        "pattern_a_count": 1,
+        "pattern_b_count": 1,
+        "agents_required": ["researcher", "monitor"]
+      }
+    }
+  ]
+}
