@@ -9,6 +9,7 @@ import { PhaseTwoPanel } from "@/components/PhaseTwoPanel";
 import { PhaseThreePanel } from "@/components/PhaseThreePanel";
 import { ContextDashboard } from "@/components/ContextDashboard";
 import { IngestPanel } from "@/components/IngestPanel";
+import { PipelineView } from "@/components/PipelineView";
 import { useAppStore } from "@/lib/store";
 
 export default function HomePage() {
@@ -69,6 +70,16 @@ export default function HomePage() {
           >
             Ingest
           </button>
+          <button
+            onClick={() => setActiveView("pipeline")}
+            className={`px-2.5 py-1 rounded text-[10px] font-medium transition-colors ${
+              activeView === "pipeline"
+                ? "bg-[var(--bg-primary)] text-[var(--text-primary)] shadow-sm"
+                : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+            }`}
+          >
+            Pipeline
+          </button>
         </div>
 
         <div className="flex items-center gap-1">
@@ -101,6 +112,10 @@ export default function HomePage() {
       ) : activeView === "ingest" ? (
         <div className="flex-1 overflow-hidden">
           <IngestPanel />
+        </div>
+      ) : activeView === "pipeline" ? (
+        <div className="flex-1 overflow-hidden">
+          <PipelineView />
         </div>
       ) : (
         <div className="flex flex-1 overflow-hidden">

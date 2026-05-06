@@ -1,0 +1,231 @@
+{
+  "metadata": {
+    "spec_id": "jobos-ai-0001",
+    "version": "0.2.0",
+    "owners": ["research_lead", "engineering_lead"],
+    "created": "2026-05-01",
+    "updated": "2026-05-06",
+    "status": "in_progress",
+    "description": "JobOS.ai first-iteration: canonical Managerial + Agent job hierarchies, T-3 DSL, context graph machine, SAP pilot."
+  },
+
+  "pipeline": {
+    "stages": [
+      {
+        "id": "research",
+        "name": "Research",
+        "description": "Survey JTBD, org design, OKR/KPI, APQC taxonomies. Propose finite Managerial catalog with counts. Propose fractal Agent hierarchy schema with 10+ worked examples.",
+        "owner": "gemini",
+        "status": "in_progress",
+        "outputs": ["managerial_catalog", "agent_catalog", "evidence"],
+        "acceptance_criteria": ["AC-01", "AC-02", "AC-03"],
+        "last_run": null,
+        "last_run_result": null
+      },
+      {
+        "id": "synthesis",
+        "name": "Synthesis",
+        "description": "Merge research outputs into structured handoff schema. Resolve open questions. Finalize crosswalk with translation examples.",
+        "owner": "human",
+        "status": "pending",
+        "outputs": ["crosswalk", "open_questions_resolved"],
+        "acceptance_criteria": ["AC-04"],
+        "last_run": null,
+        "last_run_result": null
+      },
+      {
+        "id": "decision",
+        "name": "Decision",
+        "description": "Human review of open_questions requiring decisions (catalog finiteness, T-3 DSL edge cases, ethics flags). Time-boxed 48h per question.",
+        "owner": "human",
+        "status": "needs_human_decision",
+        "outputs": ["decisions_log"],
+        "acceptance_criteria": [],
+        "last_run": null,
+        "last_run_result": null
+      },
+      {
+        "id": "engineering",
+        "name": "Engineering",
+        "description": "Implement: T-3 DSL engine, JSON schemas, evaluation harness, APIs (hierarchy browse, agent consumption, 2D placement), SAP pilot thin-slice.",
+        "owner": "claude",
+        "status": "in_progress",
+        "outputs": ["src/jobos/kernel/t3_dsl.py", "src/jobos/schemas/", "src/jobos/api/routes/schemas.py", "tests/unit/test_t3_dsl.py"],
+        "acceptance_criteria": ["AC-05", "AC-06", "AC-07"],
+        "last_run": "2026-05-06T00:00:00Z",
+        "last_run_result": {
+          "passed": 769,
+          "failed": 0,
+          "status": "green"
+        }
+      },
+      {
+        "id": "evaluation",
+        "name": "Evaluation",
+        "description": "Run evaluation harness: coverage tests, orthogonality, fractal consistency, T-3 grammaticality. Publish scoring report. Merge only when thresholds met.",
+        "owner": "claude",
+        "status": "pending",
+        "outputs": ["evaluation_report.json"],
+        "acceptance_criteria": ["AC-08"],
+        "last_run": null,
+        "last_run_result": null
+      }
+    ]
+  },
+
+  "managerial_catalog": {
+    "status": "draft",
+    "t1": [
+      {"id": "M-T1-01", "name": "Achieve Market Position", "definition": "Secure and grow the organization's strategic position in target markets"},
+      {"id": "M-T1-02", "name": "Build Organizational Capability", "definition": "Develop the internal resources, skills, and systems needed to deliver outcomes"},
+      {"id": "M-T1-03", "name": "Ensure Operational Continuity", "definition": "Maintain reliable, compliant, and risk-managed operations"}
+    ],
+    "t2": [
+      {"id": "M-T2-01", "name": "Acquire Customers", "definition": "Identify, attract, and convert target buyers into paying customers"},
+      {"id": "M-T2-02", "name": "Retain Customers", "definition": "Maintain customer engagement and prevent churn"},
+      {"id": "M-T2-03", "name": "Deliver Product/Service", "definition": "Fulfill customer commitments reliably and on time"},
+      {"id": "M-T2-04", "name": "Manage Workforce", "definition": "Hire, develop, and retain the right people for required roles"},
+      {"id": "M-T2-05", "name": "Manage Financial Resources", "definition": "Allocate, track, and optimize capital and operating spend"},
+      {"id": "M-T2-06", "name": "Manage Risk & Compliance", "definition": "Identify, assess, and mitigate operational, legal, and reputational risk"}
+    ],
+    "t3_count_target": 24,
+    "note": "T-3 catalog requires research phase output (Gemini). Placeholder."
+  },
+
+  "agent_catalog": {
+    "status": "draft",
+    "t1_programs": [
+      {"id": "A-T1-01", "name": "Lead Qualification Automation"},
+      {"id": "A-T1-02", "name": "Invoice Processing Automation"},
+      {"id": "A-T1-03", "name": "Customer Onboarding Automation"}
+    ],
+    "t3_dsl_examples": [
+      "Minimize the time to qualify a lead from first contact to CRM stage updated, measured in hours, target ≤ 4",
+      "Minimize the likelihood of invoice processing error due to PO mismatch, measured as error_rate in percent, target ≤ 0.5",
+      "Minimize the time to onboard a new user from account created to first feature used, measured in calendar_days, target ≤ 7",
+      "Minimize the likelihood of a qualified lead going uncontacted for > 1 business day, measured as miss_rate in percent, target ≤ 2",
+      "Minimize the time to provision all required software licenses from IT ticket creation to first login confirmed, measured in hours, target ≤ 4",
+      "Minimize the likelihood of SLA breach on P1 tickets, measured as breach_rate in per_1000, target ≤ 5",
+      "Minimize the time to complete financial close reconciliation from period end to CFO sign-off, measured in business_days, target ≤ 3",
+      "Minimize the likelihood of inventory count discrepancy detected at cycle audit, measured as defect_rate in percent, target ≤ 0.5"
+    ]
+  },
+
+  "crosswalk": [
+    {
+      "managerial": "M-T2-01",
+      "agent": "A-T1-01",
+      "mapping_rule": "Acquire Customers → Lead Qualification Automation",
+      "translation_type": "analog"
+    },
+    {
+      "managerial": "M-T2-05",
+      "agent": "A-T1-02",
+      "mapping_rule": "Manage Financial Resources → Invoice Processing Automation",
+      "translation_type": "decomposition"
+    }
+  ],
+
+  "evidence": [
+    {
+      "title": "JobOS.ai Canonical Schemas v1.0",
+      "source": "engineering",
+      "notes": "JSON Schema for managerial_hierarchy, agent_hierarchy, crosswalk. In src/jobos/schemas/.",
+      "created": "2026-05-06"
+    },
+    {
+      "title": "T-3 DSL Engine",
+      "source": "engineering",
+      "notes": "Pattern A/B parser, validator, renderer, translator. 39 tests passing. In src/jobos/kernel/t3_dsl.py.",
+      "created": "2026-05-06"
+    }
+  ],
+
+  "open_questions": [
+    {
+      "id": "Q-01",
+      "stage": "research",
+      "priority": "P0",
+      "prompt": "How many T-1 categories belong in the finite Managerial catalog? Current draft has 3. Literature (APQC PCF) suggests 12 process categories — should we align to APQC or define our own minimum set?",
+      "status": "open",
+      "opened": "2026-05-06",
+      "deadline": "2026-05-08",
+      "decision": null
+    },
+    {
+      "id": "Q-02",
+      "stage": "research",
+      "priority": "P0",
+      "prompt": "What is the correct finite count for T-2 Core Functional jobs in the Managerial catalog? Current draft has 6. Should each T-1 have exactly 3–7 T-2 children?",
+      "status": "open",
+      "opened": "2026-05-06",
+      "deadline": "2026-05-08",
+      "decision": null
+    },
+    {
+      "id": "Q-03",
+      "stage": "decision",
+      "priority": "P1",
+      "prompt": "Should the T-3 DSL support a Pattern C for resource/cost minimization? (e.g., 'Minimize the cost of [process] from [start] to [end], measured in [currency_unit], target ≤ [N]'). This would cover financial jobs that are neither time nor likelihood.",
+      "status": "open",
+      "opened": "2026-05-06",
+      "deadline": "2026-05-10",
+      "decision": null
+    },
+    {
+      "id": "Q-04",
+      "stage": "research",
+      "priority": "P1",
+      "prompt": "For the SAP pilot: which SAP module and process should be the thin-slice? Candidates: (a) FI-AP invoice processing, (b) SD order-to-cash, (c) MM procurement-to-pay. Which has the clearest T-3 DSL mapping and best available public data?",
+      "status": "open",
+      "opened": "2026-05-06",
+      "deadline": "2026-05-10",
+      "decision": null
+    },
+    {
+      "id": "Q-05",
+      "stage": "decision",
+      "priority": "P2",
+      "prompt": "Ethics/bias flag: When the Managerial catalog classifies jobs as 'AI-automatable', how do we ensure the catalog itself does not systematically undervalue human-only work categories (e.g., care work, creative work, relational work)?",
+      "status": "open",
+      "opened": "2026-05-06",
+      "deadline": "2026-05-15",
+      "decision": null
+    }
+  ],
+
+  "acceptance_criteria": [
+    {"id": "AC-01", "stage": "research", "text": "Managerial catalog proposes T-1, T-2, T-3 counts with definitions and 2D placement for each entry", "status": "pending"},
+    {"id": "AC-02", "stage": "research", "text": "Agent hierarchy schema includes 10+ worked T-3 DSL examples across ≥ 3 industries", "status": "met"},
+    {"id": "AC-03", "stage": "research", "text": "All T-3 DSL examples parse and validate against the T-3 DSL engine without errors", "status": "met"},
+    {"id": "AC-04", "stage": "synthesis", "text": "Crosswalk covers ≥ 80% of Managerial T-2 nodes with agent counterparts", "status": "pending"},
+    {"id": "AC-05", "stage": "engineering", "text": "T-3 DSL parser handles Pattern A and Pattern B with ≤, <=, and < operators", "status": "met"},
+    {"id": "AC-06", "stage": "engineering", "text": "JSON schemas define all tier properties, provenance, and versioning fields", "status": "met"},
+    {"id": "AC-07", "stage": "engineering", "text": "API endpoints for T-3 validate, parse, render, translate, and 2D classify", "status": "met"},
+    {"id": "AC-08", "stage": "evaluation", "text": "Evaluation harness runs: coverage, orthogonality, fractal consistency, T-3 grammaticality. All ≥ 95% pass rate", "status": "pending"}
+  ],
+
+  "engineering_tasks": [
+    {"id": "ENG-01", "title": "T-3 DSL parser + validator", "priority": "P0", "status": "done", "artifact": "src/jobos/kernel/t3_dsl.py"},
+    {"id": "ENG-02", "title": "Managerial hierarchy JSON Schema", "priority": "P0", "status": "done", "artifact": "src/jobos/schemas/managerial_hierarchy.json"},
+    {"id": "ENG-03", "title": "Agent hierarchy JSON Schema with fractal structure", "priority": "P0", "status": "done", "artifact": "src/jobos/schemas/agent_hierarchy.json"},
+    {"id": "ENG-04", "title": "Crosswalk JSON Schema with 12 worked examples", "priority": "P0", "status": "done", "artifact": "src/jobos/schemas/crosswalk.json"},
+    {"id": "ENG-05", "title": "Schema API endpoints (validate, parse, render, translate, classify-2d)", "priority": "P0", "status": "done", "artifact": "src/jobos/api/routes/schemas.py"},
+    {"id": "ENG-06", "title": "Evaluation harness (68 tests for DSL + schemas)", "priority": "P0", "status": "done", "artifact": "tests/unit/test_t3_dsl.py + test_hierarchy_schemas.py"},
+    {"id": "ENG-07", "title": "Pipeline orchestrator dashboard view", "priority": "P1", "status": "in_progress", "artifact": "frontend/src/components/PipelineView.tsx"},
+    {"id": "ENG-08", "title": "Handoff spec API (load/save/run stage)", "priority": "P1", "status": "in_progress", "artifact": "src/jobos/api/routes/spec.py"},
+    {"id": "ENG-09", "title": "SAP pilot thin-slice: FI-AP ingest → hierarchy → T-3 → RAG Q&A", "priority": "P1", "status": "pending", "artifact": "TBD"},
+    {"id": "ENG-10", "title": "Pretraining data pipeline: dedup + PII filter + domain balance", "priority": "P2", "status": "pending", "artifact": "TBD"}
+  ],
+
+  "evaluation_plan": {
+    "tests": [
+      {"id": "EVAL-01", "name": "dsl_grammar_check", "description": "All T-3 DSL examples in spec parse without error", "threshold": "100%"},
+      {"id": "EVAL-02", "name": "crosswalk_roundtrip", "description": "Every managerial T-2 has at least one agent DSL counterpart or explicit no_equivalent", "threshold": "100%"},
+      {"id": "EVAL-03", "name": "orthogonality_check", "description": "No T-3 statement contains technology/product names (solution-agnostic)", "threshold": "95%"},
+      {"id": "EVAL-04", "name": "fractal_consistency", "description": "Agent hierarchy nodes at depth 1-5 all parse to valid T-3 constraints", "threshold": "100%"},
+      {"id": "EVAL-05", "name": "schema_unit_tests", "description": "All 68 schema + DSL unit tests pass", "threshold": "100%"},
+      {"id": "EVAL-06", "name": "t3_coverage", "description": "Worked examples cover all TimeUnit and RateType enum values", "threshold": "80%"}
+    ]
+  }
+}

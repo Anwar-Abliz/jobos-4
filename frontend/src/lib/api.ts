@@ -639,3 +639,140 @@ export function syncSurveyImperfections(
 ): Promise<{ imperfections_created: number }> {
   return apiFetch(`/surveys/${surveyId}/sync-imperfections`, { method: "POST" });
 }
+
+// ── Pipeline Orchestrator (Spec) ───────────────────────
+
+export interface SpecStage {
+  id: string;
+  name: string;
+  description: string;
+  owner: string;
+  status: "pending" | "in_progress" | "needs_human_decision" | "done" | "blocked";
+  outputs: string[];
+  acceptance_criteria: string[];
+  last_run: string | null;
+  last_run_result: Record<string, unknown> | null;
+}
+
+export interface OpenQuestion {
+  id: string;
+  stage: string;
+  priority: "P0" | "P1" | "P2";
+  prompt: string;
+  status: "open" | "resolved";
+  opened: string;
+  deadline: string;
+  decision: string | null;
+  decided_by?: string;
+  resolved_at?: string;
+  notes?: string;
+}
+
+export interface AcceptanceCriterion {
+  id: string;
+  stage: string;
+  text: string;
+  status: "pending" | "met" | "failed";
+}
+
+export interface EngineeringTask {
+  id: string;
+  title: string;
+  priority: "P0" | "P1" | "P2";
+  status: "pending" | "in_progress" | "done";
+  artifact?: string;
+}
+
+export interface EvalCheck {
+  id: string;
+  name: string;
+  passed?: number;
+  failed?: number;
+  total?: number;
+  pct?: number;
+  status: "pass" | "fail" | "partial" | "dry_run";
+  note?: string;
+}
+
+export interface SpecMetadata {
+  spec_id: string;
+  version: string;
+  owners: string[];
+  updated: string;
+  status: string;
+  description: string;
+}
+
+export interface HandoffSpec {
+  metadata: SpecMetadata;
+  pipeline: { stages: SpecStage[] };
+  open_questions: OpenQuestion[];
+  acceptance_criteria: AcceptanceCriterion[];
+  engineering_tasks: EngineeringTask[];
+  managerial_catalog: Record<string, unknown>;
+  agent_catalog: Record<string, unknown>;
+  crosswalk: Array<Record<string, string>>;
+  evidence: Array<{ title: string; source: string; notes: string; created: string }>;
+  evaluation_plan: { tests: Array<{ id: string; name: string; description: string; threshold: string }> };
+}
+
+export interface StageRunResult {
+  stage: string;
+  ran_at: string;
+  result: {
+    status: string;
+    passed?: number;
+    failed?: number;
+    checks?: EvalCheck[];
+    summary?: Record<string, unknown>;
+  };
+}
+
+export function getSpec(): Promise<HandoffSpec> {
+  return apiFetch("/spec");
+}
+
+export function updateSpec(spec: HandoffSpec): Promise<{ status: string; updated: string }> {
+  return apiFetch("/spec", {
+    method: "PUT",
+    body: JSON.stringify({ spec }),
+  });
+}
+
+export function decideQuestion(
+  questionId: string,
+  decision: string,
+  decidedBy = "human",
+  notes = "",
+): Promise<{ status: string; question: OpenQuestion }> {
+  return apiFetch(`/spec/questions/${questionId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ decision, decided_by: decidedBy, notes }),
+  });
+}
+
+export function runStage(stageId: string, dryRun = false): Promise<StageRunResult> {
+  return apiFetch(`/spec/run/${stageId}`, {
+    method: "POST",
+    body: JSON.stringify({ dry_run: dryRun }),
+  });
+}
+
+export function evaluateSpec(): Promise<{
+  status: string;
+  summary: Record<string, number>;
+  checks: EvalCheck[];
+  ran_at: string;
+}> {
+  return apiFetch("/spec/evaluate");
+}
+
+export function getSpecTasks(status?: string): Promise<{
+  total: number;
+  filtered: EngineeringTask[];
+  by_status: Record<string, EngineeringTask[]>;
+}> {
+  const qs = status ? `?status=${status}` : "";
+  return apiFetch(`/spec/tasks${qs}`);
+}
+
