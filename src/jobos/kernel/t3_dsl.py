@@ -1,6 +1,6 @@
 """JobOS.ai — T-3 DSL: Constraint Language for Agent Job Hierarchies.
 
-Two canonical patterns derived from the JobOS.ai architecture spec:
+Three canonical patterns derived from the JobOS.ai architecture spec:
 
   Pattern A (time minimization):
     "Minimize the time to [verb_noun] from [start_state] to [end_state],
@@ -9,6 +9,10 @@ Two canonical patterns derived from the JobOS.ai architecture spec:
   Pattern B (likelihood minimization):
     "Minimize the likelihood of [event], measured as [rate_type] in [unit],
      target ≤ [threshold]"
+
+  Pattern C (cost/resource minimization):
+    "Minimize the cost of [process] from [start_state] to [end_state],
+     measured in [currency_unit], target ≤ [threshold]"
 
 These DSL statements are the lingua franca between managerial job hierarchies
 (T-2/T-3 outcome statements) and agent job hierarchies (executable constraints).
@@ -24,6 +28,7 @@ from typing import Any
 class T3Pattern(str, Enum):
     A_TIME = "A_time"
     B_LIKELIHOOD = "B_likelihood"
+    C_COST = "C_cost"
 
 
 class TimeUnit(str, Enum):
@@ -51,6 +56,16 @@ class RateUnit(str, Enum):
     PER_1000 = "per_1000"
     PER_10000 = "per_10000"
     RATIO = "ratio"
+
+
+class CostUnit(str, Enum):
+    USD = "USD"
+    EUR = "EUR"
+    GBP = "GBP"
+    COST_PER_TRANSACTION = "cost_per_transaction"
+    COST_PER_UNIT = "cost_per_unit"
+    TOKENS_PER_TASK = "tokens_per_task"
+    FTE_HOURS = "FTE_hours"
 
 
 @dataclass
@@ -153,7 +168,56 @@ class T3ConstraintB:
         return errors
 
 
-T3Constraint = T3ConstraintA | T3ConstraintB
+@dataclass
+class T3ConstraintC:
+    """Pattern C — Cost/Resource Minimization constraint."""
+    pattern: T3Pattern = T3Pattern.C_COST
+    process: str = ""
+    start_state: str = ""
+    end_state: str = ""
+    unit: CostUnit = CostUnit.USD
+    threshold: float = 0.0
+    baseline: float | None = None
+
+    def to_statement(self) -> str:
+        """Render as canonical T-3 DSL statement."""
+        return (
+            f"Minimize the cost of {self.process} "
+            f"from {self.start_state} to {self.end_state}, "
+            f"measured in {self.unit.value}, "
+            f"target ≤ {self.threshold}"
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "pattern": self.pattern.value,
+            "process": self.process,
+            "start_state": self.start_state,
+            "end_state": self.end_state,
+            "unit": self.unit.value,
+            "threshold": self.threshold,
+            "baseline": self.baseline,
+        }
+
+    def validate(self) -> list[str]:
+        """Return list of validation errors (empty = valid)."""
+        errors: list[str] = []
+        if not self.process.strip():
+            errors.append("process is required")
+        if not self.start_state.strip():
+            errors.append("start_state is required")
+        if not self.end_state.strip():
+            errors.append("end_state is required")
+        if self.threshold <= 0:
+            errors.append("threshold must be > 0")
+        if self.baseline is not None and self.baseline <= self.threshold:
+            errors.append(
+                f"baseline ({self.baseline}) should exceed threshold ({self.threshold})"
+            )
+        return errors
+
+
+T3Constraint = T3ConstraintA | T3ConstraintB | T3ConstraintC
 
 
 # ── Threshold operator: ≤, <=, or < ─────────────────────────────────────────
@@ -178,6 +242,16 @@ _PATTERN_B_RE = re.compile(
     re.IGNORECASE,
 )
 
+# ── Pattern C regex ──────────────────────────────────────────────────────────
+# "Minimize the cost of [process] from [start] to [end], measured in [unit], target ≤ [N]"
+_PATTERN_C_RE = re.compile(
+    r"Minimize the cost of (?P<process>.+?) "
+    r"from (?P<start>.+?) to (?P<end>.+?), "
+    r"measured in (?P<unit>\w+(?:_\w+)?), "
+    r"target\s*" + _LE_OP + r"\s*(?P<threshold>[\d.]+)",
+    re.IGNORECASE,
+)
+
 _UNIT_ALIASES: dict[str, TimeUnit] = {
     "seconds": TimeUnit.SECONDS, "second": TimeUnit.SECONDS, "sec": TimeUnit.SECONDS,
     "minutes": TimeUnit.MINUTES, "minute": TimeUnit.MINUTES, "min": TimeUnit.MINUTES,
@@ -193,6 +267,16 @@ _RATE_UNIT_ALIASES: dict[str, RateUnit] = {
     "per_1000": RateUnit.PER_1000, "per 1000": RateUnit.PER_1000,
     "per_10000": RateUnit.PER_10000, "per 10000": RateUnit.PER_10000,
     "ratio": RateUnit.RATIO,
+}
+
+_COST_UNIT_ALIASES: dict[str, CostUnit] = {
+    "usd": CostUnit.USD, "$": CostUnit.USD,
+    "eur": CostUnit.EUR, "euro": CostUnit.EUR,
+    "gbp": CostUnit.GBP,
+    "cost_per_transaction": CostUnit.COST_PER_TRANSACTION,
+    "cost_per_unit": CostUnit.COST_PER_UNIT,
+    "tokens_per_task": CostUnit.TOKENS_PER_TASK,
+    "fte_hours": CostUnit.FTE_HOURS, "fte hours": CostUnit.FTE_HOURS,
 }
 
 
@@ -245,6 +329,24 @@ def parse_constraint(statement: str) -> T3Constraint | None:
             threshold=float(m.group("threshold")),
         )
 
+    m = _PATTERN_C_RE.search(stmt)
+    if m:
+        unit_str = m.group("unit").lower().replace(" ", "_")
+        cost_unit = _COST_UNIT_ALIASES.get(unit_str)
+        if cost_unit is None:
+            try:
+                cost_unit = CostUnit(unit_str)
+            except ValueError:
+                cost_unit = CostUnit.USD
+
+        return T3ConstraintC(
+            process=m.group("process").strip(),
+            start_state=m.group("start").strip(),
+            end_state=m.group("end").strip(),
+            unit=cost_unit,
+            threshold=float(m.group("threshold")),
+        )
+
     return None
 
 
@@ -256,11 +358,13 @@ def validate_statement(statement: str) -> tuple[bool, list[str]]:
     constraint = parse_constraint(statement)
     if constraint is None:
         return False, [
-            "Statement does not match Pattern A or Pattern B. "
+            "Statement does not match Pattern A, B, or C. "
             "Expected: "
             "'Minimize the time to [verb-noun] from [start] to [end], measured in [unit], target ≤ [N]' "
             "or "
-            "'Minimize the likelihood of [event], measured as [rate_type] in [unit], target ≤ [N]'"
+            "'Minimize the likelihood of [event], measured as [rate_type] in [unit], target ≤ [N]' "
+            "or "
+            "'Minimize the cost of [process] from [start] to [end], measured in [unit], target ≤ [N]'"
         ]
     errors = constraint.validate()
     return len(errors) == 0, errors
@@ -303,6 +407,19 @@ def from_dict(data: dict[str, Any]) -> T3Constraint | None:
         except (KeyError, ValueError):
             return None
 
+    if pattern == T3Pattern.C_COST.value:
+        try:
+            return T3ConstraintC(
+                process=data["process"],
+                start_state=data["start_state"],
+                end_state=data["end_state"],
+                unit=CostUnit(data["unit"]),
+                threshold=float(data["threshold"]),
+                baseline=data.get("baseline"),
+            )
+        except (KeyError, ValueError):
+            return None
+
     return None
 
 
@@ -312,6 +429,7 @@ def infer_pattern(managerial_statement: str) -> T3Pattern:
     Heuristic rules:
     - Statements about speed, time, latency, cycle → Pattern A
     - Statements about risk, error, likelihood, compliance, prevention → Pattern B
+    - Statements about cost, budget, spend, expense, price → Pattern C
     """
     lower = managerial_statement.lower()
 
@@ -324,11 +442,24 @@ def infer_pattern(managerial_statement: str) -> T3Pattern:
         "error rate", "failure rate", "compliance", "eliminate", "protect from",
         "ensure no", "minimize errors", "reduce errors",
     ]
+    c_signals = [
+        "reduce cost", "minimize cost", "lower cost", "budget", "spend",
+        "expense", "price", "cheaper", "cost per", "cost of",
+        "reduce spend", "optimize cost", "token usage", "fte",
+    ]
 
     a_score = sum(1 for s in a_signals if s in lower)
     b_score = sum(1 for s in b_signals if s in lower)
+    c_score = sum(1 for s in c_signals if s in lower)
 
-    return T3Pattern.A_TIME if a_score >= b_score else T3Pattern.B_LIKELIHOOD
+    best = max(a_score, b_score, c_score)
+    if best == 0:
+        return T3Pattern.A_TIME
+    if c_score == best and c_score > a_score and c_score > b_score:
+        return T3Pattern.C_COST
+    if a_score >= b_score:
+        return T3Pattern.A_TIME
+    return T3Pattern.B_LIKELIHOOD
 
 
 def translate_t2_to_t3_dsl(
@@ -336,21 +467,21 @@ def translate_t2_to_t3_dsl(
     importance: float = 5.0,
     baseline_time: float | None = None,
     baseline_rate: float | None = None,
+    baseline_cost: float | None = None,
 ) -> list[T3Constraint]:
     """Translate a T-2 managerial outcome statement to T-3 DSL constraints.
 
-    Returns one or two constraints (Pattern A + optionally Pattern B for
-    outcomes that have both a speed and a reliability dimension).
+    Returns one or more constraints depending on whether the outcome has
+    speed, reliability, or cost dimensions.
 
     This is a heuristic translation — always review with domain expert.
     """
     pattern = infer_pattern(t2_statement)
     results: list[T3Constraint] = []
 
-    # Extract the core action phrase (basic heuristic)
-    lower = t2_statement.lower()
     verb_noun = _extract_verb_noun(t2_statement)
     event = _extract_event(t2_statement)
+    process = _extract_process(t2_statement)
 
     if pattern == T3Pattern.A_TIME:
         threshold = _suggest_time_threshold(importance, baseline_time)
@@ -361,6 +492,16 @@ def translate_t2_to_t3_dsl(
             unit=_suggest_time_unit(threshold),
             threshold=threshold,
             baseline=baseline_time,
+        ))
+    elif pattern == T3Pattern.C_COST:
+        threshold = _suggest_cost_threshold(importance, baseline_cost)
+        results.append(T3ConstraintC(
+            process=process,
+            start_state="process initiated",
+            end_state="process completed",
+            unit=CostUnit.USD,
+            threshold=threshold,
+            baseline=baseline_cost,
         ))
     else:
         threshold = _suggest_rate_threshold(importance, baseline_rate)
@@ -414,6 +555,18 @@ def _extract_event(statement: str) -> str:
     return statement.rstrip(".").strip()
 
 
+def _extract_process(statement: str) -> str:
+    """Extract a process phrase for Pattern C from a managerial statement."""
+    lower = statement.lower()
+    for prefix in ["reduce cost of ", "minimize cost of ", "lower cost of ",
+                   "reduce the cost of ", "optimize cost of "]:
+        if prefix in lower:
+            idx = lower.index(prefix) + len(prefix)
+            phrase = statement[idx:].split(".")[0].split(",")[0].strip()
+            return phrase[:80]
+    return _extract_verb_noun(statement)
+
+
 def _suggest_time_threshold(importance: float, baseline: float | None) -> float:
     """Suggest a reasonable time threshold given importance and current baseline."""
     if baseline:
@@ -443,3 +596,14 @@ def _suggest_rate_threshold(importance: float, baseline: float | None) -> float:
     if importance >= 6:
         return 1.0
     return 2.0
+
+
+def _suggest_cost_threshold(importance: float, baseline: float | None) -> float:
+    """Suggest a reasonable cost threshold."""
+    if baseline:
+        return round(baseline * (1 - (importance / 20)), 2)
+    if importance >= 8:
+        return 50.0
+    if importance >= 6:
+        return 200.0
+    return 500.0

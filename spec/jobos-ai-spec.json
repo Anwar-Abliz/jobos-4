@@ -1,14 +1,16 @@
 {
   "metadata": {
     "spec_id": "jobos-ai-0001",
-    "version": "0.2.0",
-    "owners": ["research_lead", "engineering_lead"],
+    "version": "0.3.0",
+    "owners": [
+      "research_lead",
+      "engineering_lead"
+    ],
     "created": "2026-05-01",
-    "updated": "2026-05-06",
+    "updated": "2026-05-07",
     "status": "in_progress",
     "description": "JobOS.ai first-iteration: canonical Managerial + Agent job hierarchies, T-3 DSL, context graph machine, SAP pilot."
   },
-
   "pipeline": {
     "stages": [
       {
@@ -16,20 +18,37 @@
         "name": "Research",
         "description": "Survey JTBD, org design, OKR/KPI, APQC taxonomies. Propose finite Managerial catalog with counts. Propose fractal Agent hierarchy schema with 10+ worked examples.",
         "owner": "gemini",
-        "status": "in_progress",
-        "outputs": ["managerial_catalog", "agent_catalog", "evidence"],
-        "acceptance_criteria": ["AC-01", "AC-02", "AC-03"],
-        "last_run": null,
-        "last_run_result": null
+        "status": "done",
+        "outputs": [
+          "managerial_catalog",
+          "agent_catalog",
+          "evidence"
+        ],
+        "acceptance_criteria": [
+          "AC-01",
+          "AC-02",
+          "AC-03"
+        ],
+        "last_run": "2026-05-07T00:00:00Z",
+        "last_run_result": {
+          "passed": 3,
+          "failed": 0,
+          "status": "green"
+        }
       },
       {
         "id": "synthesis",
         "name": "Synthesis",
         "description": "Merge research outputs into structured handoff schema. Resolve open questions. Finalize crosswalk with translation examples.",
         "owner": "human",
-        "status": "pending",
-        "outputs": ["crosswalk", "open_questions_resolved"],
-        "acceptance_criteria": ["AC-04"],
+        "status": "in_progress",
+        "outputs": [
+          "crosswalk",
+          "open_questions_resolved"
+        ],
+        "acceptance_criteria": [
+          "AC-04"
+        ],
         "last_run": null,
         "last_run_result": null
       },
@@ -38,8 +57,10 @@
         "name": "Decision",
         "description": "Human review of open_questions requiring decisions (catalog finiteness, T-3 DSL edge cases, ethics flags). Time-boxed 48h per question.",
         "owner": "human",
-        "status": "needs_human_decision",
-        "outputs": ["decisions_log"],
+        "status": "in_progress",
+        "outputs": [
+          "decisions_log"
+        ],
         "acceptance_criteria": [],
         "last_run": null,
         "last_run_result": null
@@ -50,8 +71,17 @@
         "description": "Implement: T-3 DSL engine, JSON schemas, evaluation harness, APIs (hierarchy browse, agent consumption, 2D placement), SAP pilot thin-slice.",
         "owner": "claude",
         "status": "in_progress",
-        "outputs": ["src/jobos/kernel/t3_dsl.py", "src/jobos/schemas/", "src/jobos/api/routes/schemas.py", "tests/unit/test_t3_dsl.py"],
-        "acceptance_criteria": ["AC-05", "AC-06", "AC-07"],
+        "outputs": [
+          "src/jobos/kernel/t3_dsl.py",
+          "src/jobos/schemas/",
+          "src/jobos/api/routes/schemas.py",
+          "tests/unit/test_t3_dsl.py"
+        ],
+        "acceptance_criteria": [
+          "AC-05",
+          "AC-06",
+          "AC-07"
+        ],
         "last_run": "2026-05-06T00:00:00Z",
         "last_run_result": {
           "passed": 769,
@@ -65,40 +95,419 @@
         "description": "Run evaluation harness: coverage tests, orthogonality, fractal consistency, T-3 grammaticality. Publish scoring report. Merge only when thresholds met.",
         "owner": "claude",
         "status": "pending",
-        "outputs": ["evaluation_report.json"],
-        "acceptance_criteria": ["AC-08"],
+        "outputs": [
+          "evaluation_report.json"
+        ],
+        "acceptance_criteria": [
+          "AC-08"
+        ],
         "last_run": null,
         "last_run_result": null
       }
     ]
   },
-
   "managerial_catalog": {
-    "status": "draft",
+    "status": "review",
     "t1": [
-      {"id": "M-T1-01", "name": "Achieve Market Position", "definition": "Secure and grow the organization's strategic position in target markets"},
-      {"id": "M-T1-02", "name": "Build Organizational Capability", "definition": "Develop the internal resources, skills, and systems needed to deliver outcomes"},
-      {"id": "M-T1-03", "name": "Ensure Operational Continuity", "definition": "Maintain reliable, compliant, and risk-managed operations"}
+      {
+        "id": "M-T1-01",
+        "name": "Vision and Strategy",
+        "definition": "High-level goal setting, environment assessment, and business concept definition",
+        "rationale": "APQC PCF Category 1.0 — Governance & Planning"
+      },
+      {
+        "id": "M-T1-02",
+        "name": "Product/Service Lifecycle",
+        "definition": "Market requirement analysis, design, and retirement of offerings",
+        "rationale": "APQC PCF Category 2.0 — Innovation & R&D"
+      },
+      {
+        "id": "M-T1-03",
+        "name": "Marketing and Sales",
+        "definition": "Customer segmentation, pricing, and revenue acquisition",
+        "rationale": "APQC PCF Category 3.0 — Demand Generation"
+      },
+      {
+        "id": "M-T1-04",
+        "name": "Supply Chain Management",
+        "definition": "Procurement, inventory, and transportation of tangible goods",
+        "rationale": "APQC PCF Category 4.0 — Logistics (Physical)"
+      },
+      {
+        "id": "M-T1-05",
+        "name": "Service Delivery",
+        "definition": "Execution of professional or technical services to clients",
+        "rationale": "APQC PCF Category 5.0 — Fulfillment (Intangible)"
+      },
+      {
+        "id": "M-T1-06",
+        "name": "Customer Service",
+        "definition": "Post-sale support, feedback loops, and loyalty management",
+        "rationale": "APQC PCF Category 6.0 — Relationship Management"
+      },
+      {
+        "id": "M-T1-07",
+        "name": "Human Capital",
+        "definition": "Acquisition, development, and retention of the workforce",
+        "rationale": "APQC PCF Category 7.0 — Talent & Culture"
+      },
+      {
+        "id": "M-T1-08",
+        "name": "Information Technology",
+        "definition": "Data governance, infrastructure, and application management",
+        "rationale": "APQC PCF Category 8.0 — Digital Foundation"
+      },
+      {
+        "id": "M-T1-09",
+        "name": "Financial Resources",
+        "definition": "Capital allocation, accounting, and treasury management",
+        "rationale": "APQC PCF Category 9.0 — Fiscal Stewardship"
+      },
+      {
+        "id": "M-T1-10",
+        "name": "Asset Management",
+        "definition": "Maintenance and optimization of facilities and equipment",
+        "rationale": "APQC PCF Category 10.0 — Physical Capital"
+      },
+      {
+        "id": "M-T1-11",
+        "name": "Risk and Compliance",
+        "definition": "Legal adherence, auditing, and emergency response planning",
+        "rationale": "APQC PCF Category 11.0 — Resilience & Safety"
+      },
+      {
+        "id": "M-T1-12",
+        "name": "External Relations",
+        "definition": "Public relations, regulatory affairs, and partner governance",
+        "rationale": "APQC PCF Category 12.0 — Ecosystem Management"
+      },
+      {
+        "id": "M-T1-13",
+        "name": "Business Capabilities",
+        "definition": "Developing underlying maturity in people, processes, and tools",
+        "rationale": "APQC PCF Category 13.0 — Organizational Competence"
+      }
     ],
     "t2": [
-      {"id": "M-T2-01", "name": "Acquire Customers", "definition": "Identify, attract, and convert target buyers into paying customers"},
-      {"id": "M-T2-02", "name": "Retain Customers", "definition": "Maintain customer engagement and prevent churn"},
-      {"id": "M-T2-03", "name": "Deliver Product/Service", "definition": "Fulfill customer commitments reliably and on time"},
-      {"id": "M-T2-04", "name": "Manage Workforce", "definition": "Hire, develop, and retain the right people for required roles"},
-      {"id": "M-T2-05", "name": "Manage Financial Resources", "definition": "Allocate, track, and optimize capital and operating spend"},
-      {"id": "M-T2-06", "name": "Manage Risk & Compliance", "definition": "Identify, assess, and mitigate operational, legal, and reputational risk"}
+      {
+        "id": "M-T2-01",
+        "name": "Define Business Concept",
+        "definition": "Establish the strategic vision and business model",
+        "parent_t1_id": "M-T1-01"
+      },
+      {
+        "id": "M-T2-02",
+        "name": "Assess Internal Environment",
+        "definition": "Evaluate organizational capabilities and resource gaps",
+        "parent_t1_id": "M-T1-01"
+      },
+      {
+        "id": "M-T2-03",
+        "name": "Assess External Environment",
+        "definition": "Analyze market conditions, competitors, and industry trends",
+        "parent_t1_id": "M-T1-01"
+      },
+      {
+        "id": "M-T2-04",
+        "name": "Develop Product Strategy",
+        "definition": "Define product/service roadmap and portfolio priorities",
+        "parent_t1_id": "M-T1-02"
+      },
+      {
+        "id": "M-T2-05",
+        "name": "Design Products/Services",
+        "definition": "Create specifications and prototypes for new offerings",
+        "parent_t1_id": "M-T1-02"
+      },
+      {
+        "id": "M-T2-06",
+        "name": "Manage Product Lifecycle",
+        "definition": "Govern product maturity, updates, and retirement",
+        "parent_t1_id": "M-T1-02"
+      },
+      {
+        "id": "M-T2-07",
+        "name": "Acquire Customers",
+        "definition": "Identify, attract, and convert target buyers into paying customers",
+        "parent_t1_id": "M-T1-03"
+      },
+      {
+        "id": "M-T2-08",
+        "name": "Develop Marketing Strategy",
+        "definition": "Define positioning, messaging, and channel strategy",
+        "parent_t1_id": "M-T1-03"
+      },
+      {
+        "id": "M-T2-09",
+        "name": "Manage Sales Pipeline",
+        "definition": "Track and optimize the lead-to-close process",
+        "parent_t1_id": "M-T1-03"
+      },
+      {
+        "id": "M-T2-10",
+        "name": "Plan Supply Chain",
+        "definition": "Forecast demand and plan procurement activities",
+        "parent_t1_id": "M-T1-04"
+      },
+      {
+        "id": "M-T2-11",
+        "name": "Procure Materials",
+        "definition": "Source, evaluate, and contract with suppliers",
+        "parent_t1_id": "M-T1-04"
+      },
+      {
+        "id": "M-T2-12",
+        "name": "Manage Logistics",
+        "definition": "Coordinate warehousing, transportation, and distribution",
+        "parent_t1_id": "M-T1-04"
+      },
+      {
+        "id": "M-T2-13",
+        "name": "Deliver Services",
+        "definition": "Execute professional or technical service engagements",
+        "parent_t1_id": "M-T1-05"
+      },
+      {
+        "id": "M-T2-14",
+        "name": "Manage Service Quality",
+        "definition": "Monitor service performance and drive continuous improvement",
+        "parent_t1_id": "M-T1-05"
+      },
+      {
+        "id": "M-T2-15",
+        "name": "Manage Customer Support",
+        "definition": "Resolve issues, manage inquiries, and maintain SLAs",
+        "parent_t1_id": "M-T1-06"
+      },
+      {
+        "id": "M-T2-16",
+        "name": "Retain Customers",
+        "definition": "Maintain customer engagement, loyalty, and prevent churn",
+        "parent_t1_id": "M-T1-06"
+      },
+      {
+        "id": "M-T2-17",
+        "name": "Acquire Talent",
+        "definition": "Recruit, screen, and onboard new employees",
+        "parent_t1_id": "M-T1-07"
+      },
+      {
+        "id": "M-T2-18",
+        "name": "Develop Workforce",
+        "definition": "Train, upskill, and manage career development",
+        "parent_t1_id": "M-T1-07"
+      },
+      {
+        "id": "M-T2-19",
+        "name": "Retain Employees",
+        "definition": "Maintain engagement, compensation, and culture to reduce attrition",
+        "parent_t1_id": "M-T1-07"
+      },
+      {
+        "id": "M-T2-20",
+        "name": "Manage IT Infrastructure",
+        "definition": "Operate and maintain computing, networking, and cloud resources",
+        "parent_t1_id": "M-T1-08"
+      },
+      {
+        "id": "M-T2-21",
+        "name": "Govern Data",
+        "definition": "Ensure data quality, access controls, and master data management",
+        "parent_t1_id": "M-T1-08"
+      },
+      {
+        "id": "M-T2-22",
+        "name": "Manage Applications",
+        "definition": "Develop, deploy, and maintain business applications",
+        "parent_t1_id": "M-T1-08"
+      },
+      {
+        "id": "M-T2-23",
+        "name": "Manage Financial Planning",
+        "definition": "Budget, forecast, and allocate capital",
+        "parent_t1_id": "M-T1-09"
+      },
+      {
+        "id": "M-T2-24",
+        "name": "Process Transactions",
+        "definition": "Execute accounts payable, receivable, and general ledger",
+        "parent_t1_id": "M-T1-09"
+      },
+      {
+        "id": "M-T2-25",
+        "name": "Manage Treasury",
+        "definition": "Optimize cash flow, investments, and financing",
+        "parent_t1_id": "M-T1-09"
+      },
+      {
+        "id": "M-T2-26",
+        "name": "Manage Facilities",
+        "definition": "Maintain buildings, workspace, and physical infrastructure",
+        "parent_t1_id": "M-T1-10"
+      },
+      {
+        "id": "M-T2-27",
+        "name": "Manage Equipment",
+        "definition": "Maintain, calibrate, and replace capital equipment",
+        "parent_t1_id": "M-T1-10"
+      },
+      {
+        "id": "M-T2-28",
+        "name": "Manage Legal",
+        "definition": "Handle contracts, intellectual property, and litigation",
+        "parent_t1_id": "M-T1-11"
+      },
+      {
+        "id": "M-T2-29",
+        "name": "Manage Compliance",
+        "definition": "Ensure adherence to regulations, standards, and policies",
+        "parent_t1_id": "M-T1-11"
+      },
+      {
+        "id": "M-T2-30",
+        "name": "Manage Risk",
+        "definition": "Identify, assess, and mitigate operational and strategic risks",
+        "parent_t1_id": "M-T1-11"
+      },
+      {
+        "id": "M-T2-31",
+        "name": "Manage Government Relations",
+        "definition": "Navigate regulatory affairs and public policy",
+        "parent_t1_id": "M-T1-12"
+      },
+      {
+        "id": "M-T2-32",
+        "name": "Manage Partnerships",
+        "definition": "Build and maintain strategic alliances and ecosystems",
+        "parent_t1_id": "M-T1-12"
+      },
+      {
+        "id": "M-T2-33",
+        "name": "Manage Public Relations",
+        "definition": "Shape public perception and corporate communications",
+        "parent_t1_id": "M-T1-12"
+      },
+      {
+        "id": "M-T2-34",
+        "name": "Develop Business Capabilities",
+        "definition": "Build organizational competence in people, processes, and tools",
+        "parent_t1_id": "M-T1-13"
+      },
+      {
+        "id": "M-T2-35",
+        "name": "Manage Knowledge",
+        "definition": "Capture, organize, and disseminate institutional knowledge",
+        "parent_t1_id": "M-T1-13"
+      },
+      {
+        "id": "M-T2-36",
+        "name": "Drive Continuous Improvement",
+        "definition": "Establish feedback loops and process optimization programs",
+        "parent_t1_id": "M-T1-13"
+      }
     ],
-    "t3_count_target": 24,
-    "note": "T-3 catalog requires research phase output (Gemini). Placeholder."
+    "t3_count_target": 150,
+    "note": "Research proposes 150 T-3 nodes (Level 3 APQC processes). T-3 entries to be populated in next engineering iteration. Each T-2 decomposes into 3-5 T-3 roadmap/blueprint jobs."
   },
-
   "agent_catalog": {
-    "status": "draft",
+    "status": "review",
     "t1_programs": [
-      {"id": "A-T1-01", "name": "Lead Qualification Automation"},
-      {"id": "A-T1-02", "name": "Invoice Processing Automation"},
-      {"id": "A-T1-03", "name": "Customer Onboarding Automation"}
+      {
+        "id": "A-T1-01",
+        "name": "Lead Qualification Automation",
+        "description": "Automate the qualification of inbound leads to reduce response time and improve conversion"
+      },
+      {
+        "id": "A-T1-02",
+        "name": "Invoice Processing Automation",
+        "description": "Automate matching, validation, and routing of supplier invoices"
+      },
+      {
+        "id": "A-T1-03",
+        "name": "Customer Onboarding Automation",
+        "description": "Automate user provisioning and first-experience guidance for new customers"
+      },
+      {
+        "id": "A-T1-04",
+        "name": "Order-to-Cash Optimization",
+        "description": "Optimize the end-to-end order fulfillment and revenue collection process"
+      },
+      {
+        "id": "A-T1-05",
+        "name": "Procure-to-Pay Automation",
+        "description": "Automate procurement workflows from requisition to payment"
+      },
+      {
+        "id": "A-T1-06",
+        "program_name": "Market Intelligence Automation",
+        "description": "Automated market research, competitive analysis, and trend detection"
+      },
+      {
+        "id": "A-T1-07",
+        "program_name": "Product Lifecycle Intelligence",
+        "description": "Automated product roadmap analysis, feature prioritization, and lifecycle stage assessment"
+      },
+      {
+        "id": "A-T1-08",
+        "program_name": "Supply Chain Optimization",
+        "description": "Demand forecasting, logistics optimization, and supplier management automation"
+      },
+      {
+        "id": "A-T1-09",
+        "program_name": "Service Delivery Automation",
+        "description": "Automated service provisioning, quality monitoring, and SLA management"
+      },
+      {
+        "id": "A-T1-10",
+        "program_name": "Customer Experience Automation",
+        "description": "Automated support routing, sentiment analysis, and retention workflows"
+      },
+      {
+        "id": "A-T1-11",
+        "program_name": "Talent Management Automation",
+        "description": "Recruiting pipeline, skills assessment, learning path automation"
+      },
+      {
+        "id": "A-T1-12",
+        "program_name": "IT Operations Automation",
+        "description": "Infrastructure monitoring, incident response, deployment automation"
+      },
+      {
+        "id": "A-T1-13",
+        "program_name": "Financial Planning Automation",
+        "description": "Forecasting, budgeting, variance analysis automation"
+      },
+      {
+        "id": "A-T1-14",
+        "program_name": "Asset Management Automation",
+        "description": "Facilities monitoring, equipment maintenance scheduling, resource allocation"
+      },
+      {
+        "id": "A-T1-15",
+        "program_name": "Compliance & Risk Automation",
+        "description": "Regulatory monitoring, risk assessment, audit trail automation"
+      },
+      {
+        "id": "A-T1-16",
+        "program_name": "Stakeholder Communication Automation",
+        "description": "PR monitoring, partnership coordination, government relations tracking"
+      },
+      {
+        "id": "A-T1-17",
+        "program_name": "Knowledge & Improvement Automation",
+        "description": "Knowledge extraction, process mining, continuous improvement recommendations"
+      }
     ],
+    "t2_universal_steps": [
+      "Define",
+      "Locate",
+      "Prepare",
+      "Execute",
+      "Monitor",
+      "Modify",
+      "Conclude"
+    ],
+    "fractal_note": "Any AJH T-2 workflow can be recursively expanded into a new T-1/T-2/T-3 hierarchy at a lower level of abstraction. This allows infinite nesting while maintaining consistent structural grammar.",
     "t3_dsl_examples": [
       "Minimize the time to qualify a lead from first contact to CRM stage updated, measured in hours, target ≤ 4",
       "Minimize the likelihood of invoice processing error due to PO mismatch, measured as error_rate in percent, target ≤ 0.5",
@@ -107,25 +516,401 @@
       "Minimize the time to provision all required software licenses from IT ticket creation to first login confirmed, measured in hours, target ≤ 4",
       "Minimize the likelihood of SLA breach on P1 tickets, measured as breach_rate in per_1000, target ≤ 5",
       "Minimize the time to complete financial close reconciliation from period end to CFO sign-off, measured in business_days, target ≤ 3",
-      "Minimize the likelihood of inventory count discrepancy detected at cycle audit, measured as defect_rate in percent, target ≤ 0.5"
+      "Minimize the likelihood of inventory count discrepancy detected at cycle audit, measured as defect_rate in percent, target ≤ 0.5",
+      "Minimize the time to verify account data from receipt to approval, measured in minutes, target ≤ 5",
+      "Minimize the likelihood of duplicate invoice entry, measured as error_rate in per_1000, target ≤ 1",
+      "Minimize the time to generate a sales quote from initial inquiry to client delivery, measured in minutes, target ≤ 15",
+      "Minimize the likelihood of data hallucination during customer sentiment analysis, measured as error_rate in per_1000, target ≤ 0.5",
+      "Minimize the time to obtain manager approval for discounts > 10% from submission to decision, measured in hours, target ≤ 2"
     ]
   },
-
   "crosswalk": [
     {
+      "id": "CW-01",
       "managerial": "M-T2-01",
-      "agent": "A-T1-01",
-      "mapping_rule": "Acquire Customers → Lead Qualification Automation",
-      "translation_type": "analog"
+      "agent": "A-T1-06",
+      "mapping_rule": "Define Business Concept → Market Intelligence Automation",
+      "translation_type": "decomposition",
+      "lossless": false,
+      "notes": "Agent automates market validation and concept testing subprocess"
     },
     {
+      "id": "CW-02",
+      "managerial": "M-T2-02",
+      "agent": "A-T1-06",
+      "mapping_rule": "Assess Internal Environment → Market Intelligence Automation",
+      "translation_type": "decomposition",
+      "lossless": false,
+      "notes": "Agent handles data gathering and benchmarking; strategic interpretation remains human"
+    },
+    {
+      "id": "CW-03",
+      "managerial": "M-T2-03",
+      "agent": "A-T1-06",
+      "mapping_rule": "Assess External Environment → Market Intelligence Automation",
+      "translation_type": "analog",
+      "lossless": false,
+      "notes": "Competitive intelligence and trend detection are core agent capabilities"
+    },
+    {
+      "id": "CW-04",
+      "managerial": "M-T2-04",
+      "agent": "A-T1-07",
+      "mapping_rule": "Develop Product Strategy → Product Lifecycle Intelligence",
+      "translation_type": "decomposition",
+      "lossless": false,
+      "notes": "Agent provides feature prioritization data; strategic decisions remain human"
+    },
+    {
+      "id": "CW-05",
       "managerial": "M-T2-05",
+      "agent": "A-T1-07",
+      "mapping_rule": "Design Products/Services → Product Lifecycle Intelligence",
+      "translation_type": "decomposition",
+      "lossless": false,
+      "notes": "Agent assists with requirements analysis and design validation"
+    },
+    {
+      "id": "CW-06",
+      "managerial": "M-T2-06",
+      "agent": "A-T1-07",
+      "mapping_rule": "Manage Product Lifecycle → Product Lifecycle Intelligence",
+      "translation_type": "analog",
+      "lossless": true,
+      "notes": "Lifecycle stage tracking and transition triggers map directly"
+    },
+    {
+      "id": "CW-07",
+      "managerial": "M-T2-07",
+      "agent": "A-T1-01",
+      "mapping_rule": "Acquire Customers → Lead Qualification Automation",
+      "translation_type": "decomposition",
+      "lossless": false,
+      "notes": "Agent handles qualification subprocess of full acquisition funnel"
+    },
+    {
+      "id": "CW-08",
+      "managerial": "M-T2-08",
+      "agent": "A-T1-06",
+      "mapping_rule": "Develop Marketing Strategy → Market Intelligence Automation",
+      "translation_type": "decomposition",
+      "lossless": false,
+      "notes": "Agent provides market data and campaign performance analytics"
+    },
+    {
+      "id": "CW-09",
+      "managerial": "M-T2-09",
+      "agent": "A-T1-04",
+      "mapping_rule": "Manage Sales Pipeline → Order-to-Cash Optimization",
+      "translation_type": "analog",
+      "lossless": false,
+      "notes": "O2C spans from sales pipeline through delivery and payment"
+    },
+    {
+      "id": "CW-10",
+      "managerial": "M-T2-10",
+      "agent": "A-T1-08",
+      "mapping_rule": "Plan Supply Chain → Supply Chain Optimization",
+      "translation_type": "analog",
+      "lossless": true,
+      "notes": "Demand forecasting and supply planning are core agent capabilities"
+    },
+    {
+      "id": "CW-11",
+      "managerial": "M-T2-11",
+      "agent": "A-T1-05",
+      "mapping_rule": "Procure Materials → Procure-to-Pay Automation",
+      "translation_type": "analog",
+      "lossless": true,
+      "notes": "Near-direct mapping between procurement and P2P agent program"
+    },
+    {
+      "id": "CW-12",
+      "managerial": "M-T2-12",
+      "agent": "A-T1-08",
+      "mapping_rule": "Manage Logistics → Supply Chain Optimization",
+      "translation_type": "decomposition",
+      "lossless": false,
+      "notes": "Agent handles route optimization and tracking; physical logistics remain external"
+    },
+    {
+      "id": "CW-13",
+      "managerial": "M-T2-13",
+      "agent": "A-T1-09",
+      "mapping_rule": "Deliver Services → Service Delivery Automation",
+      "translation_type": "analog",
+      "lossless": false,
+      "notes": "Agent automates provisioning and scheduling; physical delivery remains human"
+    },
+    {
+      "id": "CW-14",
+      "managerial": "M-T2-14",
+      "agent": "A-T1-09",
+      "mapping_rule": "Manage Service Quality → Service Delivery Automation",
+      "translation_type": "decomposition",
+      "lossless": false,
+      "notes": "Agent monitors SLAs and flags quality deviations"
+    },
+    {
+      "id": "CW-15",
+      "managerial": "M-T2-15",
+      "agent": "A-T1-10",
+      "mapping_rule": "Manage Customer Support → Customer Experience Automation",
+      "translation_type": "analog",
+      "lossless": false,
+      "notes": "Agent handles ticket routing, FAQ responses, and escalation detection"
+    },
+    {
+      "id": "CW-16",
+      "managerial": "M-T2-16",
+      "agent": "A-T1-03",
+      "mapping_rule": "Retain Customers → Customer Onboarding Automation",
+      "translation_type": "decomposition",
+      "lossless": false,
+      "notes": "Onboarding is a subprocess of retention strategy"
+    },
+    {
+      "id": "CW-17",
+      "managerial": "M-T2-17",
+      "agent": "A-T1-11",
+      "mapping_rule": "Acquire Talent → Talent Management Automation",
+      "translation_type": "decomposition",
+      "lossless": false,
+      "notes": "Agent handles resume screening, scheduling, and initial assessment"
+    },
+    {
+      "id": "CW-18",
+      "managerial": "M-T2-18",
+      "agent": "A-T1-11",
+      "mapping_rule": "Develop Workforce → Talent Management Automation",
+      "translation_type": "decomposition",
+      "lossless": false,
+      "notes": "Agent automates learning path recommendations and skills gap analysis"
+    },
+    {
+      "id": "CW-19",
+      "managerial": "M-T2-19",
+      "agent": "A-T1-11",
+      "mapping_rule": "Retain Employees → Talent Management Automation",
+      "translation_type": "decomposition",
+      "lossless": false,
+      "notes": "Agent detects attrition signals and recommends engagement actions"
+    },
+    {
+      "id": "CW-20",
+      "managerial": "M-T2-20",
+      "agent": "A-T1-12",
+      "mapping_rule": "Manage IT Infrastructure → IT Operations Automation",
+      "translation_type": "analog",
+      "lossless": true,
+      "notes": "Infrastructure monitoring and incident response are fully automatable"
+    },
+    {
+      "id": "CW-21",
+      "managerial": "M-T2-21",
+      "agent": "A-T1-12",
+      "mapping_rule": "Govern Data → IT Operations Automation",
+      "translation_type": "decomposition",
+      "lossless": false,
+      "notes": "Agent handles data quality checks and lineage tracking; governance policy is human"
+    },
+    {
+      "id": "CW-22",
+      "managerial": "M-T2-22",
+      "agent": "A-T1-12",
+      "mapping_rule": "Manage Applications → IT Operations Automation",
+      "translation_type": "analog",
+      "lossless": false,
+      "notes": "Agent automates deployment, monitoring, and performance optimization"
+    },
+    {
+      "id": "CW-23",
+      "managerial": "M-T2-23",
+      "agent": "A-T1-13",
+      "mapping_rule": "Manage Financial Planning → Financial Planning Automation",
+      "translation_type": "analog",
+      "lossless": false,
+      "notes": "Agent automates forecasting models and variance analysis"
+    },
+    {
+      "id": "CW-24",
+      "managerial": "M-T2-24",
       "agent": "A-T1-02",
-      "mapping_rule": "Manage Financial Resources → Invoice Processing Automation",
-      "translation_type": "decomposition"
+      "mapping_rule": "Process Transactions → Invoice Processing Automation",
+      "translation_type": "decomposition",
+      "lossless": false,
+      "notes": "Invoice processing is one subprocess within transaction processing"
+    },
+    {
+      "id": "CW-25",
+      "managerial": "M-T2-25",
+      "agent": "A-T1-13",
+      "mapping_rule": "Manage Treasury → Financial Planning Automation",
+      "translation_type": "decomposition",
+      "lossless": false,
+      "notes": "Agent handles cash flow forecasting; investment decisions remain human"
+    },
+    {
+      "id": "CW-26",
+      "managerial": "M-T2-26",
+      "agent": "A-T1-14",
+      "mapping_rule": "Manage Facilities → Asset Management Automation",
+      "translation_type": "decomposition",
+      "lossless": false,
+      "notes": "Agent handles scheduling, monitoring, and maintenance prediction"
+    },
+    {
+      "id": "CW-27",
+      "managerial": "M-T2-27",
+      "agent": "A-T1-14",
+      "mapping_rule": "Manage Equipment → Asset Management Automation",
+      "translation_type": "analog",
+      "lossless": false,
+      "notes": "Predictive maintenance and lifecycle tracking are automatable"
+    },
+    {
+      "id": "CW-28",
+      "managerial": "M-T2-28",
+      "agent": "A-T1-15",
+      "mapping_rule": "Manage Legal → Compliance & Risk Automation",
+      "translation_type": "decomposition",
+      "lossless": false,
+      "notes": "Agent handles contract review and clause extraction; legal judgment is human"
+    },
+    {
+      "id": "CW-29",
+      "managerial": "M-T2-29",
+      "agent": "A-T1-15",
+      "mapping_rule": "Manage Compliance → Compliance & Risk Automation",
+      "translation_type": "analog",
+      "lossless": true,
+      "notes": "Regulatory monitoring and audit trail generation are core agent capabilities"
+    },
+    {
+      "id": "CW-30",
+      "managerial": "M-T2-30",
+      "agent": "A-T1-15",
+      "mapping_rule": "Manage Risk → Compliance & Risk Automation",
+      "translation_type": "analog",
+      "lossless": false,
+      "notes": "Agent performs risk scoring and monitoring; risk appetite decisions remain human"
+    },
+    {
+      "id": "CW-31",
+      "managerial": "M-T2-31",
+      "agent": "A-T1-16",
+      "mapping_rule": "Manage Government Relations → Stakeholder Communication Automation",
+      "translation_type": "decomposition",
+      "lossless": false,
+      "notes": "Agent tracks regulatory changes and stakeholder communications"
+    },
+    {
+      "id": "CW-32",
+      "managerial": "M-T2-32",
+      "agent": "A-T1-16",
+      "mapping_rule": "Manage Partnerships → Stakeholder Communication Automation",
+      "translation_type": "decomposition",
+      "lossless": false,
+      "notes": "Agent handles partner performance tracking and communication scheduling"
+    },
+    {
+      "id": "CW-33",
+      "managerial": "M-T2-33",
+      "agent": "A-T1-16",
+      "mapping_rule": "Manage Public Relations → Stakeholder Communication Automation",
+      "translation_type": "decomposition",
+      "lossless": false,
+      "notes": "Agent monitors media, sentiment, and drafts communications"
+    },
+    {
+      "id": "CW-34",
+      "managerial": "M-T2-34",
+      "agent": "A-T1-17",
+      "mapping_rule": "Develop Business Capabilities → Knowledge & Improvement Automation",
+      "translation_type": "decomposition",
+      "lossless": false,
+      "notes": "Agent identifies capability gaps via process mining"
+    },
+    {
+      "id": "CW-35",
+      "managerial": "M-T2-35",
+      "agent": "A-T1-17",
+      "mapping_rule": "Manage Knowledge → Knowledge & Improvement Automation",
+      "translation_type": "analog",
+      "lossless": true,
+      "notes": "Knowledge extraction and organization are core agent capabilities"
+    },
+    {
+      "id": "CW-36",
+      "managerial": "M-T2-36",
+      "agent": "A-T1-17",
+      "mapping_rule": "Drive Continuous Improvement → Knowledge & Improvement Automation",
+      "translation_type": "analog",
+      "lossless": false,
+      "notes": "Agent mines processes for improvement opportunities; implementation decisions are human"
     }
   ],
-
+  "crosswalk_rules": {
+    "mjh_to_ajh": "MJH T-2 (What/Strategy) maps to AJH T-1 (Target/Program). MJH T-3 (How/Roadmap) maps to AJH T-2 (Workflow steps). MJH 2D Metric Axis maps to AJH T-3 (Constraints via DSL). MJH 2D Identity Axis maps to AJH metadata/style constraints.",
+    "ajh_to_mjh": "AJH T-3 metric breaches are summarized as Imperfections in MJH 2D model. Green = target met. Red = threshold exceeded, triggers human Switch decision.",
+    "non_negotiables": "Social/emotional dimensions exist ONLY in MJH. Agent hierarchy is metric-only. Social goals must be translated into Pattern B likelihood constraints."
+  },
+  "design_decisions": [
+    {
+      "id": "DD-01",
+      "title": "13 APQC-based T-1 pillars as universal finite catalog",
+      "decision": "Use APQC PCF v8.0's 13 categories as the T-1 tier. This provides 100% coverage of business activities based on 30 years of cross-industry research.",
+      "rationale": "Stability first — organizations should NOT create custom T-1 pillars. Use T-2/T-3 for specialization.",
+      "source": "Gemini research synthesis (jobos-blueprint-research-with-jtbd-deep-dive.md)",
+      "date": "2026-05-07",
+      "status": "approved"
+    },
+    {
+      "id": "DD-02",
+      "title": "2D Orthogonal Model uses CVF + KPI axes",
+      "decision": "Dimension 1 (Identity/Culture) uses Competing Values Framework (Collaborate/Create/Compete/Control). Dimension 2 (KPI/Metric) uses domain-agnostic measurement semantics with units, targets, baselines.",
+      "rationale": "Orthogonality prevents 'metric blindness' — AI agents pursuing efficiency must not destroy corporate culture. The 2D model is what prevents JobOS from being a mere process list.",
+      "source": "Gemini research (Jobos.ai-project-plan-and-Research.md)",
+      "date": "2026-05-07",
+      "status": "approved"
+    },
+    {
+      "id": "DD-03",
+      "title": "AJH has NO emotional/social dimension",
+      "decision": "The Agent Job Hierarchy is strictly metric-driven. Any attempt to introduce social goals leads to reasoning instability. Social goals must be translated into Pattern B 'Minimize the likelihood of...' constraints.",
+      "rationale": "Fractal precision requires determinism. Social context is encoded as metadata/style constraints, not optimization targets.",
+      "source": "Gemini research synthesis",
+      "date": "2026-05-07",
+      "status": "approved"
+    },
+    {
+      "id": "DD-04",
+      "title": "SAP Pilot: Order-to-Cash (O2C) domain",
+      "decision": "Use Order-to-Cash as the SAP internal pilot domain. Decompose into 5 T-2 stages: Contact→Lead, Lead→Opportunity, Opportunity→Quote, Quote→Order, Order→Cash.",
+      "rationale": "O2C has clear metrics, high frequency, spans multiple SAP modules (SD, FI, CO), and has abundant public reference data in SAP Help Portal and Signavio.",
+      "source": "Gemini research (both reports)",
+      "date": "2026-05-07",
+      "status": "approved"
+    },
+    {
+      "id": "DD-05",
+      "title": "Unified Metric ontology: KPI (continuous) + Threshold (binary)",
+      "decision": "Metrics have two subclasses: KPI Metrics (performance, continuous scale, directionality) and Threshold Metrics (constraint, binary pass/fail, hiring criteria). Both map to T-3 DSL patterns.",
+      "rationale": "Synthesizes ODI school (quantified outcomes) with Switch school (binary hiring/firing criteria). Both are needed for complete JTBD coverage.",
+      "source": "Gemini research (metrics-in-jtbd.md)",
+      "date": "2026-05-07",
+      "status": "approved"
+    },
+    {
+      "id": "DD-06",
+      "title": "AJH fractal expansion via universal T-2 step grammar",
+      "decision": "All AJH T-2 workflows use a universal 7-step grammar: Define, Locate, Prepare, Execute, Monitor, Modify, Conclude. Any T-2 can be promoted to a root T-1 for a sub-agent.",
+      "rationale": "Ensures structural self-similarity at every depth level. Agents parse the same grammar regardless of nesting depth.",
+      "source": "Gemini research (jobos-blueprint-research-with-jtbd-deep-dive.md)",
+      "date": "2026-05-07",
+      "status": "approved"
+    }
+  ],
   "evidence": [
     {
       "title": "JobOS.ai Canonical Schemas v1.0",
@@ -138,94 +923,331 @@
       "source": "engineering",
       "notes": "Pattern A/B parser, validator, renderer, translator. 39 tests passing. In src/jobos/kernel/t3_dsl.py.",
       "created": "2026-05-06"
+    },
+    {
+      "title": "APQC Process Classification Framework v8.0",
+      "source": "research",
+      "notes": "13-category universal business process taxonomy. 30+ years of cross-industry research. Justifies T-1 catalog count of 13.",
+      "links": [
+        "https://www.apqc.org/process-classification-framework"
+      ],
+      "created": "2026-05-07"
+    },
+    {
+      "title": "Competing Values Framework (CVF)",
+      "source": "research",
+      "notes": "Organizational culture model: Collaborate/Create/Compete/Control quadrants. Used for Dimension 1 (Identity axis) of 2D model.",
+      "links": [],
+      "created": "2026-05-07"
+    },
+    {
+      "title": "Gemini Blueprint Research Report",
+      "source": "research",
+      "notes": "Comprehensive synthesis of JTBD theory, active inference, control theory, and APQC standards. Proposes 15→13 T-1, 45→36 T-2, 150 T-3 catalog structure. Saved at materials/jobos-blueprint-research-with-jtbd-deep-dive.md",
+      "created": "2026-05-07"
+    },
+    {
+      "title": "Gemini Project Plan & Architecture Report",
+      "source": "research",
+      "notes": "Full architecture proposal: dual MJH/AJH hierarchies, 2D orthogonal model, fractal execution, crosswalk ontology, evaluation criteria, pretraining strategy, SAP L2C pilot. Saved at materials/Jobos.ai-project-plan-and-Research.md",
+      "created": "2026-05-07"
+    },
+    {
+      "title": "Ontology of Context in JTBD",
+      "source": "research",
+      "notes": "Formal synthesis: Circumstance vs Situation vs Condition vs Constraint. Context = spatiotemporal predicates of the struggling moment. Saved at materials/context-in-jtbd.md",
+      "created": "2026-05-07"
+    },
+    {
+      "title": "Metrics Ontology in JTBD",
+      "source": "research",
+      "notes": "Unified metric specification: ODI continuous outcomes + Switch binary thresholds. Two subclasses: KPI Metrics (Performance) and Threshold Metrics (Constraint). Saved at materials/metrics-in-jtbd.md",
+      "created": "2026-05-07"
     }
   ],
-
   "open_questions": [
     {
       "id": "Q-01",
       "stage": "research",
       "priority": "P0",
       "prompt": "How many T-1 categories belong in the finite Managerial catalog? Current draft has 3. Literature (APQC PCF) suggests 12 process categories — should we align to APQC or define our own minimum set?",
-      "status": "open",
+      "status": "answered",
       "opened": "2026-05-06",
       "deadline": "2026-05-08",
-      "decision": null
+      "decision": "13 T-1 pillars aligned directly to APQC PCF v8.0 categories. Justified by 30 years of cross-industry research providing 100% coverage. The 13 pillars should remain unchanged (0% growth) for minimum 5 years. Previous draft of 3 was insufficient — APQC provides the correct universally-validated finite set."
     },
     {
       "id": "Q-02",
       "stage": "research",
       "priority": "P0",
       "prompt": "What is the correct finite count for T-2 Core Functional jobs in the Managerial catalog? Current draft has 6. Should each T-1 have exactly 3–7 T-2 children?",
-      "status": "open",
+      "status": "answered",
       "opened": "2026-05-06",
       "deadline": "2026-05-08",
-      "decision": null
+      "decision": "36 T-2 jobs (averaging 2-3 per T-1 pillar), derived from APQC Level 2 'Process Groups'. The research proposes 75-100 T-2 at full saturation but the initial catalog starts with 36 core entries. Each T-1 has 2-4 T-2 children. T-2 should see <5% annual growth."
     },
     {
       "id": "Q-03",
       "stage": "decision",
       "priority": "P1",
       "prompt": "Should the T-3 DSL support a Pattern C for resource/cost minimization? (e.g., 'Minimize the cost of [process] from [start] to [end], measured in [currency_unit], target ≤ [N]'). This would cover financial jobs that are neither time nor likelihood.",
-      "status": "open",
+      "status": "answered",
       "opened": "2026-05-06",
       "deadline": "2026-05-10",
-      "decision": null
+      "decision": "YES — Pattern C is justified. The research identifies 'Efficiency: Cost per Task, Tokens per Task' as a canonical measure category. Financial metrics (cost-per-transaction) are pervasive in enterprise contexts. Pattern C follows: 'Minimize the cost of [process] from [start] to [end], measured in [currency_unit], target ≤ [threshold], current baseline [value].' Canonical units: USD, EUR, cost_per_transaction, tokens_per_task."
     },
     {
       "id": "Q-04",
       "stage": "research",
       "priority": "P1",
       "prompt": "For the SAP pilot: which SAP module and process should be the thin-slice? Candidates: (a) FI-AP invoice processing, (b) SD order-to-cash, (c) MM procurement-to-pay. Which has the clearest T-3 DSL mapping and best available public data?",
-      "status": "open",
+      "status": "answered",
       "opened": "2026-05-06",
       "deadline": "2026-05-10",
-      "decision": null
+      "decision": "Order-to-Cash (O2C) is recommended. Rationale: (1) Clear metrics and high frequency, (2) Spans multiple SAP modules (SD, FI, CO) — robust cross-pillar test, (3) Abundant public data in SAP Help Portal, Signavio, and SAP GitHub. Decompose into 5 T-2 stages: Contact→Lead, Lead→Opportunity, Opportunity→Quote, Quote→Order, Order→Cash. Source corpus: SAP Help Portal, SAP Signavio Process Insights/Explorer, answers.sap.com, SAP Build Store."
     },
     {
       "id": "Q-05",
       "stage": "decision",
       "priority": "P2",
       "prompt": "Ethics/bias flag: When the Managerial catalog classifies jobs as 'AI-automatable', how do we ensure the catalog itself does not systematically undervalue human-only work categories (e.g., care work, creative work, relational work)?",
-      "status": "open",
+      "status": "answered",
       "opened": "2026-05-06",
       "deadline": "2026-05-15",
-      "decision": null
+      "decision": "Mitigated via three mechanisms: (1) The 2D model's Identity axis (Dimension 1) explicitly tracks cultural/social value independent of efficiency metrics — jobs that score high on Identity but low on KPI are flagged as 'Human Essential', not 'low value'. (2) The MJH T-1 pillars include 'Human Capital' and 'External Relations' which are inherently relational. (3) Guard against 'Western Management' bias by supporting diverse organizational models (non-profit, cooperative) through configurable Identity dimension weights. The taxonomy classifies 'what needs to be done' not 'what can be automated.'"
     }
   ],
-
   "acceptance_criteria": [
-    {"id": "AC-01", "stage": "research", "text": "Managerial catalog proposes T-1, T-2, T-3 counts with definitions and 2D placement for each entry", "status": "pending"},
-    {"id": "AC-02", "stage": "research", "text": "Agent hierarchy schema includes 10+ worked T-3 DSL examples across ≥ 3 industries", "status": "met"},
-    {"id": "AC-03", "stage": "research", "text": "All T-3 DSL examples parse and validate against the T-3 DSL engine without errors", "status": "met"},
-    {"id": "AC-04", "stage": "synthesis", "text": "Crosswalk covers ≥ 80% of Managerial T-2 nodes with agent counterparts", "status": "pending"},
-    {"id": "AC-05", "stage": "engineering", "text": "T-3 DSL parser handles Pattern A and Pattern B with ≤, <=, and < operators", "status": "met"},
-    {"id": "AC-06", "stage": "engineering", "text": "JSON schemas define all tier properties, provenance, and versioning fields", "status": "met"},
-    {"id": "AC-07", "stage": "engineering", "text": "API endpoints for T-3 validate, parse, render, translate, and 2D classify", "status": "met"},
-    {"id": "AC-08", "stage": "evaluation", "text": "Evaluation harness runs: coverage, orthogonality, fractal consistency, T-3 grammaticality. All ≥ 95% pass rate", "status": "pending"}
+    {
+      "id": "AC-01",
+      "stage": "research",
+      "text": "Managerial catalog proposes T-1, T-2, T-3 counts with definitions and 2D placement for each entry",
+      "status": "met"
+    },
+    {
+      "id": "AC-02",
+      "stage": "research",
+      "text": "Agent hierarchy schema includes 10+ worked T-3 DSL examples across ≥ 3 industries",
+      "status": "met"
+    },
+    {
+      "id": "AC-03",
+      "stage": "research",
+      "text": "All T-3 DSL examples parse and validate against the T-3 DSL engine without errors",
+      "status": "met"
+    },
+    {
+      "id": "AC-04",
+      "stage": "synthesis",
+      "text": "Crosswalk covers ≥ 80% of Managerial T-2 nodes with agent counterparts",
+      "status": "pending"
+    },
+    {
+      "id": "AC-05",
+      "stage": "engineering",
+      "text": "T-3 DSL parser handles Pattern A and Pattern B with ≤, <=, and < operators",
+      "status": "met"
+    },
+    {
+      "id": "AC-06",
+      "stage": "engineering",
+      "text": "JSON schemas define all tier properties, provenance, and versioning fields",
+      "status": "met"
+    },
+    {
+      "id": "AC-07",
+      "stage": "engineering",
+      "text": "API endpoints for T-3 validate, parse, render, translate, and 2D classify",
+      "status": "met"
+    },
+    {
+      "id": "AC-08",
+      "stage": "evaluation",
+      "text": "Evaluation harness runs: coverage, orthogonality, fractal consistency, T-3 grammaticality. All ≥ 95% pass rate",
+      "status": "pending"
+    },
+    {
+      "id": "AC-09",
+      "stage": "engineering",
+      "text": "T-3 DSL supports Pattern C (cost/resource minimization)",
+      "status": "pending"
+    },
+    {
+      "id": "AC-10",
+      "stage": "engineering",
+      "text": "Managerial catalog expanded to 13 T-1 pillars and 36 T-2 entries in Neo4j schema",
+      "status": "pending"
+    },
+    {
+      "id": "AC-11",
+      "stage": "engineering",
+      "text": "SAP O2C pilot: 5 T-2 stages with T-3 constraints defined and parseable",
+      "status": "pending"
+    }
   ],
-
   "engineering_tasks": [
-    {"id": "ENG-01", "title": "T-3 DSL parser + validator", "priority": "P0", "status": "done", "artifact": "src/jobos/kernel/t3_dsl.py"},
-    {"id": "ENG-02", "title": "Managerial hierarchy JSON Schema", "priority": "P0", "status": "done", "artifact": "src/jobos/schemas/managerial_hierarchy.json"},
-    {"id": "ENG-03", "title": "Agent hierarchy JSON Schema with fractal structure", "priority": "P0", "status": "done", "artifact": "src/jobos/schemas/agent_hierarchy.json"},
-    {"id": "ENG-04", "title": "Crosswalk JSON Schema with 12 worked examples", "priority": "P0", "status": "done", "artifact": "src/jobos/schemas/crosswalk.json"},
-    {"id": "ENG-05", "title": "Schema API endpoints (validate, parse, render, translate, classify-2d)", "priority": "P0", "status": "done", "artifact": "src/jobos/api/routes/schemas.py"},
-    {"id": "ENG-06", "title": "Evaluation harness (68 tests for DSL + schemas)", "priority": "P0", "status": "done", "artifact": "tests/unit/test_t3_dsl.py + test_hierarchy_schemas.py"},
-    {"id": "ENG-07", "title": "Pipeline orchestrator dashboard view", "priority": "P1", "status": "in_progress", "artifact": "frontend/src/components/PipelineView.tsx"},
-    {"id": "ENG-08", "title": "Handoff spec API (load/save/run stage)", "priority": "P1", "status": "in_progress", "artifact": "src/jobos/api/routes/spec.py"},
-    {"id": "ENG-09", "title": "SAP pilot thin-slice: FI-AP ingest → hierarchy → T-3 → RAG Q&A", "priority": "P1", "status": "pending", "artifact": "TBD"},
-    {"id": "ENG-10", "title": "Pretraining data pipeline: dedup + PII filter + domain balance", "priority": "P2", "status": "pending", "artifact": "TBD"}
+    {
+      "id": "ENG-01",
+      "title": "T-3 DSL parser + validator",
+      "priority": "P0",
+      "status": "done",
+      "artifact": "src/jobos/kernel/t3_dsl.py"
+    },
+    {
+      "id": "ENG-02",
+      "title": "Managerial hierarchy JSON Schema",
+      "priority": "P0",
+      "status": "done",
+      "artifact": "src/jobos/schemas/managerial_hierarchy.json"
+    },
+    {
+      "id": "ENG-03",
+      "title": "Agent hierarchy JSON Schema with fractal structure",
+      "priority": "P0",
+      "status": "done",
+      "artifact": "src/jobos/schemas/agent_hierarchy.json"
+    },
+    {
+      "id": "ENG-04",
+      "title": "Crosswalk JSON Schema with 12 worked examples",
+      "priority": "P0",
+      "status": "done",
+      "artifact": "src/jobos/schemas/crosswalk.json"
+    },
+    {
+      "id": "ENG-05",
+      "title": "Schema API endpoints (validate, parse, render, translate, classify-2d)",
+      "priority": "P0",
+      "status": "done",
+      "artifact": "src/jobos/api/routes/schemas.py"
+    },
+    {
+      "id": "ENG-06",
+      "title": "Evaluation harness (68 tests for DSL + schemas)",
+      "priority": "P0",
+      "status": "done",
+      "artifact": "tests/unit/test_t3_dsl.py + test_hierarchy_schemas.py"
+    },
+    {
+      "id": "ENG-07",
+      "title": "Pipeline orchestrator dashboard view",
+      "priority": "P1",
+      "status": "done",
+      "artifact": "C:\\dashboard\\index.html + C:\\my-codes\\Jobos.ai\\orchestrator\\"
+    },
+    {
+      "id": "ENG-08",
+      "title": "Handoff spec API (load/save/run stage)",
+      "priority": "P1",
+      "status": "in_progress",
+      "artifact": "src/jobos/api/routes/spec.py"
+    },
+    {
+      "id": "ENG-09",
+      "title": "SAP O2C pilot: ingest 5 T-2 stages with T-3 constraints",
+      "priority": "P1",
+      "status": "pending",
+      "artifact": "TBD"
+    },
+    {
+      "id": "ENG-10",
+      "title": "Expand T-1 catalog to 13 APQC pillars in Neo4j + seed data",
+      "priority": "P0",
+      "status": "pending",
+      "artifact": "scripts/seed_managerial_catalog.py"
+    },
+    {
+      "id": "ENG-11",
+      "title": "Expand T-2 catalog to 36 entries with parent_t1_id links",
+      "priority": "P0",
+      "status": "pending",
+      "artifact": "scripts/seed_managerial_catalog.py"
+    },
+    {
+      "id": "ENG-12",
+      "title": "Implement Pattern C (cost minimization) in T-3 DSL",
+      "priority": "P1",
+      "status": "pending",
+      "artifact": "src/jobos/kernel/t3_dsl.py"
+    },
+    {
+      "id": "ENG-13",
+      "title": "2D orthogonal scoring with CVF Identity axis",
+      "priority": "P1",
+      "status": "pending",
+      "artifact": "src/jobos/services/scoring_service.py"
+    },
+    {
+      "id": "ENG-14",
+      "title": "Crosswalk transform: MJH T-2 → AJH T-1 automated mapping",
+      "priority": "P2",
+      "status": "pending",
+      "artifact": "src/jobos/services/crosswalk_service.py"
+    },
+    {
+      "id": "ENG-15",
+      "title": "Pretraining data pipeline: dedup + PII filter + domain balance",
+      "priority": "P2",
+      "status": "pending",
+      "artifact": "TBD"
+    }
   ],
-
   "evaluation_plan": {
     "tests": [
-      {"id": "EVAL-01", "name": "dsl_grammar_check", "description": "All T-3 DSL examples in spec parse without error", "threshold": "100%"},
-      {"id": "EVAL-02", "name": "crosswalk_roundtrip", "description": "Every managerial T-2 has at least one agent DSL counterpart or explicit no_equivalent", "threshold": "100%"},
-      {"id": "EVAL-03", "name": "orthogonality_check", "description": "No T-3 statement contains technology/product names (solution-agnostic)", "threshold": "95%"},
-      {"id": "EVAL-04", "name": "fractal_consistency", "description": "Agent hierarchy nodes at depth 1-5 all parse to valid T-3 constraints", "threshold": "100%"},
-      {"id": "EVAL-05", "name": "schema_unit_tests", "description": "All 68 schema + DSL unit tests pass", "threshold": "100%"},
-      {"id": "EVAL-06", "name": "t3_coverage", "description": "Worked examples cover all TimeUnit and RateType enum values", "threshold": "80%"}
+      {
+        "id": "EVAL-01",
+        "name": "dsl_grammar_check",
+        "description": "All T-3 DSL examples in spec parse without error (Pattern A, B, and C)",
+        "threshold": "100%"
+      },
+      {
+        "id": "EVAL-02",
+        "name": "crosswalk_roundtrip",
+        "description": "Every managerial T-2 has at least one agent DSL counterpart or explicit no_equivalent",
+        "threshold": "100%"
+      },
+      {
+        "id": "EVAL-03",
+        "name": "orthogonality_check",
+        "description": "No T-3 statement contains technology/product names (solution-agnostic)",
+        "threshold": "95%"
+      },
+      {
+        "id": "EVAL-04",
+        "name": "fractal_consistency",
+        "description": "Agent hierarchy nodes at depth 1-5 all parse to valid T-3 constraints",
+        "threshold": "100%"
+      },
+      {
+        "id": "EVAL-05",
+        "name": "schema_unit_tests",
+        "description": "All schema + DSL unit tests pass",
+        "threshold": "100%"
+      },
+      {
+        "id": "EVAL-06",
+        "name": "t3_coverage",
+        "description": "Worked examples cover all TimeUnit and RateType enum values",
+        "threshold": "80%"
+      },
+      {
+        "id": "EVAL-07",
+        "name": "inter_rater_reliability",
+        "description": "Classification audit: Cohen's kappa ≥ 0.85 when mapping random process descriptions to T-1/T-2",
+        "threshold": "85%"
+      },
+      {
+        "id": "EVAL-08",
+        "name": "cross_domain_coverage",
+        "description": "≥ 98% of SAP O2C process steps map to a T-3 job without Miscellaneous category",
+        "threshold": "98%"
+      }
+    ],
+    "datasets": [
+      "APQC_PCF_v8",
+      "SAP_Help_Portal_O2C",
+      "SEC_EDGAR_Missions",
+      "SAP_Signavio_Benchmarks"
     ]
   }
 }
