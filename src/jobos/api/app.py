@@ -103,4 +103,8 @@ def create_app() -> FastAPI:
     app.include_router(schemas.router, prefix="/api", tags=["schemas"])
     app.include_router(spec.router, prefix="/api", tags=["spec"])
 
+    # Pilot routes
+    from jobos.pilots.erp_opc.routes import router as erp_opc_router
+    app.include_router(erp_opc_router, prefix="/api/pilot", tags=["erp-opc"])
+
     return app

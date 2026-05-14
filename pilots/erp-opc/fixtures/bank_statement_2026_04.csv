@@ -1,0 +1,17 @@
+date,amount,description,reference
+2026-04-01,1500.00,Client payment - Invoice INV-001,INV-001
+2026-04-02,-89.00,GitHub Team subscription,SUB-GH-APR
+2026-04-03,-49.99,Adobe Creative Cloud,SUB-ADOBE-APR
+2026-04-05,-1200.00,Coworking space rent,RENT-APR
+2026-04-07,4500.00,Project Alpha milestone 2,PROJ-ALPHA-M2
+2026-04-08,-35.00,Zoom Pro monthly,SUB-ZOOM-APR
+2026-04-10,-150.00,Legal consultation,LEGAL-APR
+2026-04-12,800.00,Consulting retainer - Client B,RET-CLIENTB-APR
+2026-04-14,-22.50,Domain renewal - example.com,DOMAIN-APR
+2026-04-15,-15.00,Bank monthly fee,FEE-APR
+2026-04-18,2200.00,Project Beta final payment,PROJ-BETA-FINAL
+2026-04-20,-199.00,AWS hosting,SUB-AWS-APR
+2026-04-22,-75.00,Accounting software subscription,SUB-ACCT-APR
+2026-04-25,650.00,Workshop facilitation fee,WORKSHOP-APR
+2026-04-28,-45.00,Business insurance monthly,INS-APR
+2026-04-30,-12.00,Bank wire transfer fee,FEE-WIRE-APR

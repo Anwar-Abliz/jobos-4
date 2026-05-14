@@ -885,12 +885,19 @@
     },
     {
       "id": "DD-04",
-      "title": "SAP Pilot: Order-to-Cash (O2C) domain",
-      "decision": "Use Order-to-Cash as the SAP internal pilot domain. Decompose into 5 T-2 stages: Contact→Lead, Lead→Opportunity, Opportunity→Quote, Quote→Order, Order→Cash.",
-      "rationale": "O2C has clear metrics, high frequency, spans multiple SAP modules (SD, FI, CO), and has abundant public reference data in SAP Help Portal and Signavio.",
+      "title": "Pilot: ERP for One-Person Company (OPC) — Monthly Financial Close",
+      "decision": "Use ERP-for-OPC monthly financial close as the pilot domain instead of SAP O2C. Scope: bank statement import, reconciliation, adjustment entries, trial balance, period close.",
+      "rationale": "O2C is too broad and complex for a first pilot. ERP-for-OPC is a self-contained, well-bounded domain (5 steps, single actor, clear success criteria). Agent-first API design aligns with JobOS axioms — no UI, machine-readable interfaces, human only approves.",
       "source": "Gemini research (both reports)",
       "date": "2026-05-07",
-      "status": "approved"
+      "status": "approved",
+      "implications": [
+        "Pilot domain is financial close for a one-person company",
+        "Primary user is AI Agent, not human",
+        "Human intervenes only for approval and final review",
+        "Success: Agent execution <= 30 min, human review <= 15 min",
+        "No payment execution, invoicing, payroll, inventory, or tax filing in Phase 1"
+      ]
     },
     {
       "id": "DD-05",
@@ -1082,7 +1089,8 @@
       "id": "AC-11",
       "stage": "engineering",
       "text": "SAP O2C pilot: 5 T-2 stages with T-3 constraints defined and parseable",
-      "status": "pending"
+      "status": "pending",
+      "description": "ERP-for-OPC pilot produces a valid job hierarchy (T-1/T-2/T-3) with >=5 T-3 constraints, seeded in Neo4j, passing schema validation"
     }
   ],
   "engineering_tasks": [
@@ -1144,10 +1152,11 @@
     },
     {
       "id": "ENG-09",
-      "title": "SAP O2C pilot: ingest 5 T-2 stages with T-3 constraints",
+      "title": "ERP-for-OPC pilot: ingest financial close T-2 stages with T-3 constraints",
       "priority": "P1",
       "status": "pending",
-      "artifact": "TBD"
+      "artifact": "TBD",
+      "description": "Decompose monthly financial close into T-2 steps (7-step grammar) and generate T-3 DSL constraints (Pattern A: time, B: error rate, C: cost). Seed into Neo4j."
     },
     {
       "id": "ENG-10",
@@ -1249,5 +1258,6 @@
       "SEC_EDGAR_Missions",
       "SAP_Signavio_Benchmarks"
     ]
-  }
+  },
+  "version": "0.5.0"
 }

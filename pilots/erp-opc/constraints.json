@@ -1,0 +1,167 @@
+{
+  "pilot_id": "erp-opc-financial-close",
+  "constraints": [
+    {
+      "id": "OPC-C-01",
+      "parent_t2": "OPC-T2-01",
+      "pattern": "A_time",
+      "statement": "Minimize the time to ingest bank statements from file received to transactions journaled, measured in minutes, target ≤ 5",
+      "structured": {
+        "verb_noun": "ingest bank statements",
+        "start_state": "file received",
+        "end_state": "transactions journaled",
+        "unit": "minutes",
+        "threshold": 5.0,
+        "baseline": 45.0
+      }
+    },
+    {
+      "id": "OPC-C-02",
+      "parent_t2": "OPC-T2-01",
+      "pattern": "B_likelihood",
+      "statement": "Minimize the likelihood of duplicate transaction ingestion, measured as error_rate in percent, target ≤ 0.1",
+      "structured": {
+        "event": "duplicate transaction ingestion",
+        "rate_type": "error_rate",
+        "unit": "percent",
+        "threshold": 0.1,
+        "baseline": 2.0
+      }
+    },
+    {
+      "id": "OPC-C-03",
+      "parent_t2": "OPC-T2-02",
+      "pattern": "A_time",
+      "statement": "Minimize the time to reconcile accounts from transactions loaded to reconciliation report emitted, measured in minutes, target ≤ 10",
+      "structured": {
+        "verb_noun": "reconcile accounts",
+        "start_state": "transactions loaded",
+        "end_state": "reconciliation report emitted",
+        "unit": "minutes",
+        "threshold": 10.0,
+        "baseline": 120.0
+      }
+    },
+    {
+      "id": "OPC-C-04",
+      "parent_t2": "OPC-T2-02",
+      "pattern": "B_likelihood",
+      "statement": "Minimize the likelihood of false match in reconciliation, measured as error_rate in percent, target ≤ 1.0",
+      "structured": {
+        "event": "false match in reconciliation",
+        "rate_type": "error_rate",
+        "unit": "percent",
+        "threshold": 1.0,
+        "baseline": 5.0
+      }
+    },
+    {
+      "id": "OPC-C-05",
+      "parent_t2": "OPC-T2-03",
+      "pattern": "B_likelihood",
+      "statement": "Minimize the likelihood of unbalanced journal entry posted, measured as error_rate in percent, target ≤ 0",
+      "structured": {
+        "event": "unbalanced journal entry posted",
+        "rate_type": "error_rate",
+        "unit": "percent",
+        "threshold": 0.0,
+        "baseline": 0.5
+      }
+    },
+    {
+      "id": "OPC-C-06",
+      "parent_t2": "OPC-T2-03",
+      "pattern": "B_likelihood",
+      "statement": "Minimize the likelihood of unapproved adjustment exceeding threshold, measured as breach_rate in percent, target ≤ 0",
+      "structured": {
+        "event": "unapproved adjustment exceeding threshold",
+        "rate_type": "breach_rate",
+        "unit": "percent",
+        "threshold": 0.0,
+        "baseline": null
+      }
+    },
+    {
+      "id": "OPC-C-07",
+      "parent_t2": "OPC-T2-04",
+      "pattern": "A_time",
+      "statement": "Minimize the time to generate trial balance from period entries aggregated to report emitted, measured in seconds, target ≤ 30",
+      "structured": {
+        "verb_noun": "generate trial balance",
+        "start_state": "period entries aggregated",
+        "end_state": "report emitted",
+        "unit": "seconds",
+        "threshold": 30.0,
+        "baseline": 300.0
+      }
+    },
+    {
+      "id": "OPC-C-08",
+      "parent_t2": "OPC-T2-04",
+      "pattern": "B_likelihood",
+      "statement": "Minimize the likelihood of trial balance imbalance, measured as error_rate in percent, target ≤ 0",
+      "structured": {
+        "event": "trial balance imbalance",
+        "rate_type": "error_rate",
+        "unit": "percent",
+        "threshold": 0.0,
+        "baseline": null
+      }
+    },
+    {
+      "id": "OPC-C-09",
+      "parent_t2": "OPC-T2-05",
+      "pattern": "A_time",
+      "statement": "Minimize the time to close period from prerequisites confirmed to period locked, measured in minutes, target ≤ 2",
+      "structured": {
+        "verb_noun": "close period",
+        "start_state": "prerequisites confirmed",
+        "end_state": "period locked",
+        "unit": "minutes",
+        "threshold": 2.0,
+        "baseline": 30.0
+      }
+    },
+    {
+      "id": "OPC-C-10",
+      "parent_t2": "OPC-T2-05",
+      "pattern": "B_likelihood",
+      "statement": "Minimize the likelihood of post-close entry modification, measured as breach_rate in percent, target ≤ 0",
+      "structured": {
+        "event": "post-close entry modification",
+        "rate_type": "breach_rate",
+        "unit": "percent",
+        "threshold": 0.0,
+        "baseline": null
+      }
+    },
+    {
+      "id": "OPC-C-11",
+      "parent_t2": "OPC-T1-01",
+      "pattern": "A_time",
+      "statement": "Minimize the time to complete monthly close from period start to close confirmed, measured in minutes, target ≤ 30",
+      "structured": {
+        "verb_noun": "complete monthly close",
+        "start_state": "period start",
+        "end_state": "close confirmed",
+        "unit": "minutes",
+        "threshold": 30.0,
+        "baseline": 480.0
+      }
+    },
+    {
+      "id": "OPC-C-12",
+      "parent_t2": "OPC-T1-01",
+      "pattern": "C_cost",
+      "statement": "Minimize the cost of monthly financial close from period start to close confirmed, measured in tokens_per_task, target ≤ 50000",
+      "structured": {
+        "process": "monthly financial close",
+        "start_state": "period start",
+        "end_state": "close confirmed",
+        "unit": "tokens_per_task",
+        "threshold": 50000.0,
+        "baseline": null
+      }
+    }
+  ]
+}

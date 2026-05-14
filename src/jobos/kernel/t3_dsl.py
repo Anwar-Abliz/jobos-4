@@ -524,6 +524,7 @@ _ACTION_VERBS = {
     "define", "execute", "monitor", "adjust", "validate", "report",
     "qualify", "process", "resolve", "onboard", "provision", "complete",
     "generate", "review", "approve", "submit", "close", "update", "create",
+    "reconcile", "ingest", "import", "export", "post", "lock", "archive",
 }
 
 

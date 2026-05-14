@@ -181,6 +181,8 @@ class Neo4jEntityRepo(GraphPort):
             "EXECUTED_BY", "OPERATES_ON", "BELONGS_TO", "GOVERNED_BY",
             "DECIDED_BY", "INGESTED_FROM", "SURVEYED_BY", "HAS_OUTCOME",
             "RESPONDS_TO", "PRECEDED_BY", "VARIANT_OF",
+            # JobOS hierarchy relationship types
+            "CONSTRAINS", "MAPS_TO_AGENT",
         }
         if edge_type not in allowed_types:
             logger.warning("Unknown edge type: %s", edge_type)

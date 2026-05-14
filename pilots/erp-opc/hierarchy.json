@@ -1,0 +1,217 @@
+{
+  "pilot_id": "erp-opc-financial-close",
+  "pilot_name": "ERP for One-Person Company — Monthly Financial Close",
+  "version": "1.0.0",
+  "domain": "financial_close",
+  "primary_user": "AI Agent",
+  "human_role": "approval_and_review_only",
+  "success_criteria": {
+    "agent_execution_time": "<=30 minutes",
+    "human_review_time": "<=15 minutes"
+  },
+  "phase_1_scope": [
+    "bank_statement_import",
+    "reconciliation",
+    "adjustment_entries",
+    "trial_balance",
+    "period_close"
+  ],
+  "out_of_scope_phase_1": [
+    "payment_execution",
+    "invoice_processing",
+    "payroll",
+    "inventory",
+    "tax_filing",
+    "multi_entity_consolidation"
+  ],
+
+  "managerial_hierarchy": {
+    "t1": {
+      "id": "OPC-T1-01",
+      "name": "Manage Financial Close",
+      "tier": 1,
+      "definition": "Ensure the one-person company completes monthly financial close accurately, completely, and on time with minimal human intervention.",
+      "parent_apqc": "M-T1-09"
+    },
+    "t2": [
+      {
+        "id": "OPC-T2-01",
+        "name": "Import Bank Statements",
+        "tier": 2,
+        "parent": "OPC-T1-01",
+        "definition": "Retrieve and ingest bank transaction data into the ledger system for the closing period.",
+        "universal_steps": {
+          "define": "Identify the bank accounts and date range for the period",
+          "locate": "Connect to bank data source (CSV, OFX, API)",
+          "prepare": "Parse and normalize transactions into standard format",
+          "execute": "Write normalized transactions to the journal",
+          "monitor": "Verify record count matches source, detect duplicates",
+          "modify": "Flag anomalies (missing dates, zero amounts) for human review",
+          "conclude": "Confirm all transactions ingested; emit completion signal"
+        }
+      },
+      {
+        "id": "OPC-T2-02",
+        "name": "Reconcile Accounts",
+        "tier": 2,
+        "parent": "OPC-T1-01",
+        "definition": "Match bank transactions against ledger entries, identify discrepancies, and surface unmatched items.",
+        "universal_steps": {
+          "define": "Determine accounts and tolerance rules for matching",
+          "locate": "Load bank transactions and corresponding ledger entries",
+          "prepare": "Apply matching algorithms (amount, date, reference)",
+          "execute": "Mark matched pairs; isolate unmatched items",
+          "monitor": "Calculate match rate; flag if below threshold",
+          "modify": "Propose matching suggestions for ambiguous items; escalate to human if confidence < threshold",
+          "conclude": "Emit reconciliation report with matched/unmatched/suggested counts"
+        }
+      },
+      {
+        "id": "OPC-T2-03",
+        "name": "Post Adjustment Entries",
+        "tier": 2,
+        "parent": "OPC-T1-01",
+        "definition": "Create and post adjusting journal entries to resolve discrepancies found during reconciliation.",
+        "universal_steps": {
+          "define": "Identify required adjustments from reconciliation output",
+          "locate": "Retrieve relevant account balances and prior adjustments",
+          "prepare": "Draft journal entries with debit/credit pairs",
+          "execute": "Post entries to ledger (requires human approval if amount > threshold)",
+          "monitor": "Verify debits equal credits; check account balance impact",
+          "modify": "If approval denied, revise entry and re-submit",
+          "conclude": "All adjustments posted or explicitly deferred with reason"
+        }
+      },
+      {
+        "id": "OPC-T2-04",
+        "name": "Generate Trial Balance",
+        "tier": 2,
+        "parent": "OPC-T1-01",
+        "definition": "Produce trial balance report showing all account balances after adjustments, confirming debits equal credits.",
+        "universal_steps": {
+          "define": "Set reporting period and chart of accounts scope",
+          "locate": "Aggregate all posted entries for the period",
+          "prepare": "Calculate running balances per account",
+          "execute": "Generate trial balance with total debits and total credits",
+          "monitor": "Verify total debits == total credits (zero tolerance)",
+          "modify": "If imbalanced, trace to source entry and flag for correction",
+          "conclude": "Emit balanced trial balance; mark ready for close"
+        }
+      },
+      {
+        "id": "OPC-T2-05",
+        "name": "Close Period",
+        "tier": 2,
+        "parent": "OPC-T1-01",
+        "definition": "Lock the accounting period to prevent further modifications, archive the period state.",
+        "universal_steps": {
+          "define": "Confirm all prerequisites met (reconciled, balanced, approved)",
+          "locate": "Check for any pending items or unapproved entries",
+          "prepare": "Generate period summary and close checklist",
+          "execute": "Lock period (requires human final approval)",
+          "monitor": "Verify no entries can be posted to locked period",
+          "modify": "If human rejects close, report blocking issues",
+          "conclude": "Period archived; emit close confirmation with timestamp"
+        }
+      }
+    ]
+  },
+
+  "agent_hierarchy": {
+    "t1_program": {
+      "id": "A-OPC-T1-01",
+      "program_name": "Financial Close Agent",
+      "description": "Autonomous agent that executes the monthly financial close process for a one-person company, escalating to human only for approvals and ambiguous decisions."
+    },
+    "capabilities": [
+      {
+        "id": "CAP-01",
+        "name": "ingest_bank_data",
+        "description": "Parse and import bank statement files (CSV, OFX, MT940) into normalized journal entries",
+        "input": "file_path or API credentials",
+        "output": "list of normalized transactions with status",
+        "escalation_trigger": "unrecognized format, parsing errors > 5%"
+      },
+      {
+        "id": "CAP-02",
+        "name": "reconcile_entries",
+        "description": "Match bank transactions to ledger entries using amount, date, and reference matching",
+        "input": "bank_transactions, ledger_entries, tolerance_rules",
+        "output": "matched_pairs, unmatched_bank, unmatched_ledger, suggestions",
+        "escalation_trigger": "match_rate < 80% or ambiguous matches with confidence < 0.7"
+      },
+      {
+        "id": "CAP-03",
+        "name": "draft_adjustments",
+        "description": "Generate adjusting journal entries to resolve reconciliation discrepancies",
+        "input": "unmatched_items, account_rules",
+        "output": "list of draft journal entries (debit/credit pairs)",
+        "escalation_trigger": "adjustment amount > configured threshold, novel account combination"
+      },
+      {
+        "id": "CAP-04",
+        "name": "generate_trial_balance",
+        "description": "Aggregate all entries and produce trial balance report",
+        "input": "period, chart_of_accounts",
+        "output": "trial_balance_report with per-account balances",
+        "escalation_trigger": "total_debits != total_credits"
+      },
+      {
+        "id": "CAP-05",
+        "name": "close_period",
+        "description": "Lock accounting period after all prerequisites verified",
+        "input": "period_id, prerequisite_checklist",
+        "output": "close_confirmation with timestamp and archive reference",
+        "escalation_trigger": "always (human approval required for period lock)"
+      }
+    ]
+  },
+
+  "crosswalk": [
+    {
+      "id": "OPC-CW-01",
+      "managerial": "OPC-T2-01",
+      "agent_capability": "CAP-01",
+      "mapping_rule": "Import Bank Statements → ingest_bank_data",
+      "translation_type": "analog",
+      "lossless": true,
+      "notes": "Direct mapping — agent fully executes this step"
+    },
+    {
+      "id": "OPC-CW-02",
+      "managerial": "OPC-T2-02",
+      "agent_capability": "CAP-02",
+      "mapping_rule": "Reconcile Accounts → reconcile_entries",
+      "translation_type": "analog",
+      "lossless": false,
+      "notes": "Agent handles matching; ambiguous cases escalate to human"
+    },
+    {
+      "id": "OPC-CW-03",
+      "managerial": "OPC-T2-03",
+      "agent_capability": "CAP-03",
+      "mapping_rule": "Post Adjustment Entries → draft_adjustments",
+      "translation_type": "decomposition",
+      "lossless": false,
+      "notes": "Agent drafts entries; posting requires human approval above threshold"
+    },
+    {
+      "id": "OPC-CW-04",
+      "managerial": "OPC-T2-04",
+      "agent_capability": "CAP-04",
+      "mapping_rule": "Generate Trial Balance → generate_trial_balance",
+      "translation_type": "analog",
+      "lossless": true,
+      "notes": "Fully automatable — pure computation"
+    },
+    {
+      "id": "OPC-CW-05",
+      "managerial": "OPC-T2-05",
+      "agent_capability": "CAP-05",
+      "mapping_rule": "Close Period → close_period",
+      "translation_type": "decomposition",
+      "lossless": false,
+      "notes": "Agent prepares close; human must approve the lock action"
+    }
+  ]
+}

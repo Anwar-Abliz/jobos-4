@@ -34,20 +34,22 @@ Decisions extracted from Gemini Pro 3 research sessions and consolidated on 2026
 
 ---
 
-## DD-04: SAP Pilot uses Order-to-Cash (O2C) domain
+## DD-04: Pilot uses ERP for One-Person Company (OPC) — Monthly Financial Close
 
-**Decision:** O2C over FI-AP or MM-P2P.
+**Decision:** ERP-for-OPC monthly financial close over SAP O2C (too broad/complex for first pilot).
 
 **Decomposition:**
-1. Contact → Lead
-2. Lead → Opportunity  
-3. Opportunity → Quote
-4. Quote → Order
-5. Order → Cash
+1. Import Bank Statements (file → journal)
+2. Reconcile Accounts (match bank vs. ledger)
+3. Post Adjustment Entries (draft → approve → post)
+4. Generate Trial Balance (aggregate → verify balance)
+5. Close Period (checklist → human approval → lock)
 
-**Source corpus:** SAP Help Portal, SAP Signavio Process Insights/Explorer, answers.sap.com, SAP Build Store, SAP GitHub connectors.
+**Primary user:** AI Agent (no UI). Human only approves and reviews final output.
 
-**Success metrics:** "Handoff Ambiguity" reduction and "Verification Latency" improvement.
+**Success metrics:** Agent execution ≤ 30 min, human review ≤ 15 min. Zero unbalanced entries. Zero unapproved adjustments above threshold.
+
+**Source:** PRD at `C:\my-codes\Jobos.ai\materials\Pilots\prd.md`
 
 ---
 

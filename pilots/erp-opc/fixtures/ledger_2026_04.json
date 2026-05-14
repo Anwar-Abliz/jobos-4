@@ -1,0 +1,16 @@
+[
+  {"date": "2026-04-01", "debit_account": "1000", "credit_account": "4000", "amount": 1500.00, "description": "INV-001 revenue recognized"},
+  {"date": "2026-04-02", "debit_account": "6200", "credit_account": "1000", "amount": 89.00, "description": "GitHub Team subscription"},
+  {"date": "2026-04-03", "debit_account": "6200", "credit_account": "1000", "amount": 49.99, "description": "Adobe Creative Cloud"},
+  {"date": "2026-04-05", "debit_account": "6100", "credit_account": "1000", "amount": 1200.00, "description": "Coworking space rent April"},
+  {"date": "2026-04-07", "debit_account": "1000", "credit_account": "4000", "amount": 4500.00, "description": "Project Alpha milestone 2 revenue"},
+  {"date": "2026-04-08", "debit_account": "6200", "credit_account": "1000", "amount": 35.00, "description": "Zoom Pro subscription"},
+  {"date": "2026-04-10", "debit_account": "6300", "credit_account": "1000", "amount": 150.00, "description": "Legal consultation April"},
+  {"date": "2026-04-12", "debit_account": "1000", "credit_account": "4000", "amount": 800.00, "description": "Consulting retainer Client B"},
+  {"date": "2026-04-14", "debit_account": "6200", "credit_account": "1000", "amount": 22.50, "description": "Domain renewal"},
+  {"date": "2026-04-18", "debit_account": "1000", "credit_account": "4000", "amount": 2200.00, "description": "Project Beta final payment"},
+  {"date": "2026-04-20", "debit_account": "6200", "credit_account": "1000", "amount": 199.00, "description": "AWS hosting April"},
+  {"date": "2026-04-22", "debit_account": "6200", "credit_account": "1000", "amount": 75.00, "description": "Accounting software"},
+  {"date": "2026-04-25", "debit_account": "1000", "credit_account": "4000", "amount": 650.00, "description": "Workshop facilitation fee"},
+  {"date": "2026-04-28", "debit_account": "8000", "credit_account": "1000", "amount": 45.00, "description": "Business insurance monthly"}
+]
