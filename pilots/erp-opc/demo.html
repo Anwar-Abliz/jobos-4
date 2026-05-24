@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ERP for OPC — Financial Close Demo</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0a0e17; color: #e2e8f0; min-height: 100vh; padding: 24px; }
+h1 { font-size: 1.4rem; color: #f8fafc; margin-bottom: 4px; }
+.subtitle { color: #64748b; font-size: 0.85rem; margin-bottom: 24px; }
+.status-bar { display: flex; gap: 16px; margin-bottom: 24px; padding: 12px 16px; background: #1e293b; border-radius: 8px; border: 1px solid #334155; }
+.status-item { font-size: 0.8rem; }
+.status-item span { color: #94a3b8; }
+.status-item strong { color: #e2e8f0; }
+
+.pipeline { display: flex; gap: 2px; margin-bottom: 24px; }
+.step { flex: 1; padding: 12px 16px; background: #1e293b; border: 1px solid #334155; cursor: pointer; transition: all 0.2s; position: relative; }
+.step:first-child { border-radius: 8px 0 0 8px; }
+.step:last-child { border-radius: 0 8px 8px 0; }
+.step:hover { background: #263548; border-color: #475569; }
+.step.active { background: #172554; border-color: #3b82f6; }
+.step.done { background: #052e16; border-color: #22c55e; }
+.step.escalated { background: #431407; border-color: #f97316; }
+.step.blocked { background: #450a0a; border-color: #ef4444; }
+.step-num { font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+.step-name { font-size: 0.85rem; font-weight: 600; margin-top: 2px; }
+.step-status { font-size: 0.7rem; margin-top: 4px; color: #94a3b8; }
+
+.main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 900px) { .main-grid { grid-template-columns: 1fr; } }
+
+.panel { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 16px; }
+.panel h2 { font-size: 0.9rem; color: #f8fafc; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.panel h2 .dot { width: 8px; height: 8px; border-radius: 50%; }
+.dot-green { background: #22c55e; }
+.dot-yellow { background: #eab308; }
+.dot-red { background: #ef4444; }
+.dot-blue { background: #3b82f6; }
+
+.btn { padding: 8px 16px; border: none; border-radius: 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-primary { background: #3b82f6; color: white; }
+.btn-primary:hover:not(:disabled) { background: #2563eb; }
+.btn-success { background: #22c55e; color: white; }
+.btn-success:hover:not(:disabled) { background: #16a34a; }
+.btn-warning { background: #f97316; color: white; }
+.btn-warning:hover:not(:disabled) { background: #ea580c; }
+.btn-danger { background: #ef4444; color: white; }
+.btn-danger:hover:not(:disabled) { background: #dc2626; }
+.btn-sm { padding: 5px 10px; font-size: 0.75rem; }
+
+.actions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+
+textarea { width: 100%; background: #0f172a; border: 1px solid #334155; border-radius: 6px; color: #e2e8f0; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 0.78rem; padding: 10px; resize: vertical; min-height: 120px; }
+textarea:focus { outline: none; border-color: #3b82f6; }
+
+.response-box { background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 10px; font-family: 'Cascadia Code', monospace; font-size: 0.75rem; max-height: 300px; overflow-y: auto; white-space: pre-wrap; word-break: break-word; margin-top: 8px; }
+.response-box.success { border-color: #22c55e; }
+.response-box.error { border-color: #ef4444; }
+.response-box.escalated { border-color: #f97316; }
+
+.escalation-card { background: #431407; border: 1px solid #f97316; border-radius: 6px; padding: 10px; margin-top: 8px; font-size: 0.8rem; }
+.escalation-card .reason { color: #fb923c; font-weight: 600; }
+.escalation-card .desc { color: #fed7aa; margin-top: 4px; }
+
+.approval-card { background: #1e293b; border: 1px solid #475569; border-radius: 6px; padding: 10px; margin-top: 8px; display: flex; justify-content: space-between; align-items: center; }
+.approval-card .info { font-size: 0.8rem; }
+.approval-card .btns { display: flex; gap: 6px; }
+
+.loading { color: #64748b; font-style: italic; }
+.timer { font-family: monospace; color: #3b82f6; }
+</style>
+</head>
+<body>
+
+<h1>ERP for OPC — Monthly Financial Close</h1>
+<p class="subtitle">Agent-first API demo. No UI in production — this page simulates the AI Agent's workflow.</p>
+
+<div class="status-bar" id="statusBar">
+  <div class="status-item"><span>Server:</span> <strong id="serverStatus">checking...</strong></div>
+  <div class="status-item"><span>Transactions:</span> <strong id="txnCount">0</strong></div>
+  <div class="status-item"><span>Ledger Entries:</span> <strong id="ledgerCount">0</strong></div>
+  <div class="status-item"><span>Escalations:</span> <strong id="escCount">0</strong></div>
+  <div class="status-item"><span>Elapsed:</span> <strong class="timer" id="elapsed">0.0s</strong></div>
+</div>
+
+<div class="pipeline" id="pipeline">
+  <div class="step" id="step-1" onclick="showStep(1)">
+    <div class="step-num">Step 1</div>
+    <div class="step-name">Import</div>
+    <div class="step-status">Bank statements</div>
+  </div>
+  <div class="step" id="step-2" onclick="showStep(2)">
+    <div class="step-num">Step 2</div>
+    <div class="step-name">Reconcile</div>
+    <div class="step-status">Match entries</div>
+  </div>
+  <div class="step" id="step-3" onclick="showStep(3)">
+    <div class="step-num">Step 3</div>
+    <div class="step-name">Adjust</div>
+    <div class="step-status">Post corrections</div>
+  </div>
+  <div class="step" id="step-4" onclick="showStep(4)">
+    <div class="step-num">Step 4</div>
+    <div class="step-name">Trial Balance</div>
+    <div class="step-status">Verify balance</div>
+  </div>
+  <div class="step" id="step-5" onclick="showStep(5)">
+    <div class="step-num">Step 5</div>
+    <div class="step-name">Close</div>
+    <div class="step-status">Lock period</div>
+  </div>
+</div>
+
+<div class="main-grid">
+  <!-- Left: Input/Action panel -->
+  <div class="panel">
+    <h2><span class="dot dot-blue"></span> <span id="actionTitle">Step 1: Import Bank Statements</span></h2>
+    <div class="actions" id="actionButtons"></div>
+    <textarea id="requestBody"></textarea>
+    <div style="margin-top: 8px; display: flex; gap: 8px; align-items: center;">
+      <button class="btn btn-primary" id="executeBtn" onclick="executeStep()">Execute</button>
+      <button class="btn btn-sm" style="background:#334155;color:#e2e8f0;" onclick="loadSample()">Load Sample Data</button>
+      <span id="loadingIndicator" class="loading" style="display:none;">Calling API...</span>
+    </div>
+  </div>
+
+  <!-- Right: Response panel -->
+  <div class="panel">
+    <h2><span class="dot dot-green"></span> Response</h2>
+    <div id="responseArea">
+      <div class="response-box" style="color:#64748b;">Click "Execute" or "Load Sample Data" to begin.</div>
+    </div>
+    <div id="escalationArea"></div>
+    <div id="approvalArea"></div>
+  </div>
+</div>
+
+<script>
+const BASE = 'http://127.0.0.1:8000/api/pilot/erp-opc';
+let currentStep = 1;
+let startTime = null;
+let timerInterval = null;
+
+const STEPS = {
+  1: {
+    title: 'Step 1: Import Bank Statements',
+    endpoint: '/ingest',
+    method: 'POST',
+    sample: {
+      rows: [
+        {date: "2026-04-01", amount: 1500.00, description: "Client payment - Invoice INV-001", reference: "INV-001"},
+        {date: "2026-04-02", amount: -89.00, description: "GitHub Team subscription", reference: "SUB-GH"},
+        {date: "2026-04-03", amount: -49.99, description: "Adobe Creative Cloud", reference: "SUB-ADOBE"},
+        {date: "2026-04-05", amount: -1200.00, description: "Coworking space rent", reference: "RENT-APR"},
+        {date: "2026-04-07", amount: 4500.00, description: "Project Alpha milestone 2", reference: "PROJ-ALPHA"},
+        {date: "2026-04-08", amount: -35.00, description: "Zoom Pro monthly", reference: "SUB-ZOOM"},
+        {date: "2026-04-10", amount: -150.00, description: "Legal consultation", reference: "LEGAL-APR"},
+        {date: "2026-04-12", amount: 800.00, description: "Consulting retainer Client B", reference: "RET-B"},
+        {date: "2026-04-15", amount: -15.00, description: "Bank monthly fee", reference: "FEE-01"},
+        {date: "2026-04-18", amount: 2200.00, description: "Project Beta final payment", reference: "PROJ-BETA"},
+        {date: "2026-04-20", amount: -199.00, description: "AWS hosting", reference: "SUB-AWS"},
+        {date: "2026-04-25", amount: 650.00, description: "Workshop facilitation", reference: "WORKSHOP"},
+        {date: "2026-04-28", amount: -45.00, description: "Business insurance", reference: "INS-APR"},
+        {date: "2026-04-30", amount: -12.00, description: "Wire transfer fee", reference: "FEE-02"}
+      ]
+    }
+  },
+  2: {
+    title: 'Step 2: Reconcile Accounts',
+    endpoint: '/reconcile',
+    method: 'POST',
+    sample: {tolerance_amount: 0.01}
+  },
+  3: {
+    title: 'Step 3: Post Adjustment Entries',
+    endpoint: '/adjustments',
+    method: 'POST',
+    sample: {
+      adjustments: [
+        {debit_account: "6400", credit_account: "1000", amount: 15.00, description: "Bank monthly fee", date: "2026-04-15"},
+        {debit_account: "6400", credit_account: "1000", amount: 12.00, description: "Wire transfer fee", date: "2026-04-30"},
+        {debit_account: "6200", credit_account: "1000", amount: 89.00, description: "GitHub subscription", date: "2026-04-02"},
+        {debit_account: "6200", credit_account: "1000", amount: 49.99, description: "Adobe Creative Cloud", date: "2026-04-03"},
+        {debit_account: "6200", credit_account: "1000", amount: 35.00, description: "Zoom Pro", date: "2026-04-08"},
+        {debit_account: "6200", credit_account: "1000", amount: 199.00, description: "AWS hosting", date: "2026-04-20"},
+        {debit_account: "8000", credit_account: "1000", amount: 45.00, description: "Business insurance", date: "2026-04-28"}
+      ]
+    }
+  },
+  4: {
+    title: 'Step 4: Generate Trial Balance',
+    endpoint: '/trial-balance',
+    method: 'POST',
+    sample: {year: 2026, month: 4}
+  },
+  5: {
+    title: 'Step 5: Close Period',
+    endpoint: '/close/request',
+    method: 'POST',
+    sample: {year: 2026, month: 4}
+  }
+};
+
+function showStep(n) {
+  currentStep = n;
+  document.querySelectorAll('.step').forEach((el, i) => {
+    el.classList.toggle('active', i + 1 === n);
+  });
+  const step = STEPS[n];
+  document.getElementById('actionTitle').textContent = step.title;
+  document.getElementById('requestBody').value = JSON.stringify(step.sample, null, 2);
+  document.getElementById('responseArea').innerHTML = '<div class="response-box" style="color:#64748b;">Ready. Click Execute to call ' + step.endpoint + '</div>';
+  document.getElementById('escalationArea').innerHTML = '';
+  document.getElementById('approvalArea').innerHTML = '';
+
+  // Extra buttons for step 5
+  const actionsDiv = document.getElementById('actionButtons');
+  actionsDiv.innerHTML = '';
+  if (n === 5) {
+    actionsDiv.innerHTML = `
+      <button class="btn btn-sm btn-success" onclick="confirmClose()">Confirm Close (Human Approval)</button>
+      <button class="btn btn-sm btn-warning" onclick="viewEscalations()">View All Escalations</button>
+    `;
+  } else if (n === 3) {
+    actionsDiv.innerHTML = `
+      <button class="btn btn-sm btn-warning" onclick="viewEscalations()">View Escalations</button>
+    `;
+  }
+}
+
+function loadSample() {
+  const step = STEPS[currentStep];
+  document.getElementById('requestBody').value = JSON.stringify(step.sample, null, 2);
+}
+
+async function executeStep() {
+  if (!startTime) {
+    startTime = Date.now();
+    timerInterval = setInterval(updateTimer, 100);
+  }
+
+  const step = STEPS[currentStep];
+  const body = document.getElementById('requestBody').value;
+  const loading = document.getElementById('loadingIndicator');
+  const btn = document.getElementById('executeBtn');
+
+  loading.style.display = 'inline';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(BASE + step.endpoint, {
+      method: step.method,
+      headers: {'Content-Type': 'application/json'},
+      body: body
+    });
+    const data = await res.json();
+    renderResponse(data, res.ok);
+    updateHealth();
+
+    // Mark step status
+    const stepEl = document.getElementById('step-' + currentStep);
+    if (data.status === 'success') {
+      stepEl.classList.add('done');
+      stepEl.classList.remove('escalated', 'blocked');
+      stepEl.querySelector('.step-status').textContent = 'Done';
+    } else if (data.status === 'escalated') {
+      stepEl.classList.add('escalated');
+      stepEl.querySelector('.step-status').textContent = 'Escalated';
+    } else if (data.status === 'blocked') {
+      stepEl.classList.add('blocked');
+      stepEl.querySelector('.step-status').textContent = 'Blocked';
+    } else if (data.status === 'awaiting_approval') {
+      stepEl.classList.add('escalated');
+      stepEl.querySelector('.step-status').textContent = 'Awaiting approval';
+    } else if (data.status === 'closed') {
+      stepEl.classList.add('done');
+      stepEl.querySelector('.step-status').textContent = 'Closed';
+      stopTimer();
+    }
+  } catch (e) {
+    renderResponse({error: e.message, hint: 'Is the server running at ' + BASE + '?'}, false);
+  }
+
+  loading.style.display = 'none';
+  btn.disabled = false;
+}
+
+function renderResponse(data, ok) {
+  const area = document.getElementById('responseArea');
+  const cls = data.status === 'escalated' ? 'escalated' : (ok ? 'success' : 'error');
+  area.innerHTML = `<div class="response-box ${cls}">${JSON.stringify(data, null, 2)}</div>`;
+
+  // Show escalation cards
+  const escArea = document.getElementById('escalationArea');
+  escArea.innerHTML = '';
+  if (data.escalation) {
+    escArea.innerHTML = `
+      <div class="escalation-card">
+        <div class="reason">ESCALATION: ${data.escalation.reason}</div>
+        <div class="desc">${data.escalation.description}</div>
+      </div>
+    `;
+  }
+
+  // Show approval cards
+  const appArea = document.getElementById('approvalArea');
+  appArea.innerHTML = '';
+  if (data.pending_approval && data.pending_approval.length > 0) {
+    for (const entry of data.pending_approval) {
+      appArea.innerHTML += `
+        <div class="approval-card">
+          <div class="info">
+            <strong>$${entry.amount}</strong> — ${entry.description}<br>
+            <span style="color:#64748b;font-size:0.75rem;">ID: ${entry.id} | ${entry.debit_account} → ${entry.credit_account}</span>
+          </div>
+          <div class="btns">
+            <button class="btn btn-sm btn-success" onclick="approveEntry('${entry.id}')">Approve</button>
+            <button class="btn btn-sm btn-danger" onclick="rejectEntry('${entry.id}')">Reject</button>
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  // Show blockers
+  if (data.blockers) {
+    escArea.innerHTML = `
+      <div class="escalation-card" style="background:#450a0a;border-color:#ef4444;">
+        <div class="reason" style="color:#fca5a5;">BLOCKED</div>
+        <div class="desc" style="color:#fecaca;">${data.blockers.join('<br>')}</div>
+      </div>
+    `;
+  }
+}
+
+async function approveEntry(entryId) {
+  const res = await fetch(BASE + '/adjustments/approve', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({entry_id: entryId, approved_by: 'owner@mycompany.com'})
+  });
+  const data = await res.json();
+  renderResponse(data, res.ok);
+  document.getElementById('approvalArea').innerHTML = '';
+  updateHealth();
+}
+
+async function rejectEntry(entryId) {
+  const reason = prompt('Rejection reason:');
+  if (!reason) return;
+  const res = await fetch(BASE + '/adjustments/reject', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({entry_id: entryId, reason: reason})
+  });
+  const data = await res.json();
+  renderResponse(data, res.ok);
+  document.getElementById('approvalArea').innerHTML = '';
+}
+
+async function confirmClose() {
+  const res = await fetch(BASE + '/close/confirm', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({year: 2026, month: 4, approved_by: 'owner@mycompany.com'})
+  });
+  const data = await res.json();
+  renderResponse(data, res.ok);
+  if (data.status === 'closed') {
+    document.getElementById('step-5').classList.remove('escalated');
+    document.getElementById('step-5').classList.add('done');
+    document.getElementById('step-5').querySelector('.step-status').textContent = 'Closed';
+    stopTimer();
+  }
+  updateHealth();
+}
+
+async function viewEscalations() {
+  const res = await fetch(BASE + '/escalations?unresolved_only=true');
+  const data = await res.json();
+  renderResponse(data, res.ok);
+}
+
+async function updateHealth() {
+  try {
+    const res = await fetch(BASE + '/health');
+    const data = await res.json();
+    document.getElementById('serverStatus').textContent = 'connected';
+    document.getElementById('serverStatus').style.color = '#22c55e';
+    document.getElementById('txnCount').textContent = data.transactions;
+    document.getElementById('ledgerCount').textContent = data.ledger_entries;
+    document.getElementById('escCount').textContent = data.open_escalations;
+  } catch {
+    document.getElementById('serverStatus').textContent = 'offline';
+    document.getElementById('serverStatus').style.color = '#ef4444';
+  }
+}
+
+function updateTimer() {
+  if (!startTime) return;
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+  document.getElementById('elapsed').textContent = elapsed + 's';
+}
+
+function stopTimer() {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+}
+
+// Initialize
+showStep(1);
+updateHealth();
+setInterval(updateHealth, 5000);
+</script>
+</body>
+</html>
